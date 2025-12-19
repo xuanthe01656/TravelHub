@@ -4,7 +4,7 @@ import Login from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import Flights from './pages/Flights';
 import Hotels from './pages/Hotels';
-import Cars from './pages/cars';
+import Cars from './pages/Cars';
 import Confirmation from './pages/Payment'; 
 import ThankYouPage from './pages/ThankYouPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
