@@ -1,0 +1,49 @@
+@tailwind base;@tailwind components;@tailwind utilities;
+@layer base {
+    :root {
+      /* Loại bỏ các biến màu và shadow vì chúng đã được định nghĩa trong tailwind.config.js */
+      /* Chỉ giữ lại nếu bạn vẫn dùng chúng cho các thư viện bên ngoài */
+      /* Các biến này hiện tại là DƯ THỪA nếu bạn dùng tiện ích Tailwind */
+      /* --primary-color: #007bff; */
+      /* --secondary-color: #27ae60; */
+      /* --error-color: #e74c3c; */
+      /* --card-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); */
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    html, body, #root {
+      height: 100%;
+    }
+    
+    body {
+      /* Giữ lại các style phức tạp không thể thay thế bằng class đơn giản */
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+      margin: 0;
+      padding: 0;
+      color: #333; 
+    }
+}
+
+@layer components {
+    /* Class này bây giờ sẽ hoạt động vì @tailwind components đã được xử lý trước */
+    .btn-primary {
+        @apply px-4 py-2 rounded-lg font-semibold transition duration-300;
+        @apply bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg;
+    }
+}
+/* ======================================================= */
+
+
+/* ======================================================= */
+/* 4. KEYFRAMES (Không cần @layer, chỉ cần định nghĩa) */
+/* Cần giữ lại keyframes cho animate-fadeIn */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* ======================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
