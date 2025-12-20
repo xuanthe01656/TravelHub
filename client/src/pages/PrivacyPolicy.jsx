@@ -2,106 +2,128 @@
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { FaLock, FaUserShield, FaDatabase, FaExchangeAlt, FaPrint, FaEnvelope } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
 function PrivacyPolicy({ isLogged, welcomeMessage, handleLogout }) {
-    useDocumentTitle('Chính sách bảo mật');
-  // Tự động cuộn lên đầu trang khi truy cập
+  useDocumentTitle('Chính sách bảo mật');
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-800">
       <Header 
         isLogged={isLogged} 
         welcomeMessage={welcomeMessage} 
         handleLogout={handleLogout} 
       />
       
-      <main className="flex-1 max-w-4xl mx-auto w-full p-4 md:py-12 md:px-6">
-        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 p-8 md:p-16 border border-white relative overflow-hidden">
-          
-          {/* Trang trí background nhẹ nhàng */}
-          <div className="absolute top-0 left-0 w-40 h-40 bg-emerald-50 rounded-br-full -ml-20 -mt-20 opacity-60"></div>
+      {/* Container chính: Đồng bộ khoảng cách với FAQ/Terms */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-6 pt-24 pb-16 md:pt-32">
+        
+        {/* Header Section: Sử dụng tông Emerald cho Privacy */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest mb-4">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            Privacy Center
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Chính sách bảo mật</h1>
+          <p className="mt-4 text-slate-500 font-medium italic text-sm">Cập nhật lần cuối: 19/12/2025</p>
+        </div>
 
-          <header className="relative mb-12">
-            <div className="flex items-center gap-2 mb-2">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                <span className="text-emerald-600 font-black text-sm uppercase tracking-[0.2em]">Privacy Center</span>
-            </div>
-            <h1 className="text-4xl font-black text-slate-800">Chính sách bảo mật</h1>
-            <div className="h-1.5 w-24 bg-emerald-500 mt-4 rounded-full"></div>
-            <p className="text-slate-400 text-sm mt-6 font-medium italic">Cập nhật lần cuối: 19/12/2025</p>
-          </header>
+        {/* Nội dung chính trong Card trắng */}
+        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-8 md:p-14 border border-slate-100 relative overflow-hidden">
+          {/* Họa tiết trang trí Emerald nhẹ nhàng */}
+          <div className="absolute top-0 left-0 w-40 h-40 bg-emerald-50 rounded-full blur-[80px] opacity-50 -ml-20 -mt-20"></div>
 
-          <div className="space-y-12 text-slate-600 leading-relaxed relative">
+          <div className="space-y-12 relative z-10">
             
-            <section className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100/50 text-slate-700">
-              <p>
-                Chúng tôi coi trọng quyền riêng tư của bạn. Là một nền tảng <strong>B2C Affiliate</strong>, TravelHub đóng vai trò cầu nối thông tin. Mọi giao dịch tài chính sẽ được thực hiện trực tiếp trên nền tảng của đối tác để đảm bảo an toàn tuyệt đối cho bạn.
+            {/* Tóm tắt mô hình bảo mật Affiliate */}
+            <section className="bg-emerald-50/50 p-6 md:p-8 rounded-3xl border border-emerald-100 flex gap-4 items-start">
+              <FaLock className="text-emerald-600 text-xl shrink-0 mt-1" />
+              <p className="font-semibold text-slate-700 leading-relaxed">
+                Chúng tôi hiểu rằng dữ liệu của bạn là tài sản quý giá nhất. Với tư cách là nền tảng <span className="text-emerald-700">Affiliate Marketing</span>, TravelHub cam kết không bao giờ thu thập thông tin tài chính trực tiếp của người dùng.
               </p>
             </section>
-
-            {/* Mục 1 */}
-            <section>
-              <h2 className="text-2xl font-black text-slate-800 mb-6 flex items-baseline gap-3">
-                <span className="text-emerald-500 text-3xl">1.</span>
-                Dữ liệu chúng tôi thu thập
-              </h2>
-              <div className="grid gap-6 pl-0 md:pl-10">
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl hover:border-emerald-200 transition-colors">
-                  <h3 className="text-lg font-bold text-slate-800 mb-2">1.1 Dữ liệu bạn cung cấp</h3>
-                  <p>Họ tên, email, số điện thoại khi đăng ký tài khoản. Chúng tôi <strong>không</strong> thu thập số thẻ tín dụng hoặc mật khẩu thanh toán.</p>
+            
+            <div className="grid gap-12 text-slate-600 leading-relaxed">
+              
+              {/* Mục 1 */}
+              <section>
+                <h2 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
+                  <span className="text-emerald-500">1.</span> Dữ liệu thu thập
+                </h2>
+                <div className="grid md:grid-cols-2 gap-4 ml-0 md:ml-8">
+                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:border-emerald-200 transition-all">
+                    <FaUserShield className="text-emerald-500 mb-3 text-lg" />
+                    <h3 className="font-bold text-slate-800 mb-2">Thông tin định danh</h3>
+                    <p className="text-sm font-medium">Email, họ tên và số điện thoại. Chúng tôi chỉ lưu giữ để quản lý tài khoản thành viên của bạn.</p>
+                  </div>
+                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:border-emerald-200 transition-all">
+                    <FaDatabase className="text-emerald-500 mb-3 text-lg" />
+                    <h3 className="font-bold text-slate-800 mb-2">Dữ liệu hành vi</h3>
+                    <p className="text-sm font-medium">Lịch sử tìm kiếm vé và khách sạn để gợi ý các hành trình tối ưu nhất cho lần truy cập sau.</p>
+                  </div>
                 </div>
+              </section>
 
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl hover:border-emerald-200 transition-colors">
-                  <h3 className="text-lg font-bold text-slate-800 mb-2">1.2 Dữ liệu tự động</h3>
-                  <p>Địa chỉ IP, loại trình duyệt và hành vi tìm kiếm nhằm tối ưu hóa kết quả hiển thị phù hợp với nhu cầu của bạn.</p>
+              {/* Mục 2 */}
+              <section className="border-l-4 border-emerald-100 pl-8">
+                <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-3">
+                  2. Cách sử dụng thông tin
+                </h2>
+                <p className="font-medium">
+                  TravelHub sử dụng dữ liệu của bạn để cá nhân hóa kết quả tìm kiếm, gửi thông báo giảm giá độc quyền và cải thiện tốc độ tải dữ liệu từ API của các đối tác hàng không liên kết.
+                </p>
+              </section>
+
+              {/* Mục 3 */}
+              <section>
+                <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-3">
+                  <FaExchangeAlt className="text-emerald-500" /> 3. Chia sẻ dữ liệu
+                </h2>
+                <p className="ml-8 font-medium">
+                  Khi bạn tiến hành đặt vé, các thông tin cơ bản sẽ được chuyển tiếp an toàn sang hệ thống của đối tác (Hãng bay/Khách sạn). Chúng tôi <strong>không bao giờ bán</strong> thông tin cá nhân của bạn cho các bên quảng cáo.
+                </p>
+              </section>
+
+              {/* Bảo mật & Quyền lợi */}
+              <div className="grid md:grid-cols-2 gap-6 border-t border-slate-50 pt-10">
+                <div className="p-6 rounded-3xl bg-slate-900 text-white">
+                  <h3 className="font-black mb-2 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div> Bảo mật SSL
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-loose">
+                    Toàn bộ dữ liệu truyền tải giữa thiết bị của bạn và TravelHub đều được mã hóa theo tiêu chuẩn quân đội SSL/TLS.
+                  </p>
+                </div>
+                <div className="p-6 rounded-3xl bg-emerald-600 text-white">
+                  <h3 className="font-black mb-2 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div> Quyền của bạn
+                  </h3>
+                  <p className="text-xs text-emerald-50 leading-loose">
+                    Bạn có toàn quyền yêu cầu trích xuất dữ liệu hoặc xóa vĩnh viễn tài khoản trong trang cài đặt cá nhân của mình.
+                  </p>
                 </div>
               </div>
-            </section>
 
-            {/* Mục 2 */}
-            <section className="relative">
-              <div className="absolute -left-4 top-0 bottom-0 w-1 bg-emerald-100 rounded-full"></div>
-              <h2 className="text-2xl font-black text-slate-800 mb-4 pl-4">2. Cách sử dụng dữ liệu</h2>
-              <p className="pl-4">
-                Thông tin của bạn giúp chúng tôi cá nhân hóa trải nghiệm du lịch, gửi mã giảm giá đặc quyền và cải thiện thuật toán tìm kiếm vé máy bay/khách sạn từ các đối tác Affiliate.
-              </p>
-            </section>
-
-            {/* Mục 3 */}
-            <section>
-              <h2 className="text-2xl font-black text-slate-800 mb-4">3. Chia sẻ dữ liệu</h2>
-              <p>
-                Để hoàn tất việc đặt vé, chúng tôi sẽ chuyển hướng và chia sẻ các thông tin tìm kiếm cần thiết với đối tác Affiliate (Hãng bay, Khách sạn). Chúng tôi <strong>không bán</strong> dữ liệu cá nhân của bạn cho bất kỳ bên quảng cáo thứ ba nào.
-              </p>
-            </section>
-
-            {/* Mục 4 & 5 */}
-            <div className="grid md:grid-cols-2 gap-8">
-                <section className="bg-slate-50 p-6 rounded-3xl">
-                    <h2 className="text-xl font-black text-slate-800 mb-3">4. Bảo mật</h2>
-                    <p className="text-sm">Sử dụng giao thức mã hóa SSL/TLS để bảo vệ dữ liệu trong quá trình bạn tìm kiếm thông tin trên trang web.</p>
-                </section>
-                <section className="bg-slate-50 p-6 rounded-3xl">
-                    <h2 className="text-xl font-black text-slate-800 mb-3">5. Quyền của bạn</h2>
-                    <p className="text-sm">Bạn có quyền truy cập, yêu cầu chỉnh sửa hoặc xóa vĩnh viễn dữ liệu tài khoản bất cứ lúc nào trong phần cài đặt.</p>
-                </section>
             </div>
-
           </div>
 
-          <footer className="mt-16 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-slate-400 text-sm font-medium text-center md:text-left">
-              Mọi thắc mắc vui lòng gửi về: <span className="text-blue-600">privacy@travelhub.com</span>
-            </p>
+          {/* Footer Card: Đồng bộ với Terms */}
+          <footer className="mt-16 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-3 text-slate-500 font-medium text-sm">
+              <FaEnvelope className="text-emerald-500" />
+              <span>Liên hệ: <span className="text-slate-900 font-bold">privacy@travelhub.com</span></span>
+            </div>
+            
             <button 
-                onClick={() => window.print()}
-                className="text-slate-500 text-sm font-bold hover:text-blue-600 transition-colors flex items-center gap-2"
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all active:scale-95"
             >
-                🖨️ In bản chính sách
+              <FaPrint /> In bản chính sách
             </button>
           </footer>
         </div>
