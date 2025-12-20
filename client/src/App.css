@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@layer base {
+  /* Khóa cứng chiều ngang của toàn bộ trang web */
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
+    scroll-behavior: smooth;
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+    color: #333;
+    /* Chống rung khi scroll trên mobile */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  /* Button chuẩn của hệ thống */
+  .btn-primary {
+    @apply px-5 py-2.5 rounded-xl font-bold transition-all duration-300;
+    @apply bg-blue-600 text-white hover:bg-blue-700 active:scale-95;
+    @apply shadow-lg shadow-blue-200 hover:shadow-blue-300;
+  }
+
+  /* Hiệu ứng Glassmorphism nhẹ cho Header/Cards */
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
+  }
+}
+
+/* --- SWIPER CUSTOMIZATION --- */
+/* 1. Thiết kế nút điều hướng (Nav Buttons) */
+.swiper-button-next,
+.swiper-button-prev {
+  width: 38px !important;
+  height: 38px !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  opacity: 0 !important; /* Mặc định ẩn */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Kích thước mũi tên */
+.swiper-button-next:after,
+.swiper-button-prev:after {
+  font-size: 16px !important;
+  font-weight: 900;
+  color: #1e40af !important; /* Blue-800 */
+}
+
+/* 2. Hiệu ứng Hover trên Container Swiper */
+.swiper:hover .swiper-button-next,
+.swiper:hover .swiper-button-prev {
+  opacity: 1 !important;
+  transform: translateX(0) scale(1);
+}
+
+/* Đẩy nhẹ nút ra ngoài khi chưa hover */
+.swiper-button-prev { transform: translateX(-15px); left: 15px !important; }
+.swiper-button-next { transform: translateX(15px); right: 15px !important; }
+
+/* Hiệu ứng khi nhấn vào nút */
+.swiper-button-next:active,
+.swiper-button-prev:active {
+  transform: scale(0.9);
+  background-color: white !important;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* --- FIX MOBILE DRAWER --- */
+/* Đảm bảo khi menu mobile trượt đi, nó hoàn toàn không thể tương tác */
+.invisible-nav {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.visible-nav {
+  visibility: visible;
+  pointer-events: auto;
+}
