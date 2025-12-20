@@ -62,11 +62,10 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
         <nav className={`
           fixed lg:relative top-0 right-0 h-screen lg:h-auto w-[280px] lg:w-auto 
           bg-white lg:bg-transparent shadow-[-10px_0_30px_rgba(0,0,0,0.1)] lg:shadow-none 
-          transform ${menuOpen ? 'translate-x-0' : 'translate-x-full'} 
-          ${menuOpen ? 'visible' : 'invisible lg:visible'} 
-          transition-all duration-300 ease-in-out 
-          flex flex-col lg:flex-row items-start lg:items-center gap-1 
-          p-6 lg:p-0 z-[120] lg:z-auto
+          transition-all duration-300 ease-in-out z-[120] lg:z-auto
+          flex flex-col lg:flex-row items-start lg:items-center gap-2 lg:gap-4 p-6 lg:p-0
+          ${menuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-0 opacity-0 lg:opacity-100'}
+          ${menuOpen ? 'visible' : 'invisible lg:visible'}
         `}>
           {/* Mobile Menu Header */}
           <div className="flex justify-between items-center lg:hidden mb-8 w-full border-b border-slate-100 pb-4">
