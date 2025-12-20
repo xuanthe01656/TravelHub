@@ -88,7 +88,7 @@ function TermsOfUse({ isLogged, welcomeMessage, handleLogout }) {
           <div className="mt-16 pt-8 border-t border-slate-100 text-center">
             <p className="text-slate-400 font-medium">
               Bạn có thắc mắc về các điều khoản này? 
-              <a href="/faq" className="ml-2 text-blue-600 font-black hover:text-blue-700 transition-colors uppercase text-xs tracking-wider">
+              <a href="/fqa" className="ml-2 text-blue-600 font-black hover:text-blue-700 transition-colors uppercase text-xs tracking-wider">
                 Xem FAQ ngay
               </a>
             </p>
