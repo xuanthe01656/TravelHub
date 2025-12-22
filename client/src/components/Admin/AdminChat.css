@@ -1,0 +1,15 @@
+.admin-chat-container { display: flex; height: 80vh; border: 1px solid #ddd; margin: 20px; font-family: sans-serif; }
+.sidebar { width: 250px; border-right: 1px solid #ddd; background: #f9f9f9; overflow-y: auto; }
+.customer-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+.customer-item.active { background: #e3f2fd; border-left: 4px solid #2196f3; }
+.main-chat { flex: 1; display: flex; flex-direction: column; background: white; }
+.chat-content { flex: 1; padding: 20px; overflow-y: auto; background: #f0f2f5; }
+.admin-msg-row { display: flex; margin-bottom: 10px; }
+.admin-msg-row.customer { justify-content: flex-start; }
+.admin-msg-row.admin { justify-content: flex-end; }
+.admin-msg-bubble { padding: 10px 15px; border-radius: 15px; max-width: 70%; position: relative; }
+.customer .admin-msg-bubble { background: white; color: black; }
+.admin .admin-msg-bubble { background: #0084ff; color: white; }
+.admin-msg-bubble small { display: block; font-size: 10px; opacity: 0.7; margin-top: 5px; }
+.chat-input-area { padding: 15px; border-top: 1px solid #ddd; display: flex; }
+.chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }

@@ -14,12 +14,15 @@ import FAQ from './pages/FAQ';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
+import ChatBox from './components/ChatBox';
+import AdminChat from './components/Admin/AdminChat';
+import AdminDashboard from './pages/Admin/AdminDashboard';
 
 const ProtectedRoute = ({ children }) => {
  const token = localStorage.getItem('token');
  return token ? children : <Navigate to="/login" />;
 };
-
+const isAdminPage = location.pathname === '/admin' || location.pathname === '/admin-support';
 function App() {
   return (
     <BrowserRouter>
@@ -44,7 +47,12 @@ function App() {
         />
         <Route path="/thank-you" element={<ThankYouPage />} />
         <Route path="/" element={<Navigate to="/Dashboard" />} />
+        <Route path="/admin-support" element={<AdminChat />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
+      {!isAdminPage && <ChatBox />}
+      
+      {/* {localStorage.getItem('token') && <ChatBox />} */}
       <ToastContainer />
     </BrowserRouter>
   );
