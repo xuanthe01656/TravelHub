@@ -1,76 +1,106 @@
-@import "tailwindcss"; 
+@import "tailwindcss";
 
 @layer base {
-    :root {
-      /* Loại bỏ các biến màu và shadow vì chúng đã được định nghĩa trong tailwind.config.js */
-      /* Chỉ giữ lại nếu bạn vẫn dùng chúng cho các thư viện bên ngoài */
-      /* Các biến này hiện tại là DƯ THỪA nếu bạn dùng tiện ích Tailwind */
-      /* --primary-color: #007bff; */
-      /* --secondary-color: #27ae60; */
-      /* --error-color: #e74c3c; */
-      /* --card-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); */
-    }
-    
-    * {
-      box-sizing: border-box;
-    }
-    
-    html, body, #root {
-      height: 100%;
-    }
-    
-    body {
-      /* Giữ lại các style phức tạp không thể thay thế bằng class đơn giản */
-      font-family: 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
-      margin: 0;
-      padding: 0;
-      color: #333; 
-    }
+  /* Khóa cứng chiều ngang của toàn bộ trang web */
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
+    scroll-behavior: smooth;
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+    color: #333;
+    /* Chống rung khi scroll trên mobile */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @layer components {
-    
-    .btn-primary {
-        @apply px-4 py-2 rounded-lg font-semibold transition duration-300;
-        @apply bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg;
-    }
+  /* Button chuẩn của hệ thống */
+  .btn-primary {
+    @apply px-5 py-2.5 rounded-xl font-bold transition-all duration-300;
+    @apply bg-blue-600 text-white hover:bg-blue-700 active:scale-95;
+    @apply shadow-lg shadow-blue-200 hover:shadow-blue-300;
+  }
+
+  /* Hiệu ứng Glassmorphism nhẹ cho Header/Cards */
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
+  }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* 1. Làm nhỏ kích thước icon và vòng tròn bảo vệ */
+/* --- SWIPER CUSTOMIZATION --- */
+/* 1. Thiết kế nút điều hướng (Nav Buttons) */
 .swiper-button-next,
 .swiper-button-prev {
-  width: 35px !important;  /* Mặc định khoảng 44px, chỉnh xuống 35px */
-  height: 35px !important;
-  background-color: rgba(255, 255, 255, 0.3); /* Nền mờ nhẹ */
-  backdrop-filter: blur(4px);
+  width: 38px !important;
+  height: 38px !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(8px);
   border-radius: 50%;
-  transition: all 0.3s ease-in-out;
-  opacity: 0; /* Mặc định ẩn đi */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  opacity: 0 !important; /* Mặc định ẩn */
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Chỉnh kích thước mũi tên bên trong */
+/* Kích thước mũi tên */
 .swiper-button-next:after,
 .swiper-button-prev:after {
-  font-size: 14px !important; /* Mặc định khoảng 20-24px, chỉnh xuống 14-16px */
-  font-weight: bold;
-  color: white;
+  font-size: 16px !important;
+  font-weight: 900;
+  color: #1e40af !important; /* Blue-800 */
 }
 
-/* 2. Hiệu ứng khi Hover vào vùng Swiper thì hiện nút */
+/* 2. Hiệu ứng Hover trên Container Swiper */
 .swiper:hover .swiper-button-next,
 .swiper:hover .swiper-button-prev {
-  opacity: 1;
-  transform: translateX(0);
+  opacity: 1 !important;
+  transform: translateX(0) scale(1);
 }
 
-/* Hiệu ứng đẩy nhẹ nút ra khi hiện (tùy chọn) */
-.swiper-button-prev { transform: translateX(-10px); left: 10px !important; }
-.swiper-button-next { transform: translateX(10px); right: 10px !important; }
+/* Đẩy nhẹ nút ra ngoài khi chưa hover */
+.swiper-button-prev { transform: translateX(-15px); left: 15px !important; }
+.swiper-button-next { transform: translateX(15px); right: 15px !important; }
 
-.swiper:hover .swiper-button-prev { transform: translateX(0); }
-.swiper:hover .swiper-button-next { transform: translateX(0); }
+/* Hiệu ứng khi nhấn vào nút */
+.swiper-button-next:active,
+.swiper-button-prev:active {
+  transform: scale(0.9);
+  background-color: white !important;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* --- FIX MOBILE DRAWER --- */
+/* Đảm bảo khi menu mobile trượt đi, nó hoàn toàn không thể tương tác */
+.invisible-nav {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.visible-nav {
+  visibility: visible;
+  pointer-events: auto;
+}

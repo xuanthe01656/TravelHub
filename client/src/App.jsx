@@ -16,8 +16,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" />;
+ const token = localStorage.getItem('token');
+ return token ? children : <Navigate to="/login" />;
 };
 
 function App() {
@@ -32,7 +32,7 @@ function App() {
         <Route path="/cars" element={<Cars />} />
         <Route path="/privacypolicy" element={<PrivacyPolicy />} />
         <Route path="/termsofuse" element={<TermsOfUse />} />
-        <Route path="/faq" element={<FAQ />} />
+        <Route path="/fqa" element={<FAQ />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route
           path="/profile"

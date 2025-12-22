@@ -47,42 +47,45 @@ function FAQ({ isLogged, welcomeMessage, handleLogout }) {
         handleLogout={handleLogout} 
       />
       
-      <main className="flex-1 max-w-4xl mx-auto w-full p-6 md:py-16">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4">
-            <FaQuestionCircle /> Help Center
+      {/* Căn chỉnh lại padding-top để đồng bộ với Header Sticky */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-6 pt-12 pb-16 md:pt-20">
+        
+        {/* Section Title: Đồng bộ với màu Blue-600 của Logo */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-widest mb-6">
+            <FaQuestionCircle className="text-sm" /> Trung tâm hỗ trợ
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Câu hỏi thường gặp</h1>
-          <p className="mt-4 text-slate-500 font-medium">Tìm câu trả lời nhanh nhất cho các thắc mắc của bạn về TravelHub</p>
+          <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter mb-6">
+            Câu hỏi thường gặp
+          </h1>
+          <p className="text-slate-500 font-medium text-lg max-w-2xl mx-auto">
+            Mọi thứ bạn cần biết về mô hình đặt vé của TravelHub.
+          </p>
         </div>
 
-        <div className="space-y-4">
+        {/* FAQ List: Chuẩn hóa Bo góc và Shadow */}
+        <div className="grid gap-4">
           {faqs.map((faq, index) => (
             <div 
               key={index} 
-              className={`group border border-slate-100 rounded-[2rem] bg-white transition-all duration-300 ${
-                openIndex === index ? 'shadow-xl shadow-blue-100 ring-2 ring-blue-500' : 'hover:shadow-lg'
+              className={`border border-slate-200/60 rounded-3xl bg-white transition-all duration-500 ${
+                openIndex === index ? 'shadow-2xl shadow-blue-100/50 ring-1 ring-blue-500/20' : 'hover:shadow-md'
               }`}
             >
               <button
-                onClick={() => toggleFAQ(index)}
-                className="w-full flex items-center justify-between p-6 md:p-8 text-left"
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                className="w-full flex items-center justify-between p-6 md:p-7 text-left outline-none"
               >
-                <span className={`text-lg font-bold transition-colors ${openIndex === index ? 'text-blue-600' : 'text-slate-700'}`}>
-                  {index + 1}. {faq.q}
+                <span className={`text-[17px] md:text-lg font-bold pr-8 transition-colors ${openIndex === index ? 'text-blue-600' : 'text-slate-700'}`}>
+                  {faq.q}
                 </span>
-                <div className={`p-2 rounded-xl transition-transform duration-300 ${openIndex === index ? 'bg-blue-600 text-white rotate-180' : 'bg-slate-50 text-slate-400'}`}>
-                  <FaChevronDown />
+                <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${openIndex === index ? 'bg-blue-600 text-white rotate-180' : 'bg-slate-100 text-slate-400'}`}>
+                  <FaChevronDown className="text-xs" />
                 </div>
               </button>
               
-              <div 
-                className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                  openIndex === index ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-                }`}
-              >
-                <div className="px-8 pb-8 pt-0 text-slate-500 leading-relaxed font-medium">
-                  <div className="h-[1px] bg-slate-100 mb-6 w-full" />
+              <div className={`overflow-hidden transition-all duration-500 ease-in-out ${openIndex === index ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="px-7 pb-7 text-slate-500 leading-relaxed font-medium text-[15px] md:text-base border-t border-slate-50 pt-5">
                   {faq.a}
                 </div>
               </div>
@@ -90,21 +93,21 @@ function FAQ({ isLogged, welcomeMessage, handleLogout }) {
           ))}
         </div>
 
-        {/* Box Liên hệ hỗ trợ */}
-        <div className="mt-16 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[3rem] p-8 md:p-12 text-center text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20 -mr-32 -mt-32"></div>
-          <h3 className="text-2xl font-black mb-4 relative z-10">Bạn vẫn chưa tìm thấy câu trả lời?</h3>
-          <p className="text-slate-400 mb-8 max-w-lg mx-auto relative z-10 font-medium">
-            Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giải đáp các vấn đề về kỹ thuật hoặc gợi ý hành trình cho bạn.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
-            <button className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-500/20">
-              <FaHeadset /> Chat với chúng tôi
-            </button>
-            <button className="bg-white/10 hover:bg-white/20 px-8 py-4 rounded-2xl font-black transition-all backdrop-blur-md flex items-center justify-center gap-2">
-              <FaExternalLinkAlt className="text-sm" /> Gửi yêu cầu hỗ trợ
-            </button>
-          </div>
+        {/* CTA Box: Đồng bộ Gradient với Header Logo */}
+        <div className="mt-20 bg-gradient-to-br from-blue-700 to-blue-600 rounded-[2.5rem] p-8 md:p-14 text-center text-white relative overflow-hidden shadow-2xl shadow-blue-200">
+           <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+           <h3 className="text-2xl md:text-3xl font-black mb-4 relative z-10">Bạn cần hỗ trợ trực tiếp?</h3>
+           <p className="text-blue-100 mb-10 max-w-lg mx-auto relative z-10 font-medium">
+             Đội ngũ chăm sóc khách hàng của chúng tôi luôn trực tuyến để xử lý các yêu cầu khẩn cấp của bạn.
+           </p>
+           <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
+             <button className="bg-white text-blue-600 px-8 py-4 rounded-2xl font-black transition-all hover:bg-blue-50 active:scale-95 shadow-lg">
+               Liên hệ Hotline
+             </button>
+             <button className="bg-blue-800/30 backdrop-blur-md text-white border border-blue-400/30 px-8 py-4 rounded-2xl font-black transition-all hover:bg-blue-800/50">
+               Gửi Ticket hỗ trợ
+             </button>
+           </div>
         </div>
       </main>
       

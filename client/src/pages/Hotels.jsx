@@ -1,4 +1,3 @@
-// Hotels.jsx
 import { useMemo, useReducer, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as Yup from 'yup';
@@ -13,12 +12,13 @@ import Select from 'react-select';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import {
-  FaPlane, FaShoppingCart, FaLock, FaReceipt,
-  FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
-  FaChair, FaCar, FaGlobe, FaBars, FaTimes, FaCreditCard, FaSpinner,
-  FaWallet, FaUniversity, FaArrowLeft, FaClock, FaTicketAlt, FaHotel
+  FaPlane, FaReceipt, FaCalendarAlt, FaGlobe, FaTimes, FaSpinner,
+  FaWallet, FaUniversity, FaArrowLeft, FaTicketAlt, FaHotel,
+  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, 
+  FaUmbrellaBeach, FaBusAlt, FaArrowRight, FaCar
 } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+
 const initialState = {
   location: '',
   checkInDate: '',
@@ -97,6 +97,106 @@ const airportOptions = Object.keys(airports).map((iata) => ({
     label: `${airports[iata].city} (${iata})`,
 }));
 
+// Demo data - Tối ưu cho khách sạn
+const popularDestinations = [
+  {
+    name: 'Phú Quốc',
+    image: 'https://image.vietnam.travel/sites/default/files/styles/top_banner/public/2019-08/what%20to%20do%20in%20phu%20quoc.jpg?itok=l8yXbDaN',
+    priceLabel: 'Khách sạn từ',
+    price: 1500000,
+    description: 'Resort 5 sao view biển, bao gồm bữa sáng và hồ bơi vô cực tuyệt đẹp.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Đà Lạt',
+    image: 'https://sungetawaystravel.com/wp-content/uploads/2025/04/Vietnam-Coffee-Plantations-1-1024x683.jpg',
+    priceLabel: 'Khách sạn từ',
+    price: 800000,
+    description: 'Khách sạn phong cách Pháp, gần chợ đêm và hồ Xuân Hương thơ mộng.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Hạ Long',
+    image: 'https://i.natgeofe.com/n/88df07fb-7277-4997-9215-9002b8afa918/00000165-aa56-d88f-adff-baff1bc90000.jpg?wp=1&w=1884.75&h=1060.5',
+    priceLabel: 'Khách sạn từ',
+    price: 1200000,
+    description: 'Khách sạn 4 sao view vịnh, dịch vụ tham quan vịnh Hạ Long kèm theo.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Hội An',
+    image: 'https://static.vinwonders.com/production/Taking-a-Hoi-An-lantern-boat-ride.jpg',
+    priceLabel: 'Khách sạn từ',
+    price: 900000,
+    description: 'Homestay phố cổ, trải nghiệm làm đèn lồng và ăn cao lầu đặc sản.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Sapa',
+    image: 'http://www.sapa-tour.net/wp-content/uploads/2014/08/Sapa-Rice-Terrace.jpg',
+    priceLabel: 'Khách sạn từ',
+    price: 700000,
+    description: 'Khách sạn view ruộng bậc thang, phòng ấm áp với lò sưởi mùa đông.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Bangkok',
+    image: 'https://images.unsplash.com/photo-1504609773096-104ff2c73ba4?auto=format&fit=crop&w=800&q=80',
+    priceLabel: 'Khách sạn từ',
+    price: 1800000,
+    description: 'Khách sạn 5 sao trung tâm, gần BTS và trung tâm thương mại Siam.',
+    location: 'Thái Lan'
+  },
+  {
+    name: 'Nha Trang',
+    image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/08/58/26/62/photo0jpg.jpg?w=900&h=500&s=1',
+    priceLabel: 'Khách sạn từ',
+    price: 1100000,
+    description: 'Resort bãi biển Trần Phú, spa thư giãn và nhà hàng hải sản tươi ngon.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Singapore',
+    image: 'https://images.unsplash.com/photo-1525596662741-e94ff9f26de1?auto=format&fit=crop&w=800&q=80',
+    priceLabel: 'Khách sạn từ',
+    price: 3500000,
+    description: 'Marina Bay Sands - Khách sạn biểu tượng với hồ bơi trên tầng cao nhất.',
+    location: 'Singapore'
+  },
+];
+
+const testimonials = [
+  { name: 'Nguyễn Văn A', content: 'Khách sạn sạch đẹp, nhân viên thân thiện, view phòng tuyệt vời!', rating: 5 },
+  { name: 'Trần Thị B', content: 'Đặt phòng dễ dàng, giá cả hợp lý, sẽ quay lại lần sau.', rating: 4.5 },
+  { name: 'Lê Văn C', content: 'Vị trí trung tâm, tiện đi lại, bữa sáng ngon.', rating: 5 },
+  { name: 'Phạm Thị D', content: 'Hồ bơi đẹp, spa thư giãn, dịch vụ 5 sao.', rating: 4.8 },
+];
+
+const blogPosts = [
+  { 
+    title: 'Top 10 khách sạn view biển đẹp nhất Việt Nam', 
+    excerpt: 'Khám phá những resort nghỉ dưỡng sang trọng bên bờ biển xanh trong...', 
+    image: 'https://via.placeholder.com/300x200?text=Beach+Resort' 
+  },
+  { 
+    title: 'Bí quyết đặt phòng khách sạn giá rẻ', 
+    excerpt: 'Hướng dẫn chi tiết cách săn deal khách sạn tiết kiệm nhất...', 
+    image: 'https://via.placeholder.com/300x200?text=Hotel+Deal' 
+  },
+  { 
+    title: 'Checklist chuẩn bị khi đi nghỉ khách sạn', 
+    excerpt: 'Những vật dụng cần thiết và lưu ý quan trọng cho chuyến đi...', 
+    image: 'https://via.placeholder.com/300x200?text=Travel+Tips' 
+  },
+];
+
+const otherServices = [
+  { icon: <FaPlane />, name: 'Vé Máy Bay', path: '/flights' },
+  { icon: <FaCar />, name: 'Thuê Xe', path: '/cars' },
+  { icon: <FaBusAlt />, name: 'Vé Xe Bus', path: '/bus' },
+  { icon: <FaTrain />, name: 'Vé Tàu', path: '/train' },
+];
+
 const safeRender = (data) => {
   if (typeof data === 'object' && data !== null) {
     return data.name || data.code || 'N/A';
@@ -125,6 +225,7 @@ function Hotels() {
   const bankGuide = location.state?.bankGuide;
   const isLogged = localStorage.getItem('token');
   const tokenErrorHandled = useRef(false);
+  
   const handleTokenError = (error) => {
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       if (tokenErrorHandled.current) return true;
@@ -139,7 +240,9 @@ function Hotels() {
     }
     return false;
   };
+  
   useDocumentTitle('Đặt khách sạn');
+  
   useEffect(() => {
     fetchCheapHotels();
     if (isLogged) {
@@ -185,6 +288,13 @@ function Hotels() {
 
   const handleChange = (field, value) => {
     dispatch({ type: 'CHANGE', field, value });
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSearch = async (e) => {
@@ -232,6 +342,7 @@ function Hotels() {
   };
 
   const welcomeMessage = isLogged && userProfile ? `Chào, ${userProfile.name}!` : 'Chào bạn!';
+  
   const customSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -259,6 +370,8 @@ function Hotels() {
         welcomeMessage={welcomeMessage} 
         handleLogout={handleLogout} 
       />
+      
+      {/* Banner Slider */}
       <div className="w-full">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
@@ -295,259 +408,451 @@ function Hotels() {
           ))}
         </Swiper>
       </div>
+
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 -mt-10 md:-mt-16 relative z-10">
+        {/* Search Form */}
         <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-100">
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="flex flex-wrap justify-center space-x-4">
+              <button className="py-2 px-4 text-sm font-medium flex items-center gap-2 transition-all text-blue-600 border-b-2 border-blue-600">
+                <FaHotel /> Khách sạn
+              </button>
+            </nav>
+          </div>
+          
           <form onSubmit={(e) => e.preventDefault()}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-              <div className="lg:col-span-5">
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Vị trí</label>
-                <Select
-                  options={airportOptions} styles={customSelectStyles}
-                  value={airportOptions.find((opt) => opt.value === formState.location) || null}
-                  onChange={opt => handleChange('location', opt?.value || null)}
-                  placeholder="Chọn vị trí"
+            <div className="animate-in fade-in duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
+                <div className="md:col-span-2 lg:col-span-5 relative pb-5">
+                  <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Vị trí</label>
+                  <Select 
+                    options={airportOptions} 
+                    styles={customSelectStyles} 
+                    value={airportOptions.find((opt) => opt.value === formState.location)} 
+                    onChange={opt => handleChange('location', opt?.value)} 
+                    placeholder="Bạn muốn nghỉ ở đâu?" 
+                  />
+                  {errors.location && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.location}</p>}
+                </div>
+                
+                <div className="md:col-span-1 lg:col-span-4 grid grid-cols-2 gap-3">
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Nhận phòng</label>
+                    <input 
+                      type="date" 
+                      className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" 
+                      value={formState.checkInDate} 
+                      onChange={(e) => handleChange('checkInDate', e.target.value)} 
+                    />
+                    {errors.checkInDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.checkInDate}</p>}
+                  </div>
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Trả phòng</label>
+                    <input 
+                      type="date" 
+                      className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" 
+                      value={formState.checkOutDate} 
+                      onChange={(e) => handleChange('checkOutDate', e.target.value)} 
+                    />
+                    {errors.checkOutDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.checkOutDate}</p>}
+                  </div>
+                </div>
+                
+                <div className="md:col-span-1 lg:col-span-3 grid grid-cols-2 gap-3">
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Phòng</label>
+                    <select 
+                      className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" 
+                      value={formState.rooms} 
+                      onChange={(e) => handleChange('rooms', e.target.value)}
+                    >
+                      {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Phòng</option>)}
+                    </select>
+                    {errors.rooms && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.rooms}</p>}
+                  </div>
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Khách</label>
+                    <select 
+                      className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" 
+                      value={formState.guests} 
+                      onChange={(e) => handleChange('guests', e.target.value)}
+                    >
+                      {[...Array(20)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Khách</option>)}
+                    </select>
+                    {errors.guests && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.guests}</p>}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 mt-6 md:mt-8">
+                <SearchButton 
+                  label="Tìm Kiếm Khách Sạn" 
+                  color="indigo" 
+                  onClick={handleSearch} 
+                  loading={loading} 
                 />
-                {errors.location && <p className="text-red-500 text-xs mt-1 font-medium">{errors.location}</p>}
               </div>
-              <div className="lg:col-span-4 grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Check-in</label>
-                  <input type="date" className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={formState.checkInDate} onChange={(e) => handleChange('checkInDate', e.target.value)}
-                  />
-                  {errors.checkInDate && <p className="text-red-500 text-xs mt-1 font-medium">{errors.checkInDate}</p>}
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Check-out</label>
-                  <input type="date" className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={formState.checkOutDate} onChange={(e) => handleChange('checkOutDate', e.target.value)}
-                  />
-                  {errors.checkOutDate && <p className="text-red-500 text-xs mt-1 font-medium">{errors.checkOutDate}</p>}
-                </div>
-              </div>
-              <div className="lg:col-span-3 grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Số phòng</label>
-                  <select className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                    value={formState.rooms} onChange={(e) => handleChange('rooms', e.target.value)}>
-                    {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
-                  </select>
-                  {errors.rooms && <p className="text-red-500 text-xs mt-1 font-medium">{errors.rooms}</p>}
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Số khách</label>
-                  <select className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                    value={formState.guests} onChange={(e) => handleChange('guests', e.target.value)}>
-                    {[...Array(20)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
-                  </select>
-                  {errors.guests && <p className="text-red-500 text-xs mt-1 font-medium">{errors.guests}</p>}
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 mt-8">
-              <SearchButton label="Tìm Khách sạn" color="indigo" onClick={(e) => handleSearch(e)} loading={loading} />
             </div>
           </form>
         </div>
+
+        {/* Cheap Hotels */}
         {cheapHotels.length > 0 && (
           <div className="mt-12">
-            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaTicketAlt className="text-orange-500"/> Khách sạn rẻ đề xuất</h3>
-            <Swiper
-              modules={[Navigation, Pagination, Autoplay]}
-              spaceBetween={20} slidesPerView={1}
-              navigation pagination={{ clickable: true }}
-              autoplay={{ delay: 4000, disableOnInteraction: false }}
-              breakpoints={{ 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
-              className="pb-10"
-            >
-              {cheapHotels.map((h, idx) => (
-                <SwiperSlide key={idx} className="pb-8">
-                  <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-black text-slate-700">{h.location}</span>
-                        <span className="text-[10px] text-slate-400">Vị trí</span>
-                      </div>
-                      <FaHotel className="text-blue-400 text-lg" />
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-black text-slate-700">{h.name}</span>
-                        <span className="text-[10px] text-slate-400">Khách sạn</span>
-                      </div>
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <FaTicketAlt className="text-orange-500"/> Khách sạn rẻ đề xuất
+          </h3>
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20} slidesPerView={1}
+            navigation pagination={{ clickable: true }}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            breakpoints={{ 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
+            className="pb-10"
+          >
+            {cheapHotels.map((h, idx) => (
+              <SwiperSlide key={idx} className="pb-8">
+                <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl font-black text-slate-700">{h.location}</span>
+                      <span className="text-[10px] text-slate-400">Vị trí</span>
                     </div>
-                    <div className="flex-1 space-y-2 text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg">
-                      <div className="flex items-center gap-2"><FaCalendarAlt className="text-blue-500" /> {new Date(h.checkInDate).toLocaleDateString('vi-VN')} - {new Date(h.checkOutDate).toLocaleDateString('vi-VN')}</div>
-                      <div className="flex items-center gap-2 font-bold text-red-500 text-lg"><FaWallet /> {formatCurrency(h.price)}</div>
-                    </div>
-                    <button onClick={() => handleSelectHotel(h)} className="w-full py-2 rounded-xl bg-blue-100 text-blue-700 font-bold hover:bg-blue-600 hover:text-white transition">
-                      Chọn Ngay
-                    </button>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-        )}
-        {hasSearched && hotels.length > 0 && (
-          <div className="mt-12 animate-fade-in">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <h3 className="text-2xl font-bold text-slate-800">Kết quả tìm kiếm ({hotels.length})</h3>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
-                <span className="text-sm font-medium text-slate-500">Sắp xếp:</span>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent font-bold text-blue-600 outline-none cursor-pointer text-sm">
-                  <option value="price">Giá tốt nhất</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-4">
-              {hotels.map((h, index) => {
-                const displayPrice = h.price;
-                return (
-                  <div key={h.id || index} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="flex-1 p-5 space-y-6">
-                        <HotelRowLeg 
-                          label="Khách sạn" 
-                          data={h} 
-                          icon={<FaHotel className="text-blue-500" />} 
-                        />
-                      </div>
-                      <div className="bg-slate-50 p-5 md:w-64 flex flex-row md:flex-col justify-between items-center border-t md:border-t-0 md:border-l border-slate-100">
-                        <div className="text-left md:text-center">
-                          <span className="block text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Tổng giá</span>
-                          <span className="block text-xl md:text-2xl font-black text-orange-600">{formatCurrency(displayPrice)}</span>
-                          <span className="text-[10px] text-slate-400">Đã bao gồm thuế & phí</span>
-                        </div>
-                        <button 
-                          onClick={() => handleSelectHotel(h)} 
-                          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition transform flex items-center gap-2"
-                        >
-                          Chọn <FaArrowLeft className="rotate-180" />
-                        </button>
-                      </div>
+                    <FaHotel className="text-blue-400 text-lg" />
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl font-black text-slate-700">{h.name}</span>
+                      <span className="text-[10px] text-slate-400">Khách sạn</span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        {hasSearched && hotels.length === 0 && !loading && (
-          <div className="text-center py-20">
-            <div className="bg-white rounded-full p-6 w-24 h-24 mx-auto shadow-md mb-4 flex items-center justify-center">
-              <FaHotel className="text-4xl text-slate-300" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-700">Không tìm thấy khách sạn</h3>
-            <p className="text-slate-500 mt-2">Vui lòng thử thay đổi ngày hoặc địa điểm khác.</p>
-          </div>
-        )}
-        {isLogged && purchases.length > 0 && (
-          <div className="mt-16">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaReceipt className="text-blue-500"/> Lịch sử đặt</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {purchases.map((p, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-blue-50 p-2 rounded-lg text-blue-600 font-bold text-lg">{p.location || p.from}</div>
-                      <FaArrowLeft className="rotate-180 text-slate-300" />
-                      <div className="bg-blue-50 p-2 rounded-lg text-blue-600 font-bold text-lg">{p.name || p.to}</div>
-                    </div>
-                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${p.status === 'Đã hủy' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                      {p.status || 'Hoàn tất'}
-                    </span>
+                  <div className="flex-1 space-y-2 text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2"><FaCalendarAlt className="text-blue-500" /> {new Date(h.checkInDate).toLocaleDateString('vi-VN')} - {new Date(h.checkOutDate).toLocaleDateString('vi-VN')}</div>
+                    <div className="flex items-center gap-2 font-bold text-red-500 text-lg"><FaWallet /> {formatCurrency(h.price)}</div>
                   </div>
-                  <div className="space-y-2 text-sm text-slate-600">
-                    <div className="flex justify-between">
-                      <span>Ngày đặt:</span>
-                      <span className="font-medium">{new Date(p.date).toLocaleDateString('vi-VN')}</span>
+                  <button onClick={() => handleSelectHotel(h)} className="w-full py-2 rounded-xl bg-blue-100 text-blue-700 font-bold hover:bg-blue-600 hover:text-white transition">
+                    Chọn Ngay
+                  </button>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      )}
+
+      {/* Search Results */}
+      {hasSearched && hotels.length > 0 && (
+        <div className="mt-12 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <h3 className="text-2xl font-bold text-slate-800">Kết quả tìm kiếm ({hotels.length})</h3>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
+              <span className="text-sm font-medium text-slate-500">Sắp xếp:</span>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent font-bold text-blue-600 outline-none cursor-pointer text-sm">
+                <option value="price">Giá tốt nhất</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {hotels.map((h, index) => {
+              const displayPrice = h.price;
+              return (
+                <div key={h.id || index} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
+                  <div className="flex flex-col md:flex-row">
+                    <div className="flex-1 p-5 space-y-6">
+                      <HotelRowLeg 
+                        label="Khách sạn" 
+                        data={h} 
+                        icon={<FaHotel className="text-blue-500" />} 
+                      />
                     </div>
-                    <div className="flex justify-between">
-                      <span>Tổng tiền:</span>
-                      <span className="font-bold text-slate-800">{formatCurrency(p.totalPrice || p.price)}</span>
+                    <div className="bg-slate-50 p-5 md:w-64 flex flex-row md:flex-col justify-between items-center border-t md:border-t-0 md:border-l border-slate-100">
+                      <div className="text-left md:text-center">
+                        <span className="block text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Tổng giá</span>
+                        <span className="block text-xl md:text-2xl font-black text-orange-600">{formatCurrency(displayPrice)}</span>
+                        <span className="text-[10px] text-slate-400">Đã bao gồm thuế & phí</span>
+                      </div>
+                      <button 
+                        onClick={() => handleSelectHotel(h)} 
+                        className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition transform flex items-center gap-2"
+                      >
+                        Chọn <FaArrowLeft className="rotate-180" />
+                      </button>
                     </div>
-                    {p.bankName && <div className="text-xs text-slate-400 mt-2 pt-2 border-t">TT qua {p.bankName}: {p.bankNote}</div>}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
-      {bankGuide && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-fade-in">
-          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-md w-full relative">
-            <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><FaTimes className="text-xl" /></button>
-            <h3 className="text-xl font-bold text-green-600 mb-4 flex items-center gap-2">
-              <FaUniversity /> Chuyển khoản ngay
-            </h3>
-            <p className="text-sm text-slate-600 mb-4">Quét mã QR hoặc chuyển khoản thủ công trong <strong>{bankGuide.expireMinutes} phút</strong>.</p>
-            
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mb-6">
-              {bankGuide.vietQR ? (
-                <div className="flex justify-center mb-4">
-                  <img src={bankGuide.vietQR} alt="VietQR" className="w-48 h-48 rounded-xl shadow-md border-4 border-white" />
-                </div>
-              ) : null}
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Ngân hàng:</span> <span className="font-bold">{bankGuide.bank}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Số TK:</span> <span className="font-bold font-mono text-lg">{bankGuide.accountNumber}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Chủ TK:</span> <span className="font-bold">{bankGuide.accountName}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Nội dung:</span> <span className="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{bankGuide.content}</span></div>
-              <div className="flex justify-between text-sm items-center pt-2 border-t"><span className="text-slate-500">Số tiền:</span> <span className="font-black text-xl text-red-500">{formatCurrency(bankGuide.amount)}</span></div>
-            </div>
-            
-            <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">
-              Đã Chuyển Khoản Xong
-            </button>
+              );
+            })}
           </div>
         </div>
       )}
-      <Footer />
-    </div>
-  );
-}
-const SearchButton = ({ label, color, onClick, loading }) => {
-  const colors = {
-    emerald: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200',
-    indigo: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200',
-    blue: 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'
-  };
-  return (
-    <button type="button" onClick={onClick} disabled={loading}
-      className={`h-[50px] ${colors[color]} text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2`}
-    >
-      {loading ? <FaSpinner className="animate-spin" /> : label}
-    </button>
-  );
-};
-const HotelRowLeg = ({ label, data, icon }) => {
-  if (!data) return null;
-  const hotelName = safeRender(data.name);
-  return (
-    <div className="flex items-start gap-4">
-      <div className="bg-slate-100 p-3 rounded-full mt-1">{icon}</div>
-      <div className="flex-1">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-        </div>
-        <div className="flex items-center gap-4 mb-1">
-          <div>
-            <div className="text-lg font-black text-slate-800">{new Date(data.checkInDate).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div className="text-xs font-bold text-slate-500">Check-in</div>
+
+      {/* No Results */}
+      {hasSearched && hotels.length === 0 && !loading && (
+        <div className="text-center py-20">
+          <div className="bg-white rounded-full p-6 w-24 h-24 mx-auto shadow-md mb-4 flex items-center justify-center">
+            <FaHotel className="text-4xl text-slate-300" />
           </div>
-          <div className="flex-1 border-t-2 border-dotted border-slate-300 relative top-[-4px]"></div>
-          <div className="text-right">
-            <div className="text-lg font-black text-slate-800">{new Date(data.checkOutDate).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div className="text-xs font-bold text-slate-500">Check-out</div>
-          </div>
+          <h3 className="text-xl font-bold text-slate-700">Không tìm thấy khách sạn</h3>
+          <p className="text-slate-500 mt-2">Vui lòng thử thay đổi ngày hoặc địa điểm khác.</p>
         </div>
-        <div className="text-sm text-slate-600 flex items-center gap-2">
-          <span className="font-bold text-blue-700">{hotelName}</span>
-          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-          <span className="text-slate-500">{data.location}</span>
+      )}
+
+      {/* Popular Destinations */}
+      <div className="mt-12">
+        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <FaMapMarkerAlt className="text-blue-500"/> Khách sạn phổ biến
+        </h3>
+        <Swiper
+          modules={[Navigation, Pagination, Autoplay]}
+          spaceBetween={20}
+          slidesPerView={1}
+          navigation
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 3000 }}
+          breakpoints={{
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 4 },
+          }}
+          className="pb-10"
+        >
+          {popularDestinations.map((dest, idx) => (
+              <SwiperSlide key={idx}>
+                <div 
+                  className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 h-full flex flex-col"
+                  onClick={() => {
+                    // Logic: Khi click vào card, tự điền điểm đến vào form search
+                    // setFormData(prev => ({ ...prev, destination: dest.name }));
+                    // window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img 
+                      src={dest.image} 
+                      alt={dest.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                    <div className="absolute bottom-4 left-5">
+                      <h4 className="text-xl font-black text-white tracking-tight drop-shadow-lg">
+                        {dest.name}
+                      </h4>
+                      <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
+                        <FaMapMarkerAlt className="text-blue-400" /> {dest.location}
+                      </div>
+                    </div>
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-xl">
+                      <p className="text-[9px] text-slate-500 font-bold uppercase leading-none">{dest.priceLabel}</p>
+                      <p className="text-blue-600 font-black text-sm">{formatCurrency(dest.price)}</p>
+                    </div>
+                  </div>
+
+                  {/* Content Area */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2 mb-5">
+                      {dest.description}
+                    </p>
+                    
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Khám phá ngay</span>
+                      <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                        <FaArrowRight className="-rotate-45 group-hover:rotate-0 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+        </Swiper>
+      </div>
+
+      {/* Other Services */}
+      <div className="mt-12">
+        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <FaGlobe className="text-green-500"/> Dịch vụ khác
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {otherServices.map((service, idx) => (
+            <button
+              key={idx}
+              onClick={() => navigate(service.path)}
+              className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all flex flex-col items-center justify-center gap-2 border border-slate-100"
+            >
+              <div className="text-3xl text-blue-600">{service.icon}</div>
+              <span className="text-sm font-bold text-slate-700">{service.name}</span>
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* Testimonials */}
+      <div className="mt-12">
+        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <FaQuoteLeft className="text-purple-500"/> Đánh giá từ khách hàng
+        </h3>
+        <Swiper
+          modules={[Navigation, Pagination, Autoplay]}
+          spaceBetween={20}
+          slidesPerView={1}
+          navigation
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 4000 }}
+          breakpoints={{
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
+          }}
+          className="pb-10"
+        >
+          {testimonials.map((testimonial, idx) => (
+            <SwiperSlide key={idx}>
+              <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 h-full">
+                <div className="flex items-center mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar key={i} className={`text-yellow-400 ${i < Math.floor(testimonial.rating) ? 'fill-current' : 'opacity-30'}`} />
+                  ))}
+                </div>
+                <p className="text-sm text-slate-600 mb-4">"{testimonial.content}"</p>
+                <span className="text-sm font-bold text-slate-800">- {testimonial.name}</span>
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
+
+      {/* Blog Posts */}
+      <div className="mt-12">
+        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <FaBlog className="text-red-500"/> Bài viết mới nhất
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {blogPosts.map((post, idx) => (
+            <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
+              <img src={post.image} alt={post.title} className="w-full h-40 object-cover" />
+              <div className="p-4">
+                <h4 className="text-lg font-bold text-slate-800 mb-2">{post.title}</h4>
+                <p className="text-sm text-slate-500 mb-4">{post.excerpt}</p>
+                <button className="text-blue-600 font-bold text-sm hover:underline">Đọc thêm →</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Purchase History */}
+      {isLogged && purchases.length > 0 && (
+        <div className="mt-16">
+          <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <FaReceipt className="text-blue-500"/> Lịch sử đặt phòng
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {purchases.map((p, idx) => (
+              <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-50 p-2 rounded-lg text-blue-600 font-bold text-lg">{p.location || p.from}</div>
+                    <FaArrowLeft className="rotate-180 text-slate-300" />
+                    <div className="bg-blue-50 p-2 rounded-lg text-blue-600 font-bold text-lg">{p.name || p.to}</div>
+                  </div>
+                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${p.status === 'Đã hủy' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                    {p.status || 'Hoàn tất'}
+                  </span>
+                </div>
+                <div className="space-y-2 text-sm text-slate-600">
+                  <div className="flex justify-between">
+                    <span>Ngày đặt:</span>
+                    <span className="font-medium">{new Date(p.date).toLocaleDateString('vi-VN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tổng tiền:</span>
+                    <span className="font-bold text-slate-800">{formatCurrency(p.totalPrice || p.price)}</span>
+                  </div>
+                  {p.bankName && <div className="text-xs text-slate-400 mt-2 pt-2 border-t">TT qua {p.bankName}: {p.bankNote}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </main>
+
+    {/* Bank Guide Modal */}
+    {bankGuide && (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-fade-in">
+        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-md w-full relative">
+          <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <FaTimes className="text-xl" />
+          </button>
+          <h3 className="text-xl font-bold text-green-600 mb-4 flex items-center gap-2">
+            <FaUniversity /> Chuyển khoản ngay
+          </h3>
+          <p className="text-sm text-slate-600 mb-4">Quét mã QR hoặc chuyển khoản thủ công trong <strong>{bankGuide.expireMinutes} phút</strong>.</p>
+          
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mb-6">
+            {bankGuide.vietQR ? (
+              <div className="flex justify-center mb-4">
+                <img src={bankGuide.vietQR} alt="VietQR" className="w-48 h-48 rounded-xl shadow-md border-4 border-white" />
+              </div>
+            ) : null}
+            <div className="flex justify-between text-sm"><span className="text-slate-500">Ngân hàng:</span> <span className="font-bold">{bankGuide.bank}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-slate-500">Số TK:</span> <span className="font-bold font-mono text-lg">{bankGuide.accountNumber}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-slate-500">Chủ TK:</span> <span className="font-bold">{bankGuide.accountName}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-slate-500">Nội dung:</span> <span className="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{bankGuide.content}</span></div>
+            <div className="flex justify-between text-sm items-center pt-2 border-t"><span className="text-slate-500">Số tiền:</span> <span className="font-black text-xl text-red-500">{formatCurrency(bankGuide.amount)}</span></div>
+          </div>
+          
+          <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">
+            Đã Chuyển Khoản Xong
+          </button>
+        </div>
+      </div>
+    )}
+
+    <Footer />
+  </div>
+);
+}
+
+const SearchButton = ({ label, color, onClick, loading }) => {
+const colors = {
+  emerald: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200',
+  indigo: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200',
+  blue: 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'
+};
+return (
+  <button type="button" onClick={onClick} disabled={loading}
+    className={`h-[50px] ${colors[color]} text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2`}
+  >
+    {loading ? <FaSpinner className="animate-spin" /> : label}
+  </button>
+);
+};
+
+const HotelRowLeg = ({ label, data, icon }) => {
+if (!data) return null;
+const hotelName = safeRender(data.name);
+return (
+  <div className="flex items-start gap-4">
+    <div className="bg-slate-100 p-3 rounded-full mt-1">{icon}</div>
+    <div className="flex-1">
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+      </div>
+      <div className="flex items-center gap-4 mb-1">
+        <div>
+          <div className="text-lg font-black text-slate-800">{new Date(data.checkInDate).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
+          <div className="text-xs font-bold text-slate-500">Check-in</div>
+        </div>
+        <div className="flex-1 border-t-2 border-dotted border-slate-300 relative top-[-4px]"></div>
+        <div className="text-right">
+          <div className="text-lg font-black text-slate-800">{new Date(data.checkOutDate).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
+          <div className="text-xs font-bold text-slate-500">Check-out</div>
+        </div>
+      </div>
+      <div className="text-sm text-slate-600 flex items-center gap-2">
+        <span className="font-bold text-blue-700">{hotelName}</span>
+        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+        <span className="text-slate-500">{data.location}</span>
+      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default Hotels;

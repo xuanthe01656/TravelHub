@@ -17,7 +17,8 @@ import {
   FaPlaneDeparture, FaPlaneArrival, FaPlane, FaShoppingCart, FaLock, FaReceipt,
   FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
   FaChair, FaCar, FaGlobe, FaBars, FaTimes, FaCreditCard, FaSpinner,
-  FaWallet, FaUniversity, FaArrowLeft, FaClock, FaTicketAlt
+  FaWallet, FaUniversity, FaArrowLeft, FaClock, FaTicketAlt,
+  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach,FaBusAlt,FaArrowRight
 } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 const initialState = {
@@ -213,6 +214,13 @@ function Flights() {
 
   const handleChange = (field, value) => {
     dispatch({ type: 'CHANGE', field, value });
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSearch = async (e, isReal, isSingaporeAir) => {
@@ -307,6 +315,94 @@ function Flights() {
     }),
   };
 
+  // Demo data for new sections
+  const popularDestinations = [
+    {
+      name: 'Phú Quốc',
+      image: 'https://image.vietnam.travel/sites/default/files/styles/top_banner/public/2019-08/what%20to%20do%20in%20phu%20quoc.jpg?itok=l8yXbDaN',
+      priceLabel: 'Vé máy bay từ',
+      price: 1250000,
+      description: 'Trải nghiệm cáp treo hòn Thơm và lặn ngắm san hô tại quần đảo An Thới.',
+      location: 'Việt Nam'
+    },
+    {
+      name: 'Đà Lạt',
+      image: 'https://sungetawaystravel.com/wp-content/uploads/2025/04/Vietnam-Coffee-Plantations-1-1024x683.jpg',
+      priceLabel: 'Xe giường nằm từ',
+      price: 280000,
+      description: 'Thưởng thức cafe trong sương mù và check-in các vườn hoa rực rỡ sắc màu.',
+      location: 'Việt Nam'
+    },
+    {
+      name: 'Hạ Long',
+      image: 'https://i.natgeofe.com/n/88df07fb-7277-4997-9215-9002b8afa918/00000165-aa56-d88f-adff-baff1bc90000.jpg?wp=1&w=1884.75&h=1060.5',
+      priceLabel: 'Xe Limousine từ',
+      price: 450000,
+      description: 'Chiêm ngưỡng di sản thiên nhiên thế giới với hàng ngàn đảo đá vôi kỳ vĩ.',
+      location: 'Việt Nam'
+    },
+    {
+      name: 'Hội An',
+      image: 'https://static.vinwonders.com/production/Taking-a-Hoi-An-lantern-boat-ride.jpg',
+      priceLabel: 'Vé máy bay từ',
+      price: 950000,
+      description: 'Thả đèn hoa đăng trên dòng sông Hoài và dạo quanh phố cổ đèn lồng lung linh.',
+      location: 'Việt Nam'
+    },
+    {
+      name: 'Sapa',
+      image: 'http://www.sapa-tour.net/wp-content/uploads/2014/08/Sapa-Rice-Terrace.jpg',
+      priceLabel: 'Tàu hỏa/Xe từ',
+      price: 550000,
+      description: 'Chinh phục đỉnh Fansipan và khám phá bản sắc văn hóa vùng cao Tây Bắc.',
+      location: 'Việt Nam'
+    },
+    {
+      name: 'Băng Cốc',
+      image: 'https://images.unsplash.com/photo-1504609773096-104ff2c73ba4?auto=format&fit=crop&w=800&q=80',
+      priceLabel: 'Vé máy bay từ',
+      price: 3200000,
+      description: 'Thiên đường mua sắm sầm uất và những ngôi chùa vàng lộng lẫy tại Thái Lan.',
+      location: 'Thái Lan'
+    },
+    {
+      name: 'Nha Trang',
+      image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/08/58/26/62/photo0jpg.jpg?w=900&h=500&s=1',
+      priceLabel: 'Vé máy bay/Xe từ',
+      price: 680000,
+      description: 'Tận hưởng kỳ nghỉ tại vịnh biển đẹp nhất thế giới với các khu vui chơi giải trí sôi động.',
+      location: 'Việt Nam'
+    },
+    {
+      name: 'Singapore',
+      image: 'https://images.unsplash.com/photo-1525596662741-e94ff9f26de1?auto=format&fit=crop&w=800&q=80',
+      priceLabel: 'Vé máy bay từ',
+      price: 4800000,
+      description: 'Khám phá thành phố tương lai với Garden by the Bay và đảo Sentosa náo nhiệt.',
+      location: 'Singapore'
+    },
+  ];
+
+  const testimonials = [
+    { name: 'Nguyễn Văn A', content: 'Dịch vụ tuyệt vời, giá cả hợp lý!', rating: 5 },
+    { name: 'Trần Thị B', content: 'Hỗ trợ nhanh chóng, chuyến đi suôn sẻ.', rating: 4.5 },
+    { name: 'Lê Văn C', content: 'Giao diện dễ sử dụng, nhiều ưu đãi.', rating: 5 },
+    { name: 'Phạm Thị D', content: 'Đã đặt nhiều lần, rất hài lòng.', rating: 4.8 },
+  ];
+
+  const blogPosts = [
+    { title: 'Top 10 địa điểm du lịch hè 2025', excerpt: 'Khám phá những điểm đến hot nhất mùa hè này...', image: 'https://via.placeholder.com/300x200?text=Blog+1' },
+    { title: 'Mẹo tiết kiệm chi phí du lịch', excerpt: 'Cách để có chuyến đi thú vị mà không tốn kém...', image: 'https://via.placeholder.com/300x200?text=Blog+2' },
+    { title: 'Ẩm thực đường phố Việt Nam', excerpt: 'Những món ăn không thể bỏ qua khi du lịch Việt...', image: 'https://via.placeholder.com/300x200?text=Blog+3' },
+  ];
+
+  const otherServices = [
+    { icon: <FaBusAlt />, name: 'Vé Xe Bus', path: '/bus' },
+    { icon: <FaTrain />, name: 'Vé Tàu', path: '/train' },
+    { icon: <FaShip />, name: 'Du Thuyền', path: '/cruise' },
+    { icon: <FaUmbrellaBeach />, name: 'Tour Biển', path: '/beach-tours' },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
       <Header 
@@ -352,120 +448,83 @@ function Flights() {
       </div>
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 -mt-10 md:-mt-16 relative z-10">
         <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-100">
-        <form onSubmit={(e) => e.preventDefault()} className="animate-in fade-in duration-500">
-          <div className="flex justify-center md:justify-start gap-4 mb-8">
-            {['oneway', 'roundtrip'].map((type) => (
-              <label 
-                key={type} 
-                className={`cursor-pointer px-6 py-3 rounded-full text-sm font-bold transition-all shadow-sm ${
-                  formState.tripType === type 
-                  ? 'bg-blue-600 text-white ring-4 ring-blue-100' 
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                }`}
-              >
-                <input 
-                  type="radio" 
-                  name="tripType" 
-                  value={type} 
-                  checked={formState.tripType === type} 
-                  onChange={(e) => handleChange('tripType', e.target.value)} 
-                  className="hidden" 
-                />
-                {type === 'oneway' ? 'Một chiều' : 'Khứ hồi'}
-              </label>
-            ))}
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="flex flex-wrap justify-center space-x-4">
+              <button className="py-2 px-4 text-sm font-medium flex items-center gap-2 transition-all text-blue-600 border-b-2 border-blue-600">
+                <FaPlane /> Chuyến bay
+              </button>
+            </nav>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
-            <div className="md:col-span-2 lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 items-end">
-              <div className="flex-1">
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-wider">Điểm đi</label>
-                <Select
-                  options={airportOptions}
-                  styles={customSelectStyles}
-                  value={airportOptions.find((opt) => opt.value === formState.from) || null}
-                  onChange={opt => dispatch({ type: 'CHANGE', field: 'from', value: opt?.value || null })}
-                  placeholder="Chọn sân bay"
-                />
-                {errors.from && <p className="text-red-500 text-[10px] mt-1 font-bold">{errors.from}</p>}
+          <form onSubmit={(e) => e.preventDefault()}>
+            <div className="animate-in fade-in duration-500">
+              {/* Trip Type Selector */}
+              <div className="flex justify-center md:justify-start gap-4 mb-6">
+                {['oneway', 'roundtrip'].map((type) => (
+                  <label key={type} className={`cursor-pointer px-5 py-2.5 rounded-full text-sm font-bold transition-all ${formState.tripType === type ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                    <input type="radio" name="tripType" value={type} checked={formState.tripType === type} onChange={(e) => handleChange('tripType', e.target.value)} className="hidden" />
+                    {type === 'oneway' ? 'Một chiều' : 'Khứ hồi'}
+                  </label>
+                ))}
               </div>
-
-              <div className="flex justify-center pb-1">
-                <button 
-                  type="button" 
-                  onClick={() => dispatch({ type: 'SWAP' })} 
-                  className="p-3 bg-white border border-slate-200 hover:bg-blue-50 text-blue-600 rounded-full transition-all shadow-sm active:scale-90"
-                >
-                  <span className="text-xl leading-none">⇄</span>
-                </button>
-              </div>
-
-              <div className="flex-1">
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-wider">Điểm đến</label>
-                <Select
-                  options={airportOptions}
-                  styles={customSelectStyles}
-                  value={airportOptions.find((opt) => opt.value === formState.to) || null}
-                  onChange={opt => dispatch({ type: 'CHANGE', field: 'to', value: opt?.value || null })}
-                  placeholder="Chọn sân bay"
-                />
-                {errors.to && <p className="text-red-500 text-[10px] mt-1 font-bold">{errors.to}</p>}
-              </div>
-            </div>
-            <div className={`md:col-span-1 lg:col-span-4 grid gap-4 ${formState.tripType === 'roundtrip' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              <div>
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-wider">Ngày đi</label>
-                <input 
-                  type="date" 
-                  className="w-full h-[52px] px-4 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700 shadow-sm"
-                  value={formState.departureDate} 
-                  onChange={(e) => handleChange('departureDate', e.target.value)}
-                />
-                {errors.departureDate && <p className="text-red-500 text-[10px] mt-1 font-bold">{errors.departureDate}</p>}
-              </div>
-              
-              {formState.tripType === 'roundtrip' && (
-                <div>
-                  <label className="block text-[11px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-wider">Ngày về</label>
-                  <input 
-                    type="date" 
-                    className="w-full h-[52px] px-4 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700 shadow-sm"
-                    value={formState.returnDate} 
-                    onChange={(e) => handleChange('returnDate', e.target.value)}
-                  />
-                  {errors.returnDate && <p className="text-red-500 text-[10px] mt-1 font-bold">{errors.returnDate}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
+                <div className="md:col-span-2 lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 items-end">
+                  <div className="w-full relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Điểm đi</label>
+                    <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === formState.from)} onChange={opt => handleChange('from', opt?.value)} placeholder="Chọn điểm đi" />
+                    {errors.from && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.from}</p>}
+                  </div>
+                  
+                  <div className="flex justify-center pb-5">
+                    <button type="button" onClick={() => dispatch({ type: 'SWAP' })} className="p-2.5 bg-slate-50 hover:bg-blue-50 text-blue-600 rounded-full border border-slate-200 transition-all shadow-sm active:scale-90">
+                      <span className="text-xl">⇄</span>
+                    </button>
+                  </div>
+    
+                  <div className="w-full relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Điểm đến</label>
+                    <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === formState.to)} onChange={opt => handleChange('to', opt?.value)} placeholder="Chọn điểm đến" />
+                    {errors.to && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.to}</p>}
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="md:col-span-1 lg:col-span-3 grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-wider">Hành khách</label>
-                <select 
-                  className="w-full h-[52px] px-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold text-slate-700 shadow-sm cursor-pointer"
-                  value={formState.passengers} 
-                  onChange={(e) => handleChange('passengers', e.target.value)}
-                >
-                  {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Người</option>)}
-                </select>
+                <div className={`md:col-span-1 lg:col-span-4 grid gap-3 ${formState.tripType === 'roundtrip' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày đi</label>
+                    <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" value={formState.departureDate} onChange={(e) => handleChange('departureDate', e.target.value)} />
+                    {errors.departureDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.departureDate}</p>}
+                  </div>
+                  {formState.tripType === 'roundtrip' && (
+                    <div className="relative pb-5">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày về</label>
+                      <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" value={formState.returnDate} onChange={(e) => handleChange('returnDate', e.target.value)} />
+                      {errors.returnDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.returnDate}</p>}
+                    </div>
+                  )}
+                </div>
+                <div className="md:col-span-1 lg:col-span-3 grid grid-cols-2 gap-3">
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Hành khách</label>
+                    <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" value={formState.passengers} onChange={(e) => handleChange('passengers', e.target.value)}>
+                      {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Khách</option>)}
+                    </select>
+                    {errors.passengers && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.passengers}</p>}
+                  </div>
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Hạng vé</label>
+                    <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" value={formState.class} onChange={(e) => handleChange('class', e.target.value)}>
+                      <option value="economy">Phổ thông</option>
+                      <option value="business">Thương gia</option>
+                    </select>
+                    {errors.class && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.class}</p>}
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-wider">Hạng vé</label>
-                <select 
-                  className="w-full h-[52px] px-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold text-slate-700 shadow-sm cursor-pointer"
-                  value={formState.class} 
-                  onChange={(e) => handleChange('class', e.target.value)}
-                >
-                  <option value="economy">Phổ thông</option>
-                  <option value="business">Thương gia</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-10">
+                <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleSearch(e, false, false)} loading={loading} />
+                <SearchButton label="Amadeus" color="indigo" onClick={(e) => handleSearch(e, true, false)} loading={loading} />
+                <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleSearch(e, false, true)} loading={loading} />
               </div>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
-            <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleSearch(e, false, false)} loading={loading} />
-            <SearchButton label="Amadeus" color="indigo" onClick={(e) => handleSearch(e, true, false)} loading={loading} />
-            <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleSearch(e, false, true)} loading={loading} />
-          </div>
-        </form>
+          </form>
         </div>
         {cheapFlights.length > 0 && (
           <div className="mt-12">
@@ -579,6 +638,134 @@ function Flights() {
             <p className="text-slate-500 mt-2">Vui lòng thử thay đổi ngày hoặc địa điểm khác.</p>
           </div>
         )}
+        <div className="mt-12">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaMapMarkerAlt className="text-blue-500"/> Điểm đến phổ biến</h3>
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 3000 }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 4 },
+            }}
+            className="pb-10"
+          >
+            {popularDestinations.map((dest, idx) => (
+              <SwiperSlide key={idx}>
+                <div 
+                  className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 h-full flex flex-col"
+                  onClick={() => {
+                    // Logic: Khi click vào card, tự điền điểm đến vào form search
+                    // setFormData(prev => ({ ...prev, destination: dest.name }));
+                    // window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img 
+                      src={dest.image} 
+                      alt={dest.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                    <div className="absolute bottom-4 left-5">
+                      <h4 className="text-xl font-black text-white tracking-tight drop-shadow-lg">
+                        {dest.name}
+                      </h4>
+                      <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
+                        <FaMapMarkerAlt className="text-blue-400" /> {dest.location}
+                      </div>
+                    </div>
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-xl">
+                      <p className="text-[9px] text-slate-500 font-bold uppercase leading-none">{dest.priceLabel}</p>
+                      <p className="text-blue-600 font-black text-sm">{formatCurrency(dest.price)}</p>
+                    </div>
+                  </div>
+
+                  {/* Content Area */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2 mb-5">
+                      {dest.description}
+                    </p>
+                    
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Khám phá ngay</span>
+                      <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                        <FaArrowRight className="-rotate-45 group-hover:rotate-0 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        <div className="mt-12">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaGlobe className="text-green-500"/> Dịch vụ khác</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {otherServices.map((service, idx) => (
+              <button
+                key={idx}
+                onClick={() => navigate(service.path)}
+                className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all flex flex-col items-center justify-center gap-2 border border-slate-100"
+              >
+                <div className="text-3xl text-blue-600">{service.icon}</div>
+                <span className="text-sm font-bold text-slate-700">{service.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-12">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaQuoteLeft className="text-purple-500"/> Đánh giá từ khách hàng</h3>
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 4000 }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+            className="pb-10"
+          >
+            {testimonials.map((testimonial, idx) => (
+              <SwiperSlide key={idx}>
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 h-full">
+                  <div className="flex items-center mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar key={i} className={`text-yellow-400 ${i < Math.floor(testimonial.rating) ? 'fill-current' : 'opacity-30'}`} />
+                    ))}
+                  </div>
+                  <p className="text-sm text-slate-600 mb-4">"{testimonial.content}"</p>
+                  <span className="text-sm font-bold text-slate-800">- {testimonial.name}</span>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        <div className="mt-12">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaBlog className="text-red-500"/> Bài viết mới nhất</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {blogPosts.map((post, idx) => (
+              <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
+                <img src={post.image} alt={post.title} className="w-full h-40 object-cover" />
+                <div className="p-4">
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">{post.title}</h4>
+                  <p className="text-sm text-slate-500 mb-4">{post.excerpt}</p>
+                  <button className="text-blue-600 font-bold text-sm hover:underline">Đọc thêm →</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {isLogged && purchases.length > 0 && (
           <div className="mt-16">
             <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaReceipt className="text-blue-500"/> Lịch sử đặt vé</h3>
