@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { 
   FaPlaneDeparture, FaBars, FaTimes, FaPlane, FaHome, 
@@ -7,16 +7,46 @@ import {
 
 const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef(null);
+  const overlayRef = useRef(null);
+  const toggleRef = useRef(null);
   const navigate = useNavigate();
+
   useEffect(() => {
+    const preventInteraction = (e) => {
+      if (
+        navRef.current && !navRef.current.contains(e.target) &&
+        overlayRef.current && !overlayRef.current.contains(e.target) &&
+        toggleRef.current && !toggleRef.current.contains(e.target)
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
     if (menuOpen) {
       document.body.style.overflow = 'hidden';
+      document.addEventListener('touchstart', preventInteraction, { passive: false, capture: true });
+      document.addEventListener('touchmove', preventInteraction, { passive: false, capture: true });
+      document.addEventListener('touchend', preventInteraction, { passive: false, capture: true });
+      document.addEventListener('click', preventInteraction, { capture: true });
     } else {
-      document.body.style.overflow = ''; 
+      document.body.style.overflow = '';
+      document.removeEventListener('touchstart', preventInteraction, { passive: false, capture: true });
+      document.removeEventListener('touchmove', preventInteraction, { passive: false, capture: true });
+      document.removeEventListener('touchend', preventInteraction, { passive: false, capture: true });
+      document.removeEventListener('click', preventInteraction, { capture: true });
     }
-  
-    return () => { document.body.style.overflow = ''; };
+
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('touchstart', preventInteraction, { passive: false, capture: true });
+      document.removeEventListener('touchmove', preventInteraction, { passive: false, capture: true });
+      document.removeEventListener('touchend', preventInteraction, { passive: false, capture: true });
+      document.removeEventListener('click', preventInteraction, { capture: true });
+    };
   }, [menuOpen]);
+
   const navItems = [
     { name: 'Trang Chủ', icon: <FaHome />, path: '/dashboard' },
     { name: 'Vé Máy Bay', icon: <FaPlane />, path: '/flights' },
@@ -34,32 +64,27 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
   return (
     <header className="bg-white/95 backdrop-blur-md text-slate-800 p-3 md:p-4 sticky top-0 z-[100] shadow-sm border-b border-slate-100 font-sans">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        {/* Logo */}
         <div 
           className="text-xl md:text-2xl font-black flex items-center cursor-pointer text-blue-600 tracking-tighter shrink-0 relative z-[110]" 
           onClick={() => navigate('/')}
         >
           <FaPlaneDeparture className="mr-2 text-2xl md:text-3xl" /> TravelHub
         </div>
-
-        {/* Menu Toggle Button */}
         <button 
+          ref={toggleRef}
           className="lg:hidden text-slate-700 text-2xl p-2 relative z-[130]" 
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <FaTimes /> : <FaBars />}
         </button>
-
-        {/* Overlay: Sửa lỗi nhìn xuyên thấu bằng cách làm mờ nền phía sau */}
         {menuOpen && (
           <div 
+            ref={overlayRef}
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[115] lg:hidden animate-in fade-in duration-300" 
             onClick={() => setMenuOpen(false)} 
           />
         )}
-
-        {/* Navigation Drawer: Sửa lại màu nền bg-white đặc */}
-        <nav className={`
+        <nav ref={navRef} className={`
           fixed lg:relative top-0 right-0 h-screen lg:h-auto w-[280px] lg:w-auto 
           bg-white lg:bg-transparent shadow-[-10px_0_30px_rgba(0,0,0,0.1)] lg:shadow-none 
           transition-all duration-300 ease-in-out z-[120] lg:z-auto
@@ -67,15 +92,12 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
           ${menuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-0 opacity-0 lg:opacity-100'}
           ${menuOpen ? 'visible' : 'invisible lg:visible'}
         `}>
-          {/* Mobile Menu Header */}
           <div className="flex justify-between items-center lg:hidden mb-8 w-full border-b border-slate-100 pb-4">
             <span className="font-black text-xl text-blue-600">Menu</span>
             {/* <button onClick={() => setMenuOpen(false)} className="p-2 text-slate-400 hover:text-red-500">
               <FaTimes className="text-xl" />
             </button> */}
           </div>
-
-          {/* Nav Links */}
           <div className="flex flex-col lg:flex-row gap-2 lg:gap-1 w-full lg:w-auto overflow-y-auto">
             {navItems.map((item) => (
               <NavLink 

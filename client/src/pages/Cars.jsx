@@ -16,9 +16,11 @@ import {
   FaPlane, FaShoppingCart, FaLock, FaReceipt,
   FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
   FaChair, FaCar, FaGlobe, FaBars, FaTimes, FaCreditCard, FaSpinner,
-  FaWallet, FaUniversity, FaArrowLeft, FaClock, FaTicketAlt, FaCarSide
+  FaWallet, FaUniversity, FaArrowLeft, FaClock, FaTicketAlt, FaCarSide,
+  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach, FaBusAlt,FaArrowRight
 } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+
 const initialState = {
   pickup: '',
   dropoff: '',
@@ -41,28 +43,40 @@ function reducer(state, action) {
 }
 
 const validationSchema = Yup.object({
-  pickup: Yup.string().required('Điểm nhận xe không được để trống'),
-  dropoff: Yup.string().required('Điểm trả xe không được để trống'),
+  pickup: Yup.string()
+    .required('Vui lòng chọn điểm nhận xe'),
+  dropoff: Yup.string()
+    .required('Vui lòng chọn điểm trả xe'),
   pickupDate: Yup.date()
     .transform((value, originalValue) => (originalValue === '' ? null : value))
     .nullable()
-    .required('Ngày nhận xe không được để trống')
-    .typeError('Ngày không hợp lệ')
-    .test('min-pickup-date', 'Ngày nhận xe phải từ hôm nay trở đi', function(value) {
+    .required('Chọn ngày nhận xe')
+    .typeError('Ngày nhận không hợp lệ')
+    .test('min-pickup-date', 'Ngày nhận xe không hợp lệ', function(value) {
       if (!value) return true;
-      const today = new Date().setHours(0, 0, 0, 0);
-      return value.getTime() >= today;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return value >= today;
     }),
   dropoffDate: Yup.date()
-    .transform((value, originalValue) => originalValue === '' ? null : value)
+    .transform((value, originalValue) => (originalValue === '' ? null : value))
     .nullable()
-    .required('Ngày trả xe không được để trống')
-    .test('dropoff-date-min', 'Ngày trả xe phải sau ngày nhận xe', function(value) {
+    .required('Chọn ngày trả xe')
+    .typeError('Ngày trả không hợp lệ')
+    .test('is-after-pickup', 'Ngày trả xe không hợp lệ', function(value) {
       const { pickupDate } = this.parent;
       if (!value || !pickupDate) return true;
-      return value.getTime() > new Date(pickupDate).getTime();
+      
+      const pDate = new Date(pickupDate);
+      const dDate = new Date(value);
+      return dDate.getTime() > pDate.getTime();
     }),
-  driverAge: Yup.number().min(18, 'Tuổi tài xế ít nhất là 18').required(),
+  driverAge: Yup.number()
+    .transform((value, originalValue) => (originalValue === '' ? undefined : value))
+    .typeError('Tuổi phải là một chữ số')
+    .required('Vui lòng nhập tuổi tài xế')
+    .min(18, 'Tài xế phải từ 18 tuổi trở lên')
+    .max(80, 'Tuổi tài xế không phù hợp'),
 });
 
 const airports = {
@@ -99,6 +113,62 @@ const airportOptions = Object.keys(airports).map((iata) => ({
     label: `${airports[iata].city} (${iata})`,
 }));
 
+// Demo data cho các section mới
+const popularDestinations = [
+  {
+    name: 'Phú Quốc',
+    image: 'https://image.vietnam.travel/sites/default/files/styles/top_banner/public/2019-08/what%20to%20do%20in%20phu%20quoc.jpg?itok=l8yXbDaN',
+    priceLabel: 'Thuê xe từ',
+    price: 850000,
+    description: 'Khám phá đảo ngọc với xe tự lái, thoải mái di chuyển đến các bãi biển đẹp.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Đà Lạt',
+    image: 'https://sungetawaystravel.com/wp-content/uploads/2025/04/Vietnam-Coffee-Plantations-1-1024x683.jpg',
+    priceLabel: 'Thuê xe từ',
+    price: 650000,
+    description: 'Lái xe qua những con đường hoa, check-in tại các vườn cà phê thơ mộng.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Hạ Long',
+    image: 'https://i.natgeofe.com/n/88df07fb-7277-4997-9215-9002b8afa918/00000165-aa56-d88f-adff-baff1bc90000.jpg?wp=1&w=1884.75&h=1060.5',
+    priceLabel: 'Thuê xe từ',
+    price: 750000,
+    description: 'Tự do khám phá di sản thiên nhiên thế giới với xe riêng của bạn.',
+    location: 'Việt Nam'
+  },
+  {
+    name: 'Hội An',
+    image: 'https://static.vinwonders.com/production/Taking-a-Hoi-An-lantern-boat-ride.jpg',
+    priceLabel: 'Thuê xe từ',
+    price: 550000,
+    description: 'Dạo quanh phố cổ và các làng nghề truyền thống với xe thuê tiện lợi.',
+    location: 'Việt Nam'
+  },
+];
+
+const testimonials = [
+  { name: 'Nguyễn Văn A', content: 'Xe mới, sạch sẽ, giá cả hợp lý. Sẽ thuê lại lần sau!', rating: 5 },
+  { name: 'Trần Thị B', content: 'Thủ tục nhanh gọn, nhân viên hỗ trợ nhiệt tình.', rating: 4.5 },
+  { name: 'Lê Văn C', content: 'Thuê xe đi Đà Lạt rất tiện, xe chạy êm.', rating: 5 },
+  { name: 'Phạm Thị D', content: 'Giá tốt nhất so với các nền tảng khác.', rating: 4.8 },
+];
+
+const blogPosts = [
+  { title: 'Kinh nghiệm thuê xe tự lái an toàn', excerpt: 'Những lưu ý quan trọng khi thuê xe tự lái lần đầu...', image: 'https://via.placeholder.com/300x200?text=Blog+1' },
+  { title: 'Top 5 tuyến đường đẹp nhất Việt Nam', excerpt: 'Khám phá những cung đường tuyệt đẹp cho chuyến road trip...', image: 'https://via.placeholder.com/300x200?text=Blog+2' },
+  { title: 'So sánh các loại xe thuê phổ biến', excerpt: 'Chọn loại xe phù hợp với nhu cầu và ngân sách của bạn...', image: 'https://via.placeholder.com/300x200?text=Blog+3' },
+];
+
+const otherServices = [
+  { icon: <FaPlane />, name: 'Vé Máy Bay', path: '/flights' },
+  { icon: <FaHome />, name: 'Khách Sạn', path: '/hotels' },
+  { icon: <FaBusAlt />, name: 'Vé Xe Bus', path: '/bus' },
+  { icon: <FaTrain />, name: 'Vé Tàu', path: '/train' },
+];
+
 const safeRender = (data) => {
   if (typeof data === 'object' && data !== null) {
     return data.name || data.code || 'N/A';
@@ -127,6 +197,7 @@ function Cars() {
   const bankGuide = location.state?.bankGuide;
   const isLogged = localStorage.getItem('token');
   const tokenErrorHandled = useRef(false);
+  
   const handleTokenError = (error) => {
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       if (tokenErrorHandled.current) return true;
@@ -141,7 +212,9 @@ function Cars() {
     }
     return false;
   };
+  
   useDocumentTitle('Đặt xe');
+  
   useEffect(() => {
     fetchCheapCars();
     if (isLogged) {
@@ -187,6 +260,13 @@ function Cars() {
 
   const handleChange = (field, value) => {
     dispatch({ type: 'CHANGE', field, value });
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSearch = async (e) => {
@@ -234,6 +314,7 @@ function Cars() {
   };
 
   const welcomeMessage = isLogged && userProfile ? `Chào, ${userProfile.name}!` : 'Chào bạn!';
+  
   const customSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -261,6 +342,8 @@ function Cars() {
         welcomeMessage={welcomeMessage} 
         handleLogout={handleLogout} 
       />
+      
+      {/* Banner Slider */}
       <div className="w-full">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
@@ -297,70 +380,125 @@ function Cars() {
           ))}
         </Swiper>
       </div>
+
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 -mt-10 md:-mt-16 relative z-10">
-        <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-100">
+        {/* Search Form */}
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 lg:p-8 border border-slate-100 max-w-7xl mx-auto">
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="flex flex-wrap justify-center space-x-4">
+              <button className="py-2 px-4 text-sm font-medium flex items-center gap-2 transition-all text-blue-600 border-b-2 border-blue-600">
+                <FaCar /> Thuê xe
+              </button>
+            </nav>
+          </div>
+          
           <form onSubmit={(e) => e.preventDefault()}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-              <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Điểm nhận</label>
-                  <Select
-                    options={airportOptions} styles={customSelectStyles}
-                    value={airportOptions.find((opt) => opt.value === formState.pickup) || null}
-                    onChange={opt => handleChange('pickup', opt?.value || null)}
-                    placeholder="Chọn điểm nhận"
-                  />
-                  {errors.pickup && <p className="text-red-500 text-xs mt-1 font-medium">{errors.pickup}</p>}
+            <div className="animate-in fade-in duration-500">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div className="lg:col-span-5 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                  <div className="w-full relative pb-5">
+                    <label className="block text-[11px] md:text-xs font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">
+                      Điểm nhận
+                    </label>
+                    <Select
+                      options={airportOptions}
+                      styles={customSelectStyles}
+                      value={airportOptions.find((opt) => opt.value === formState.pickup) || null}
+                      onChange={opt => handleChange('pickup', opt?.value || null)}
+                      placeholder="Chọn điểm nhận"
+                      className="text-sm"
+                    />
+                    {errors.pickup && <p className="text-red-500 text-[10px] mt-1 font-medium ml-1 absolute left-0 bottom-0 leading-tight">{errors.pickup}</p>}
+                  </div>
+                  
+                  <div className="flex justify-center md:pt-6 pb-5">
+                    <button 
+                      type="button" 
+                      onClick={() => dispatch({ type: 'SWAP' })} 
+                      className="p-2 bg-slate-50 hover:bg-blue-100 text-blue-600 rounded-full transition-all transform hover:scale-110 active:scale-95 border border-slate-200 shadow-sm"
+                      title="Đổi chiều"
+                    >
+                      <span className="block text-lg md:text-xl font-bold rotate-90 md:rotate-0">
+                        ⇄
+                      </span>
+                    </button>
+                  </div>
+                  
+                  <div className="w-full relative pb-5">
+                    <label className="block text-[11px] md:text-xs font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">
+                      Điểm trả
+                    </label>
+                    <Select
+                      options={airportOptions}
+                      styles={customSelectStyles}
+                      value={airportOptions.find((opt) => opt.value === formState.dropoff) || null}
+                      onChange={opt => handleChange('dropoff', opt?.value || null)}
+                      placeholder="Chọn điểm trả"
+                      className="text-sm"
+                    />
+                    {errors.dropoff && <p className="text-red-500 text-[10px] mt-1 font-medium ml-1 absolute left-0 bottom-0 leading-tight">{errors.dropoff}</p>}
+                  </div>
                 </div>
-                <div className="flex justify-center">
-                  <button type="button" onClick={() => dispatch({ type: 'SWAP' })} className="p-2 bg-slate-100 hover:bg-blue-100 text-blue-600 rounded-full transition transform hover:rotate-180">
-                    <span className="text-xl">⇄</span>
-                  </button>
+                
+                <div className="lg:col-span-4 grid grid-cols-2 gap-3">
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] md:text-xs font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày nhận</label>
+                    <input 
+                      type="date" 
+                      className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-shadow shadow-sm"
+                      value={formState.pickupDate} 
+                      onChange={(e) => handleChange('pickupDate', e.target.value)}
+                    />
+                    {errors.pickupDate && <p className="text-red-500 text-[10px] mt-1 font-medium ml-1 absolute left-0 bottom-0 leading-tight">{errors.pickupDate}</p>}
+                  </div>
+                  <div className="relative pb-5">
+                    <label className="block text-[11px] md:text-xs font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày trả</label>
+                    <input 
+                      type="date" 
+                      className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-shadow shadow-sm"
+                      value={formState.dropoffDate} 
+                      onChange={(e) => handleChange('dropoffDate', e.target.value)}
+                    />
+                    {errors.dropoffDate && <p className="text-red-500 text-[10px] mt-1 font-medium ml-1 absolute left-0 bottom-0 leading-tight">{errors.dropoffDate}</p>}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Điểm trả</label>
-                  <Select
-                    options={airportOptions} styles={customSelectStyles}
-                    value={airportOptions.find((opt) => opt.value === formState.dropoff) || null}
-                    onChange={opt => handleChange('dropoff', opt?.value || null)}
-                    placeholder="Chọn điểm trả"
-                  />
-                  {errors.dropoff && <p className="text-red-500 text-xs mt-1 font-medium">{errors.dropoff}</p>}
+                
+                <div className="lg:col-span-3 relative pb-5">
+                  <label className="block text-[11px] md:text-xs font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Tuổi tài xế</label>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-shadow shadow-sm"
+                      value={formState.driverAge} 
+                      onChange={(e) => handleChange('driverAge', e.target.value)}
+                      min={18}
+                      placeholder="VD: 25"
+                    />
+                    <span className="absolute right-3 top-3.5 text-xs text-slate-400 font-medium">Tuổi</span>
+                  </div>
+                  {errors.driverAge && <p className="text-red-500 text-[10px] mt-1 font-medium ml-1 absolute left-0 bottom-0 leading-tight">{errors.driverAge}</p>}
                 </div>
               </div>
-              <div className="lg:col-span-4 grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Ngày nhận</label>
-                  <input type="date" className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={formState.pickupDate} onChange={(e) => handleChange('pickupDate', e.target.value)}
-                  />
-                  {errors.pickupDate && <p className="text-red-500 text-xs mt-1 font-medium">{errors.pickupDate}</p>}
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Ngày trả</label>
-                  <input type="date" className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={formState.dropoffDate} onChange={(e) => handleChange('dropoffDate', e.target.value)}
-                  />
-                  {errors.dropoffDate && <p className="text-red-500 text-xs mt-1 font-medium">{errors.dropoffDate}</p>}
-                </div>
-              </div>
-              <div className="lg:col-span-3">
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Tuổi tài xế</label>
-                <input type="number" className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={formState.driverAge} onChange={(e) => handleChange('driverAge', e.target.value)}
-                  min={18}
+              
+              <div className="grid grid-cols-1 mt-6 md:mt-8">
+                <SearchButton 
+                  label="Tìm Xe Ngay" 
+                  color="emerald" 
+                  onClick={(e) => handleSearch(e)} 
+                  loading={loading} 
+                  className="w-full py-3.5 md:py-4 text-lg font-bold shadow-lg shadow-emerald-100 transition-transform active:scale-[0.98]"
                 />
-                {errors.driverAge && <p className="text-red-500 text-xs mt-1 font-medium">{errors.driverAge}</p>}
               </div>
-            </div>
-            <div className="grid grid-cols-1 mt-8">
-              <SearchButton label="Tìm Xe" color="emerald" onClick={(e) => handleSearch(e)} loading={loading} />
             </div>
           </form>
         </div>
+
+        {/* Cheap Cars */}
         {cheapCars.length > 0 && (
           <div className="mt-12">
-            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaTicketAlt className="text-orange-500"/> Xe rẻ đề xuất</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <FaTicketAlt className="text-orange-500"/> Xe rẻ đề xuất
+            </h3>
             <Swiper
               modules={[Navigation, Pagination, Autoplay]}
               spaceBetween={20} slidesPerView={1}
@@ -396,6 +534,8 @@ function Cars() {
             </Swiper>
           </div>
         )}
+
+        {/* Search Results */}
         {hasSearched && cars.length > 0 && (
           <div className="mt-12 animate-fade-in">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -440,6 +580,8 @@ function Cars() {
             </div>
           </div>
         )}
+
+        {/* No Results */}
         {hasSearched && cars.length === 0 && !loading && (
           <div className="text-center py-20">
             <div className="bg-white rounded-full p-6 w-24 h-24 mx-auto shadow-md mb-4 flex items-center justify-center">
@@ -449,9 +591,153 @@ function Cars() {
             <p className="text-slate-500 mt-2">Vui lòng thử thay đổi ngày hoặc địa điểm khác.</p>
           </div>
         )}
+
+        {/* Popular Destinations */}
+        <div className="mt-12">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <FaMapMarkerAlt className="text-blue-500"/> Điểm đến phổ biến
+          </h3>
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 3000 }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 4 },
+            }}
+            className="pb-10"
+          >
+            {popularDestinations.map((dest, idx) => (
+              <SwiperSlide key={idx}>
+                <div 
+                  className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 h-full flex flex-col"
+                  onClick={() => {
+                    // Logic: Khi click vào card, tự điền điểm đến vào form search
+                    // setFormData(prev => ({ ...prev, destination: dest.name }));
+                    // window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img 
+                      src={dest.image} 
+                      alt={dest.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                    <div className="absolute bottom-4 left-5">
+                      <h4 className="text-xl font-black text-white tracking-tight drop-shadow-lg">
+                        {dest.name}
+                      </h4>
+                      <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
+                        <FaMapMarkerAlt className="text-blue-400" /> {dest.location}
+                      </div>
+                    </div>
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-xl">
+                      <p className="text-[9px] text-slate-500 font-bold uppercase leading-none">{dest.priceLabel}</p>
+                      <p className="text-blue-600 font-black text-sm">{formatCurrency(dest.price)}</p>
+                    </div>
+                  </div>
+
+                  {/* Content Area */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2 mb-5">
+                      {dest.description}
+                    </p>
+                    
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Khám phá ngay</span>
+                      <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                        <FaArrowRight className="-rotate-45 group-hover:rotate-0 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        {/* Other Services */}
+        <div className="mt-12">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <FaGlobe className="text-green-500"/> Dịch vụ khác
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {otherServices.map((service, idx) => (
+              <button
+                key={idx}
+                onClick={() => navigate(service.path)}
+                className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all flex flex-col items-center justify-center gap-2 border border-slate-100"
+              >
+                <div className="text-3xl text-blue-600">{service.icon}</div>
+                <span className="text-sm font-bold text-slate-700">{service.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Testimonials */}
+        <div className="mt-12">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <FaQuoteLeft className="text-purple-500"/> Đánh giá từ khách hàng
+          </h3>
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 4000 }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+            className="pb-10"
+          >
+            {testimonials.map((testimonial, idx) => (
+              <SwiperSlide key={idx}>
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 h-full">
+                  <div className="flex items-center mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar key={i} className={`text-yellow-400 ${i < Math.floor(testimonial.rating) ? 'fill-current' : 'opacity-30'}`} />
+                    ))}
+                  </div>
+                  <p className="text-sm text-slate-600 mb-4">"{testimonial.content}"</p>
+                  <span className="text-sm font-bold text-slate-800">- {testimonial.name}</span>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        {/* Blog Posts */}
+        <div className="mt-12">
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <FaBlog className="text-red-500"/> Bài viết mới nhất
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {blogPosts.map((post, idx) => (
+              <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
+                <img src={post.image} alt={post.title} className="w-full h-40 object-cover" />
+                <div className="p-4">
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">{post.title}</h4>
+                  <p className="text-sm text-slate-500 mb-4">{post.excerpt}</p>
+                  <button className="text-blue-600 font-bold text-sm hover:underline">Đọc thêm →</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Purchase History */}
         {isLogged && purchases.length > 0 && (
           <div className="mt-16">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaReceipt className="text-blue-500"/> Lịch sử thuê</h3>
+            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <FaReceipt className="text-blue-500"/> Lịch sử thuê
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {purchases.map((p, idx) => (
                 <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
@@ -482,10 +768,14 @@ function Cars() {
           </div>
         )}
       </main>
+
+      {/* Bank Guide Modal */}
       {bankGuide && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-fade-in">
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-md w-full relative">
-            <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><FaTimes className="text-xl" /></button>
+            <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <FaTimes className="text-xl" />
+            </button>
             <h3 className="text-xl font-bold text-green-600 mb-4 flex items-center gap-2">
               <FaUniversity /> Chuyển khoản ngay
             </h3>
@@ -510,10 +800,12 @@ function Cars() {
           </div>
         </div>
       )}
+
       <Footer />
     </div>
   );
 }
+
 const SearchButton = ({ label, color, onClick, loading }) => {
   const colors = {
     emerald: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200',
@@ -528,6 +820,7 @@ const SearchButton = ({ label, color, onClick, loading }) => {
     </button>
   );
 };
+
 const CarRowLeg = ({ label, data, icon }) => {
   if (!data) return null;
   const carModel = safeRender(data.model);
