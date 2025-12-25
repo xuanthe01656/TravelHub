@@ -270,13 +270,32 @@ function Dashboard() {
   };
 
   const fetchCheapFlights = async () => {
-    try {
-      const response = await axios.get('/api/flights/cheap');
-      let cheap = response.data || [];
-      cheap.sort((a, b) => (a.totalPrice || a.price) - (b.totalPrice || b.price));
-      setCheapFlights(cheap);
-    } catch (err) { console.error("Lỗi lấy vé rẻ", err); }
-  };
+  try {
+    let url = '/api/flights/cheap';
+
+    if ("geolocation" in navigator) {
+      const coords = await new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => resolve(null), // Nếu user từ chối, trả về null
+          { timeout: 5000 }
+        );
+      });
+
+      if (coords) {
+        url += `?lat=${coords.lat}&lng=${coords.lng}`;
+      }
+    }
+
+    const response = await axios.get(url);
+    const data = response.data || [];
+    // Sắp xếp theo giá tăng dần
+    data.sort((a, b) => (a.priceVND || 0) - (b.priceVND || 0));
+    setCheapFlights(data);
+  } catch (err) {
+    console.error("Lỗi lấy vé rẻ:", err);
+  }
+};
 
   const fetchPurchases = async () => {
     try {
@@ -632,9 +651,9 @@ function Dashboard() {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-10">
-              <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleFlightSearch(e, false, false)} loading={loading} />
+              {/* <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleFlightSearch(e, false, false)} loading={loading} /> */}
               <SearchButton label="Amadeus" color="indigo" onClick={(e) => handleFlightSearch(e, true, false)} loading={loading} />
-              <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleFlightSearch(e, false, true)} loading={loading} />
+              {/* <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleFlightSearch(e, false, true)} loading={loading} /> */}
             </div>
           </div>
         );
@@ -956,7 +975,12 @@ function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 font-sans relative">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/30 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-purple-200/10 rounded-full blur-2xl animate-float"></div>
+      </div>
       <Header 
         isLogged={isLogged} 
         welcomeMessage={welcomeMessage} 
@@ -974,20 +998,23 @@ function Dashboard() {
             color: "from-indigo-600 to-purple-600",
             title: "Khuyến Mãi Đặc Biệt",
             desc: "Giảm tới 50% cho chuyến bay nội địa.",
-            btn: "Khám Phá"
+            btn: "Khám Phá",
+            url:"https://www.shutterstock.com/image-photo/white-passenger-airplane-flying-sky-600nw-2331577059.jpg"
           }, {
             color: "from-emerald-500 to-teal-500",
             title: "Bay Quốc Tế Giá Sốc",
             desc: "Chỉ từ 2.000.000 VND cho các chặng bay ASEAN.",
-            btn: "Đặt Ngay"
+            btn: "Đặt Ngay",
+            url:"https://media.istockphoto.com/id/1366213348/photo/sunset-sky-from-an-airplane-wing-view-of-the-horizon-and-sun-lights.jpg?s=612x612&w=0&k=20&c=yvelEAeFk7Sr4KbEuQxsy4daspwWuasG6muHG3gUlmk="
           }, {
             color: "from-orange-500 to-rose-500",
             title: "Vi Vu Cuối Tuần",
             desc: "Ưu đãi vé khứ hồi cho cặp đôi.",
-            btn: "Xem Ngay"
+            btn: "Xem Ngay",
+            url:"https://media.istockphoto.com/id/1337141224/photo/airplane-wing-over-clouds-and-blue-sky-view-from-airplane-window.jpg?s=612x612&w=0&k=20&c=Yk2bVZ6fXo1k6YzvOZ6zv0Z5gSRR7K8XUuX1Z7e4b0M="
           }].map((banner, idx) => (
             <SwiperSlide key={idx}>
-              <div className={`bg-gradient-to-r ${banner.color} text-white w-full h-full flex flex-col items-center justify-center text-center p-4`}>
+              <div className={`relative bg-black/40 text-white w-full h-full flex flex-col items-center justify-center text-center p-4`} style={{ backgroundImage: `url(${banner.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <h2 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
                 <p className="text-sm md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
                 <button className="bg-white text-slate-900 px-6 py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
@@ -1029,43 +1056,66 @@ function Dashboard() {
           </form>
         </div>
         {activeService === 'flights' && cheapFlights.length > 0 && (
-          <div className="mt-12">
-            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaTicketAlt className="text-orange-500"/> Vé rẻ đề xuất</h3>
-            <Swiper
-              modules={[Navigation, Pagination, Autoplay]}
-              spaceBetween={20} slidesPerView={1}
-              navigation pagination={{ clickable: true }}
-              autoplay={{ delay: 4000, disableOnInteraction: false }}
-              breakpoints={{ 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
-              className="pb-10"
-            >
-              {cheapFlights.map((f, idx) => (
-                <SwiperSlide key={idx} className="pb-8">
-                  <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-black text-slate-700">{f.outboundFlight ? f.outboundFlight.originAirportCode : f.originAirportCode}</span>
-                        <span className="text-[10px] text-slate-400">Điểm đi</span>
-                      </div>
-                      <FaPlane className="text-blue-400 text-lg" />
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-black text-slate-700">{f.outboundFlight ? f.outboundFlight.destinationAirportCode : f.destinationAirportCode}</span>
-                        <span className="text-[10px] text-slate-400">Điểm đến</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 space-y-2 text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg">
-                      <div className="flex items-center gap-2"><FaCalendarAlt className="text-blue-500" /> {new Date(f.outboundFlight ? f.outboundFlight.departureDateTime : f.departureDate).toLocaleDateString('vi-VN')}</div>
-                      <div className="flex items-center gap-2 font-bold text-red-500 text-lg"><FaWallet /> {formatCurrency(f.totalPrice || f.priceVND)}</div>
-                    </div>
-                    <button onClick={() => handleSelectFlight(f)} className="w-full py-2 rounded-xl bg-blue-100 text-blue-700 font-bold hover:bg-blue-600 hover:text-white transition">
-                      Chọn Vé Ngay
-                    </button>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+        <div className="mt-12">
+          <div className="flex flex-col mb-6">
+            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <FaTicketAlt className="text-orange-500"/> Vé rẻ đề xuất
+            </h3>
+            {cheapFlights[0]?.isGpsBased && (
+              <p className="text-xs text-green-600 font-medium">✨ Đang hiển thị vé gần vị trí của bạn</p>
+            )}
           </div>
-        )}
+
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            breakpoints={{ 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
+            className="pb-10"
+          >
+            {cheapFlights.map((f, idx) => (
+              <SwiperSlide key={idx} className="pb-8">
+                <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl font-black text-slate-700">{f.origin}</span>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">Điểm đi</span>
+                    </div>
+                    <div className="flex flex-col items-center opacity-40">
+                      <FaPlane className="text-blue-500 text-lg" />
+                      <div className="w-10 h-[2px] bg-slate-300 mt-1"></div>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl font-black text-slate-700">{f.destination}</span>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">Điểm đến</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-2 text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FaCalendarAlt className="text-blue-500" /> 
+                      {new Date(f.departureDate).toLocaleDateString('vi-VN')}
+                    </div>
+                    <div className="flex items-center gap-2 font-bold text-red-500 text-lg">
+                      <FaWallet /> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(f.priceVND)}
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => handleSelectFlight(f)} 
+                    className="w-full py-2.5 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-600 hover:text-white transition-all duration-300"
+                  >
+                    Chọn Vé Ngay
+                  </button>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      )}
         {renderResults()}
         <div className="mt-16 max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-end mb-8">

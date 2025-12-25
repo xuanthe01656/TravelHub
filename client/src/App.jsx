@@ -16,6 +16,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 import ChatBox from './components/ChatBox';
 import AdminChat from './components/Admin/AdminChat';
+import ScrollToTop from './components/ScrollToTop';
+import BackToTop from './components/BackToTop';
+import ContactWidgets from './components/ContactWidgets';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 
 const ProtectedRoute = ({ children }) => {
@@ -26,6 +29,7 @@ const isAdminPage = location.pathname === '/admin' || location.pathname === '/ad
 function App() {
   return (
     <BrowserRouter>
+    <ScrollToTop />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -51,7 +55,8 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
       {!isAdminPage && <ChatBox />}
-      
+      <BackToTop />
+      <ContactWidgets />
       {/* {localStorage.getItem('token') && <ChatBox />} */}
       <ToastContainer />
     </BrowserRouter>

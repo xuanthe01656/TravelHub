@@ -193,13 +193,32 @@ function Flights() {
   };
 
   const fetchCheapFlights = async () => {
-    try {
-      const response = await axios.get('/api/flights/cheap');
-      let cheap = response.data || [];
-      cheap.sort((a, b) => (a.totalPrice || a.price) - (b.totalPrice || b.price));
-      setCheapFlights(cheap);
-    } catch (err) { console.error("Lỗi lấy vé rẻ", err); }
-  };
+  try {
+    let url = '/api/flights/cheap';
+
+    if ("geolocation" in navigator) {
+      const coords = await new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => resolve(null), // Nếu user từ chối, trả về null
+          { timeout: 5000 }
+        );
+      });
+
+      if (coords) {
+        url += `?lat=${coords.lat}&lng=${coords.lng}`;
+      }
+    }
+
+    const response = await axios.get(url);
+    const data = response.data || [];
+    // Sắp xếp theo giá tăng dần
+    data.sort((a, b) => (a.priceVND || 0) - (b.priceVND || 0));
+    setCheapFlights(data);
+  } catch (err) {
+    console.error("Lỗi lấy vé rẻ:", err);
+  }
+};
 
   const fetchPurchases = async () => {
     try {
@@ -391,20 +410,43 @@ function Flights() {
   ];
 
   const blogPosts = [
-    { title: 'Top 10 địa điểm du lịch hè 2025', excerpt: 'Khám phá những điểm đến hot nhất mùa hè này...', image: 'https://via.placeholder.com/300x200?text=Blog+1' },
-    { title: 'Mẹo tiết kiệm chi phí du lịch', excerpt: 'Cách để có chuyến đi thú vị mà không tốn kém...', image: 'https://via.placeholder.com/300x200?text=Blog+2' },
-    { title: 'Ẩm thực đường phố Việt Nam', excerpt: 'Những món ăn không thể bỏ qua khi du lịch Việt...', image: 'https://via.placeholder.com/300x200?text=Blog+3' },
+    { 
+      title: 'Top 10 địa điểm du lịch hè 2025 không thể bỏ qua', 
+      excerpt: 'Từ những bãi biển xanh ngắt tại Phú Quốc đến không gian se lạnh của Sapa, đây là những tọa độ đang làm mưa làm gió...', 
+      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
+      date: '20/12/2024',
+      category: 'Cẩm nang'
+    },
+    { 
+      title: 'Mẹo đặt vé máy bay và phòng khách sạn giá rẻ', 
+      excerpt: 'Làm thế nào để săn được vé 0 đồng? Thời điểm nào đặt phòng là tốt nhất? Hãy cùng TravelHub khám phá bí kíp tiết kiệm...', 
+      image: 'https://images.unsplash.com/photo-1436491865332-7a61a109c055?auto=format&fit=crop&w=600&q=80',
+      date: '18/12/2024',
+      category: 'Kinh nghiệm'
+    },
+    { 
+      title: 'Hành trình khám phá ẩm thực đường phố Hà Nội', 
+      excerpt: 'Phở, bún chả, chả cá Lã Vọng... nét tinh hoa ẩm thực nghìn năm văn hiến khiến bất kỳ thực khách nào cũng phải say đắm...', 
+      image: 'https://images.unsplash.com/photo-1567129937968-cdad8f0d5a3a?auto=format&fit=crop&w=600&q=80',
+      date: '15/12/2024',
+      category: 'Ẩm thực'
+    },
   ];
 
   const otherServices = [
-    { icon: <FaBusAlt />, name: 'Vé Xe Bus', path: '/bus' },
-    { icon: <FaTrain />, name: 'Vé Tàu', path: '/train' },
-    { icon: <FaShip />, name: 'Du Thuyền', path: '/cruise' },
-    { icon: <FaUmbrellaBeach />, name: 'Tour Biển', path: '/beach-tours' },
+    // { icon: <FaBusAlt />, name: 'Vé Xe Bus', path: '/bus' },
+    // { icon: <FaTrain />, name: 'Vé Tàu', path: '/train' },
+    // { icon: <FaShip />, name: 'Du Thuyền', path: '/cruise' },
+    // { icon: <FaUmbrellaBeach />, name: 'Tour Biển', path: '/beach-tours' },
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 font-sans relative">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/30 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-purple-200/10 rounded-full blur-2xl animate-float"></div>
+      </div>
       <Header 
         isLogged={isLogged} 
         welcomeMessage={welcomeMessage} 
@@ -422,20 +464,23 @@ function Flights() {
             color: "from-indigo-600 to-purple-600",
             title: "Khuyến Mãi Đặc Biệt",
             desc: "Giảm tới 50% cho chuyến bay nội địa.",
-            btn: "Khám Phá"
+            btn: "Khám Phá",
+            url:"https://www.shutterstock.com/image-photo/white-passenger-airplane-flying-sky-600nw-2331577059.jpg"
           }, {
             color: "from-emerald-500 to-teal-500",
             title: "Bay Quốc Tế Giá Sốc",
             desc: "Chỉ từ 2.000.000 VND cho các chặng bay ASEAN.",
-            btn: "Đặt Ngay"
+            btn: "Đặt Ngay",
+            url:"https://media.istockphoto.com/id/1366213348/photo/sunset-sky-from-an-airplane-wing-view-of-the-horizon-and-sun-lights.jpg?s=612x612&w=0&k=20&c=yvelEAeFk7Sr4KbEuQxsy4daspwWuasG6muHG3gUlmk="
           }, {
             color: "from-orange-500 to-rose-500",
             title: "Vi Vu Cuối Tuần",
             desc: "Ưu đãi vé khứ hồi cho cặp đôi.",
-            btn: "Xem Ngay"
+            btn: "Xem Ngay",
+            url:"https://www.shutterstock.com/image-photo/bottomup-view-white-passenger-airplane-600nw-2619924563.jpg"
           }].map((banner, idx) => (
             <SwiperSlide key={idx}>
-              <div className={`bg-gradient-to-r ${banner.color} text-white w-full h-full flex flex-col items-center justify-center text-center p-4`}>
+              <div className={`relative bg-black/40 text-white w-full h-full flex flex-col items-center justify-center text-center p-4`} style={{ backgroundImage: `url(${banner.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <h2 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
                 <p className="text-sm md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
                 <button className="bg-white text-slate-900 px-6 py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
@@ -519,51 +564,74 @@ function Flights() {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-10">
-                <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleSearch(e, false, false)} loading={loading} />
+                {/* <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleSearch(e, false, false)} loading={loading} /> */}
                 <SearchButton label="Amadeus" color="indigo" onClick={(e) => handleSearch(e, true, false)} loading={loading} />
-                <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleSearch(e, false, true)} loading={loading} />
+                {/* <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleSearch(e, false, true)} loading={loading} /> */}
               </div>
             </div>
           </form>
         </div>
         {cheapFlights.length > 0 && (
-          <div className="mt-12">
-            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaTicketAlt className="text-orange-500"/> Vé rẻ đề xuất</h3>
-            <Swiper
-              modules={[Navigation, Pagination, Autoplay]}
-              spaceBetween={20} slidesPerView={1}
-              navigation pagination={{ clickable: true }}
-              autoplay={{ delay: 4000, disableOnInteraction: false }}
-              breakpoints={{ 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
-              className="pb-10"
-            >
-              {cheapFlights.map((f, idx) => (
-                <SwiperSlide key={idx} className="pb-8">
-                  <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-black text-slate-700">{f.outboundFlight ? f.outboundFlight.originAirportCode : f.originAirportCode}</span>
-                        <span className="text-[10px] text-slate-400">Điểm đi</span>
-                      </div>
-                      <FaPlane className="text-blue-400 text-lg" />
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-black text-slate-700">{f.outboundFlight ? f.outboundFlight.destinationAirportCode : f.destinationAirportCode}</span>
-                        <span className="text-[10px] text-slate-400">Điểm đến</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 space-y-2 text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg">
-                      <div className="flex items-center gap-2"><FaCalendarAlt className="text-blue-500" /> {new Date(f.outboundFlight ? f.outboundFlight.departureDateTime : f.departureDate).toLocaleDateString('vi-VN')}</div>
-                      <div className="flex items-center gap-2 font-bold text-red-500 text-lg"><FaWallet /> {formatCurrency(f.totalPrice || f.priceVND)}</div>
-                    </div>
-                    <button onClick={() => handleSelectFlight(f)} className="w-full py-2 rounded-xl bg-blue-100 text-blue-700 font-bold hover:bg-blue-600 hover:text-white transition">
-                      Chọn Vé Ngay
-                    </button>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+        <div className="mt-12">
+          <div className="flex flex-col mb-6">
+            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <FaTicketAlt className="text-orange-500"/> Vé rẻ đề xuất
+            </h3>
+            {cheapFlights[0]?.isGpsBased && (
+              <p className="text-xs text-green-600 font-medium">✨ Đang hiển thị vé gần vị trí của bạn</p>
+            )}
           </div>
-        )}
+
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            breakpoints={{ 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
+            className="pb-10"
+          >
+            {cheapFlights.map((f, idx) => (
+              <SwiperSlide key={idx} className="pb-8">
+                <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl font-black text-slate-700">{f.origin}</span>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">Điểm đi</span>
+                    </div>
+                    <div className="flex flex-col items-center opacity-40">
+                      <FaPlane className="text-blue-500 text-lg" />
+                      <div className="w-10 h-[2px] bg-slate-300 mt-1"></div>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl font-black text-slate-700">{f.destination}</span>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">Điểm đến</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-2 text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FaCalendarAlt className="text-blue-500" /> 
+                      {new Date(f.departureDate).toLocaleDateString('vi-VN')}
+                    </div>
+                    <div className="flex items-center gap-2 font-bold text-red-500 text-lg">
+                      <FaWallet /> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(f.priceVND)}
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => handleSelectFlight(f)} 
+                    className="w-full py-2.5 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-600 hover:text-white transition-all duration-300"
+                  >
+                    Chọn Vé Ngay
+                  </button>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      )}
         {hasSearched && flights.length > 0 && (
           <div className="mt-12 animate-fade-in">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -576,7 +644,7 @@ function Flights() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
               {flights.map((f, index) => {
                 const isRoundTrip = !!f.outboundFlight;
                 const outbound = isRoundTrip ? f.outboundFlight : f;
@@ -584,7 +652,7 @@ function Flights() {
                 const displayPrice = isRoundTrip ? f.totalPrice : f.priceVND;
                 return (
                   <div key={f.id || index} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
-                    <div className="flex flex-col md:flex-row">
+                    <div className="flex flex-col lg:flex-row">
                       <div className="flex-1 p-5 space-y-6">
                         <FlightRowLeg 
                           label={isRoundTrip ? "Chiều đi" : "Chuyến bay"} 
@@ -592,8 +660,8 @@ function Flights() {
                           icon={<FaPlaneDeparture className="text-blue-500" />} 
                         />
                         {isRoundTrip && (
-                          <div className="relative">
-                            <div className="absolute -top-3 left-0 w-full border-t border-dashed border-slate-200"></div>
+                          <div className="relative pt-4">
+                            <div className="absolute top-0 left-0 w-full border-t border-dashed border-slate-200"></div>
                             <FlightRowLeg 
                               label="Chiều về" 
                               data={returnF} 
@@ -602,17 +670,20 @@ function Flights() {
                           </div>
                         )}
                       </div>
-                      <div className="bg-slate-50 p-5 md:w-64 flex flex-row md:flex-col justify-between items-center border-t md:border-t-0 md:border-l border-slate-100">
-                        <div className="text-left md:text-center">
-                          <span className="block text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Tổng giá vé</span>
-                          <span className="block text-xl md:text-2xl font-black text-orange-600">{formatCurrency(displayPrice)}</span>
-                          <span className="text-[10px] text-slate-400">Đã bao gồm thuế & phí</span>
+                      <div className="bg-slate-50 p-5 lg:w-48 xl:w-56 flex flex-row lg:flex-col justify-between items-center border-t lg:border-t-0 lg:border-l border-slate-100">
+                        <div className="text-left lg:text-center">
+                          <span className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Tổng giá</span>
+                          <span className="block text-xl font-black text-orange-600 leading-none">
+                            {formatCurrency(displayPrice)}
+                          </span>
+                          <span className="text-[9px] text-slate-400">Đã gồm thuế phí</span>
                         </div>
+                        
                         <button 
                           onClick={() => handleSelectFlight(f)} 
-                          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition transform flex items-center gap-2"
+                          className="px-5 py-2.5 lg:w-full bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                         >
-                          Chọn <FaArrowLeft className="rotate-180" />
+                          Chọn <FaArrowLeft className="rotate-180 text-xs" />
                         </button>
                       </div>
                     </div>
@@ -638,20 +709,29 @@ function Flights() {
             <p className="text-slate-500 mt-2">Vui lòng thử thay đổi ngày hoặc địa điểm khác.</p>
           </div>
         )}
-        <div className="mt-12">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaMapMarkerAlt className="text-blue-500"/> Điểm đến phổ biến</h3>
+        <div className="mt-16 max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
+                <FaMapMarkerAlt className="text-blue-500 animate-bounce" /> 
+                Điểm đến phổ biến
+              </h3>
+              <p className="text-slate-500 mt-2 text-sm md:text-base">Gợi ý những hành trình tuyệt vời nhất dành cho bạn</p>
+            </div>
+          </div>
+
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
             slidesPerView={1}
             navigation
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 3000 }}
+            pagination={{ clickable: true, dynamicBullets: true }}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
             breakpoints={{
               640: { slidesPerView: 2 },
               1024: { slidesPerView: 4 },
             }}
-            className="pb-10"
+            className="pb-14 destination-swiper"
           >
             {popularDestinations.map((dest, idx) => (
               <SwiperSlide key={idx}>
@@ -750,18 +830,63 @@ function Flights() {
           </Swiper>
         </div>
 
-        <div className="mt-12">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaBlog className="text-red-500"/> Bài viết mới nhất</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-16 max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+              <FaBlog className="text-red-500 animate-pulse"/> Bài viết mới nhất
+            </h3>
+            <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors">
+              Xem tất cả
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {blogPosts.map((post, idx) => (
-              <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
-                <img src={post.image} alt={post.title} className="w-full h-40 object-cover" />
-                <div className="p-4">
-                  <h4 className="text-lg font-bold text-slate-800 mb-2">{post.title}</h4>
-                  <p className="text-sm text-slate-500 mb-4">{post.excerpt}</p>
-                  <button className="text-blue-600 font-bold text-sm hover:underline">Đọc thêm →</button>
+              <article 
+                key={idx} 
+                className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-500 flex flex-col h-full cursor-pointer"
+              >
+                {/* Hình ảnh bài viết */}
+                <div className="relative h-52 overflow-hidden">
+                  <img 
+                    src={post.image} 
+                    alt={post.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  {/* Nhãn danh mục */}
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-tighter shadow-sm">
+                    {post.category || 'Tin tức'}
+                  </div>
                 </div>
-              </div>
+
+                {/* Nội dung bài viết */}
+                <div className="p-6 flex flex-col flex-1">
+                  {/* Ngày đăng */}
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 mb-3 uppercase tracking-widest">
+                    <span>{post.date || '22/12/2025'}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                    <span>5 phút đọc</span>
+                  </div>
+
+                  {/* Tiêu đề */}
+                  <h4 className="text-lg font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                    {post.title}
+                  </h4>
+
+                  {/* Mô tả ngắn */}
+                  <p className="text-sm text-slate-500 mb-6 line-clamp-3 leading-relaxed">
+                    {post.excerpt}
+                  </p>
+
+                  {/* Nút đọc thêm ở cuối */}
+                  <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
+                    <span className="text-sm font-black text-slate-700">Đọc thêm</span>
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <span className="text-lg">→</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
         </div>

@@ -62,7 +62,7 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
   };
 
   return (
-    <header className="bg-white/95 backdrop-blur-md text-slate-800 p-3 md:p-4 sticky top-0 z-[100] shadow-sm border-b border-slate-100 font-sans">
+    <header className="bg-white/95 backdrop-blur-md text-slate-800 p-3 md:p-4 sticky top-0 z-[1000] shadow-sm border-b border-slate-100 font-sans">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div 
           className="text-xl md:text-2xl font-black flex items-center cursor-pointer text-blue-600 tracking-tighter shrink-0 relative z-[110]" 
