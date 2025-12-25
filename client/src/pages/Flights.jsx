@@ -442,17 +442,17 @@ function Flights() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 font-sans relative">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/30 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-purple-200/10 rounded-full blur-2xl animate-float"></div>
-      </div>
       <Header 
         isLogged={isLogged} 
         welcomeMessage={welcomeMessage} 
         handleLogout={handleLogout} 
       />
-      <div className="w-full">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/30 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-purple-200/10 rounded-full blur-2xl animate-float"></div>
+      </div>
+      <div className="w-full relative z-10 overflow-hidden">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
           spaceBetween={0} slidesPerView={1}
@@ -491,7 +491,7 @@ function Flights() {
           ))}
         </Swiper>
       </div>
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 -mt-10 md:-mt-16 relative z-10">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 -mt-10 md:-mt-16 relative z-20 overflow-x-clip md:overflow-x-visible">
         <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-100">
           <div className="border-b border-gray-200 mb-6">
             <nav className="flex flex-wrap justify-center space-x-4">
