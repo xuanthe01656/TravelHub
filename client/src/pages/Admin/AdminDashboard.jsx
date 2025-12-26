@@ -136,7 +136,7 @@ const AdminDashboard = () => {
                             {activeTab === 'overview' ? (
                                 <div className="space-y-8">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                                        <StatCard title="Doanh thu" value={overviewData.revenue.toLocaleString() + '₫'} icon={DollarSign} trend={12.4} color="bg-indigo-600" />
+                                        <StatCard title="Doanh thu" value={(Number(overviewData?.revenue) || 0).toLocaleString() + '₫'} icon={DollarSign} trend={12.4} color="bg-indigo-600" />
                                         <StatCard title="Vé đã bán" value={overviewData.totalTickets} icon={Plane} trend={8.1} color="bg-blue-500" />
                                         <StatCard title="Người dùng" value={overviewData.activeUsers} icon={Users} trend={15.3} color="bg-emerald-500" />
                                         <StatCard title="Booking chờ" value="42" icon={Calendar} trend={2.4} color="bg-orange-500" />
@@ -170,7 +170,7 @@ const AdminDashboard = () => {
                                                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                                     <td className="p-5 font-bold text-slate-700">{item.name || 'Dữ liệu TravelHub'}</td>
                                                     <td className="p-5 text-sm text-slate-500 italic">{item.departureDate || '2024-12-30'}</td>
-                                                    <td className="p-5 font-black text-slate-800">{(item.price || 0).toLocaleString()}₫</td>
+                                                    <td className="p-5 font-black text-slate-800">{(Number(item?.price) || 0).toLocaleString()}₫</td>
                                                     <td className="p-5 text-right"><button onClick={() => handleDelete(item.id)} className="p-2.5 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={16}/></button></td>
                                                 </tr>
                                             ))}
