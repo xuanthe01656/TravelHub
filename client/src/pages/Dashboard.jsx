@@ -277,7 +277,7 @@ function Dashboard() {
       const coords = await new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => resolve(null), // Nếu user từ chối, trả về null
+          () => resolve(null),
           { timeout: 5000 }
         );
       });
