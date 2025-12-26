@@ -555,6 +555,7 @@ function Dashboard() {
 
   const blogPosts = [
     { 
+      id:1,
       title: 'Top 10 địa điểm du lịch hè 2025 không thể bỏ qua', 
       excerpt: 'Từ những bãi biển xanh ngắt tại Phú Quốc đến không gian se lạnh của Sapa, đây là những tọa độ đang làm mưa làm gió...', 
       image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
@@ -562,6 +563,7 @@ function Dashboard() {
       category: 'Cẩm nang'
     },
     { 
+      id:2,
       title: 'Mẹo đặt vé máy bay và phòng khách sạn giá rẻ', 
       excerpt: 'Làm thế nào để săn được vé 0 đồng? Thời điểm nào đặt phòng là tốt nhất? Hãy cùng TravelHub khám phá bí kíp tiết kiệm...', 
       image: 'https://images.unsplash.com/photo-1436491865332-7a61a109c055?auto=format&fit=crop&w=600&q=80',
@@ -569,6 +571,7 @@ function Dashboard() {
       category: 'Kinh nghiệm'
     },
     { 
+      id:3,
       title: 'Hành trình khám phá ẩm thực đường phố Hà Nội', 
       excerpt: 'Phở, bún chả, chả cá Lã Vọng... nét tinh hoa ẩm thực nghìn năm văn hiến khiến bất kỳ thực khách nào cũng phải say đắm...', 
       image: 'https://images.unsplash.com/photo-1567129937968-cdad8f0d5a3a?auto=format&fit=crop&w=600&q=80',
@@ -1243,7 +1246,11 @@ function Dashboard() {
             <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
               <FaBlog className="text-red-500 animate-pulse"/> Bài viết mới nhất
             </h3>
-            <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors">
+            <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors"
+                  onClick={() => {
+                    navigate('/blogs')
+                }}
+            >
               Xem tất cả
             </button>
           </div>
@@ -1289,7 +1296,11 @@ function Dashboard() {
                   {/* Nút đọc thêm ở cuối */}
                   <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
                     <span className="text-sm font-black text-slate-700">Đọc thêm</span>
-                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all"
+                      onClick={() => {
+                          navigate('/blog/' + post.id)
+                      }}
+                    >
                       <span className="text-lg">→</span>
                     </div>
                   </div>

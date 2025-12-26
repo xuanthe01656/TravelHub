@@ -9,6 +9,8 @@ import Confirmation from './pages/Payment';
 import ThankYouPage from './pages/ThankYouPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Profile from './pages/Profile';
+import BlogPage from './pages/BlogPage';
+import BlogDetail from './pages/BlogDetail';
 import TermsOfUse from './pages/TermsOfUse';
 import FAQ from './pages/FAQ';
 import { ToastContainer } from 'react-toastify';
@@ -37,6 +39,8 @@ function App() {
         <Route path="/flights" element={<Flights />} />
         <Route path="/hotels" element={<Hotels />} />
         <Route path="/cars" element={<Cars />} />
+        <Route path="/blogs" element={<BlogPage />} />
+        <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/privacypolicy" element={<PrivacyPolicy />} />
         <Route path="/termsofuse" element={<TermsOfUse />} />
         <Route path="/fqa" element={<FAQ />} />
@@ -54,9 +58,9 @@ function App() {
         <Route path="/admin-support" element={<AdminChat />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
-      {!isAdminPage && <ChatBox />}
+      {!isAdminPage && <ChatBox /> && <ContactWidgets />}
       <BackToTop />
-      <ContactWidgets />
+      
       {/* {localStorage.getItem('token') && <ChatBox />} */}
       <ToastContainer />
     </BrowserRouter>

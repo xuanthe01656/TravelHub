@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import './AdminChat.css'; // Tạo file CSS riêng hoặc dùng style inline
 
-const socket = io("http://localhost:3001");
+//const socket = io("http://localhost:3001");
+//const socket = io("http://10.93.22.210:3001");
+const socket = io("http://10.93.17.241:3001");
 
 const AdminChat = () => {
     const [chats, setChats] = useState({}); // Cấu trúc: { "socketId": [messages] }
