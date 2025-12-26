@@ -59,6 +59,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
       {!isAdminPage && <ChatBox /> && <ContactWidgets />}
+      {!isAdminPage && <ChatBox />}
       <BackToTop />
       
       {/* {localStorage.getItem('token') && <ChatBox />} */}
