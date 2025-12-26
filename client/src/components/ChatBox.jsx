@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { MessageCircle, X } from 'lucide-react';
 import io from 'socket.io-client';
+import { motion } from 'framer-motion';
 import './ChatBox.css';
 
 // Lưu ý: Thay localhost bằng IP của bạn nếu chạy trên thiết bị khác
@@ -45,9 +47,19 @@ const ChatBox = () => {
     return (
         <div className={`chat-wrapper ${isOpen ? 'open' : ''}`}>
             {!isOpen && (
-                <button className="chat-launcher" onClick={() => setIsOpen(true)}>
-                    💬 Hỗ trợ trực tuyến
-                </button>
+                <motion.button
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setIsOpen(true)}
+                    className="w-12 hover:w-45 h-12 fixed bottom-6 right-6 z-[100] flex items-center bg-indigo-600 text-white p-3 rounded-full shadow-2xl shadow-indigo-300 group transition-all duration-300 ease-out"
+                >
+                    <span className="absolute top-2 left-7 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full animate-pulse z-10"></span>
+                    <MessageCircle size={26} className="min-w-[28px]" />
+                    <span className="max-w-0 opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-3 transition-all duration-500 ease-in-out font-bold whitespace-nowrap text-sm overflow-hidden">
+                    Hỗ trợ trực tuyến
+                    </span>
+                </motion.button>
             )}
             
             {isOpen && (

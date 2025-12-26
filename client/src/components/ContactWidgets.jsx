@@ -4,7 +4,7 @@ import { SiZalo } from 'react-icons/si'; // Cần cài: npm install react-icons
 
 const ContactWidgets = () => {
   return (
-    <div className="fixed bottom-6 left-6 flex flex-col gap-3 z-[999]">
+    <div className="fixed bottom-20 right-6 flex flex-col gap-3 z-[999]">
       {/* Widget Zalo */}
       <a
         href="https://zalo.me/0xxxxxxxxx" // Thay bằng số điện thoại của bạn
