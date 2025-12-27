@@ -12,6 +12,7 @@ import 'swiper/css/pagination';
 import Select from 'react-select'; 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import CarCard from '../components/CarCard';
 import {
   FaPlane, FaShoppingCart, FaLock, FaReceipt,
   FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
@@ -181,7 +182,7 @@ const formatCurrency = (n) => {
 };
 
 function Cars() {
-  const [formState, dispatch] = useReducer(reducer, initialState);
+  const [carState, dispatch] = useReducer(reducer, initialState);
   const [errors, setErrors] = useState({});
   const [cars, setCars] = useState([]);
   const [cheapCars, setCheapCars] = useState([]);
@@ -274,9 +275,9 @@ function Cars() {
     setLoading(true);
     setHasSearched(true);
     try {
-      await validationSchema.validate(formState, { abortEarly: false });
+      await validationSchema.validate(carState, { abortEarly: false });
       setErrors({});
-      const response = await axios.get('/api/cars', { params: formState });
+      const response = await axios.get('/api/cars', { params: carState });
       let results = response.data || [];
       results.sort((a, b) => sortBy === 'price' 
         ? (a.price ?? 0) - (b.price ?? 0)
@@ -408,7 +409,7 @@ function Cars() {
                     <Select
                       options={airportOptions}
                       styles={customSelectStyles}
-                      value={airportOptions.find((opt) => opt.value === formState.pickup) || null}
+                      value={airportOptions.find((opt) => opt.value === carState.pickup) || null}
                       onChange={opt => handleChange('pickup', opt?.value || null)}
                       placeholder="Chọn điểm nhận"
                       className="text-sm"
@@ -436,7 +437,7 @@ function Cars() {
                     <Select
                       options={airportOptions}
                       styles={customSelectStyles}
-                      value={airportOptions.find((opt) => opt.value === formState.dropoff) || null}
+                      value={airportOptions.find((opt) => opt.value === carState.dropoff) || null}
                       onChange={opt => handleChange('dropoff', opt?.value || null)}
                       placeholder="Chọn điểm trả"
                       className="text-sm"
@@ -451,7 +452,7 @@ function Cars() {
                     <input 
                       type="date" 
                       className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-shadow shadow-sm"
-                      value={formState.pickupDate} 
+                      value={carState.pickupDate} 
                       onChange={(e) => handleChange('pickupDate', e.target.value)}
                     />
                     {errors.pickupDate && <p className="text-red-500 text-[10px] mt-1 font-medium ml-1 absolute left-0 bottom-0 leading-tight">{errors.pickupDate}</p>}
@@ -461,7 +462,7 @@ function Cars() {
                     <input 
                       type="date" 
                       className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-shadow shadow-sm"
-                      value={formState.dropoffDate} 
+                      value={carState.dropoffDate} 
                       onChange={(e) => handleChange('dropoffDate', e.target.value)}
                     />
                     {errors.dropoffDate && <p className="text-red-500 text-[10px] mt-1 font-medium ml-1 absolute left-0 bottom-0 leading-tight">{errors.dropoffDate}</p>}
@@ -474,7 +475,7 @@ function Cars() {
                     <input 
                       type="number" 
                       className="w-full h-[48px] px-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-shadow shadow-sm"
-                      value={formState.driverAge} 
+                      value={carState.driverAge} 
                       onChange={(e) => handleChange('driverAge', e.target.value)}
                       min={18}
                       placeholder="VD: 25"
@@ -543,45 +544,28 @@ function Cars() {
         {/* Search Results */}
         {hasSearched && cars.length > 0 && (
           <div className="mt-12 animate-fade-in">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <h3 className="text-2xl font-bold text-slate-800">Kết quả tìm kiếm ({cars.length})</h3>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
-                <span className="text-sm font-medium text-slate-500">Sắp xếp:</span>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent font-bold text-blue-600 outline-none cursor-pointer text-sm">
-                  <option value="price">Giá tốt nhất</option>
-                </select>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+              <div>
+                <h3 className="text-3xl font-black text-slate-800 tracking-tighter">Phương tiện sẵn có</h3>
+                <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">
+                  Tìm thấy {cars.length} xe tại {carState.pickupLocation}
+                </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-4">
-              {cars.map((c, index) => {
-                const displayPrice = c.price;
-                return (
-                  <div key={c.id || index} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="flex-1 p-5 space-y-6">
-                        <CarRowLeg 
-                          label="Xe" 
-                          data={c} 
-                          icon={<FaCarSide className="text-blue-500" />} 
-                        />
-                      </div>
-                      <div className="bg-slate-50 p-5 md:w-64 flex flex-row md:flex-col justify-between items-center border-t md:border-t-0 md:border-l border-slate-100">
-                        <div className="text-left md:text-center">
-                          <span className="block text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Tổng giá</span>
-                          <span className="block text-xl md:text-2xl font-black text-orange-600">{formatCurrency(displayPrice)}</span>
-                          <span className="text-[10px] text-slate-400">Đã bao gồm thuế & phí</span>
-                        </div>
-                        <button 
-                          onClick={() => handleSelectCar(c)} 
-                          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition transform flex items-center gap-2"
-                        >
-                          Chọn <FaArrowLeft className="rotate-180" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+
+            {/* Lưới 2 cột tương tự Hotels */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              {cars.map((c, index) => (
+                <CarCard 
+                  key={c.id || index} 
+                  car={c} 
+                  onSelect={handleSelectCar}
+                  pickupDate={carState.pickupDate} 
+                  dropoffDate={carState.dropoffDate || carState.pickupDate} 
+                  // Có thể truyền thêm driverAge vào Card nếu muốn hiển thị thông tin
+                  driverAge={carState.driverAge}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -599,9 +583,13 @@ function Cars() {
 
         {/* Popular Destinations */}
         <div className="mt-12">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <FaMapMarkerAlt className="text-blue-500"/> Điểm đến phổ biến
-          </h3>
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
+                <FaMapMarkerAlt className="text-blue-500 animate-bounce" /> Điểm đến phổ biến
+              </h3>
+            </div>
+          </div> 
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
@@ -719,24 +707,60 @@ function Cars() {
         </div>
 
         {/* Blog Posts */}
-        <div className="mt-12">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <FaBlog className="text-red-500"/> Bài viết mới nhất
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-16 max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+              <FaBlog className="text-red-500 animate-pulse"/> Bài viết mới nhất
+            </h3>
+            <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors">
+              Xem tất cả
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {blogPosts.map((post, idx) => (
-              <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
-                <img src={post.image} alt={post.title} className="w-full h-40 object-cover" />
-                <div className="p-4">
-                  <h4 className="text-lg font-bold text-slate-800 mb-2">{post.title}</h4>
-                  <p className="text-sm text-slate-500 mb-4">{post.excerpt}</p>
-                  <button className="text-blue-600 font-bold text-sm hover:underline">Đọc thêm →</button>
+              <article 
+                key={idx} 
+                className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-500 flex flex-col h-full cursor-pointer"
+                onClick={() => {
+                  navigate('/blog/' + post.id)
+                }}
+              >
+                {/* Hình ảnh bài viết */}
+                <div className="relative h-52 overflow-hidden">
+                  <img 
+                    src={post.image} 
+                    alt={post.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-tighter shadow-sm">
+                    {post.category || 'Tin tức'}
+                  </div>
                 </div>
-              </div>
+                <div className="p-6 flex flex-col flex-1">
+                  {/* Ngày đăng */}
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 mb-3 uppercase tracking-widest">
+                    <span>{post.date || '22/12/2025'}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                    <span>5 phút đọc</span>
+                  </div>
+                  <h4 className="text-lg font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                    {post.title}
+                  </h4>
+                  <p className="text-sm text-slate-500 mb-6 line-clamp-3 leading-relaxed">
+                    {post.excerpt}
+                  </p>
+                  <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
+                    <span className="text-sm font-black text-slate-700">Đọc thêm</span>
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <span className="text-lg">→</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
         </div>
-
         {/* Purchase History */}
         {isLogged && purchases.length > 0 && (
           <div className="mt-16">
@@ -826,36 +850,6 @@ const SearchButton = ({ label, color, onClick, loading }) => {
   );
 };
 
-const CarRowLeg = ({ label, data, icon }) => {
-  if (!data) return null;
-  const carModel = safeRender(data.model);
-  const carType = safeRender(data.type);
-  return (
-    <div className="flex items-start gap-4">
-      <div className="bg-slate-100 p-3 rounded-full mt-1">{icon}</div>
-      <div className="flex-1">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-        </div>
-        <div className="flex items-center gap-4 mb-1">
-          <div>
-            <div className="text-lg font-black text-slate-800">{new Date(data.pickupDate).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div className="text-xs font-bold text-slate-500">{data.pickup}</div>
-          </div>
-          <div className="flex-1 border-t-2 border-dotted border-slate-300 relative top-[-4px]"></div>
-          <div className="text-right">
-            <div className="text-lg font-black text-slate-800">{new Date(data.dropoffDate).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div className="text-xs font-bold text-slate-500">{data.dropoff}</div>
-          </div>
-        </div>
-        <div className="text-sm text-slate-600 flex items-center gap-2">
-          <span className="font-bold text-blue-700">{carModel}</span>
-          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-          <span className="text-slate-500">{carType}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+
 
 export default Cars;

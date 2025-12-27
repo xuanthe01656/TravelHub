@@ -13,6 +13,7 @@ import 'swiper/css/pagination';
 import Select from 'react-select'; 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import FlightRowLeg from '../components/FlightRowLeg';
 import {
   FaPlaneDeparture, FaPlaneArrival, FaPlane, FaShoppingCart, FaLock, FaReceipt,
   FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
@@ -33,13 +34,15 @@ const initialState = {
 function reducer(state, action) {
   switch (action.type) {
       case 'CHANGE':
-          return { ...state, [action.field]: action.value };
+        return { ...state, [action.field]: action.value };
       case 'RESET':
-          return initialState;
+        return initialState;
+      case 'UPDATE_FIELD': 
+        return { ...state, [action.field]: action.value };
       case 'SWAP':
-          return { ...state, from: state.to, to: state.from };
+        return { ...state, from: state.to, to: state.from };
       default:
-          return state;
+        return state;
   }
 }
 const validationSchema = Yup.object({
@@ -563,7 +566,7 @@ function Flights() {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-10">
+              <div className="grid grid-cols-1 mt-6 md:mt-6">
                 {/* <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleSearch(e, false, false)} loading={loading} /> */}
                 <SearchButton label="Amadeus" color="indigo" onClick={(e) => handleSearch(e, true, false)} loading={loading} />
                 {/* <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleSearch(e, false, true)} loading={loading} /> */}
@@ -634,71 +637,90 @@ function Flights() {
       )}
         {hasSearched && flights.length > 0 && (
           <div className="mt-12 animate-fade-in">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <h3 className="text-2xl font-bold text-slate-800">Kết quả tìm kiếm ({flights.length})</h3>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
-                <span className="text-sm font-medium text-slate-500">Sắp xếp:</span>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent font-bold text-blue-600 outline-none cursor-pointer text-sm">
-                  <option value="price">Giá tốt nhất</option>
-                  <option value="date">Giờ cất cánh</option>
-                </select>
-              </div>
+          {/* Header kết quả */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <h3 className="text-2xl font-black text-slate-800">Kết quả tìm kiếm</h3>
+              <p className="text-slate-500 text-sm font-medium">Tìm thấy {flights.length} lựa chọn tốt nhất cho bạn</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-              {flights.map((f, index) => {
-                const isRoundTrip = !!f.outboundFlight;
-                const outbound = isRoundTrip ? f.outboundFlight : f;
-                const returnF = isRoundTrip ? f.returnFlight : null;
-                const displayPrice = isRoundTrip ? f.totalPrice : f.priceVND;
-                return (
-                  <div key={f.id || index} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
-                    <div className="flex flex-col lg:flex-row">
-                      <div className="flex-1 p-5 space-y-6">
-                        <FlightRowLeg 
-                          label={isRoundTrip ? "Chiều đi" : "Chuyến bay"} 
-                          data={outbound} 
-                          icon={<FaPlaneDeparture className="text-blue-500" />} 
-                        />
-                        {isRoundTrip && (
-                          <div className="relative pt-4">
-                            <div className="absolute top-0 left-0 w-full border-t border-dashed border-slate-200"></div>
-                            <FlightRowLeg 
-                              label="Chiều về" 
-                              data={returnF} 
-                              icon={<FaPlaneArrival className="text-purple-500" />} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                      <div className="bg-slate-50 p-5 lg:w-48 xl:w-56 flex flex-row lg:flex-col justify-between items-center border-t lg:border-t-0 lg:border-l border-slate-100">
-                        <div className="text-left lg:text-center">
-                          <span className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Tổng giá</span>
-                          <span className="block text-xl font-black text-orange-600 leading-none">
-                            {formatCurrency(displayPrice)}
-                          </span>
-                          <span className="text-[9px] text-slate-400">Đã gồm thuế phí</span>
-                        </div>
-                        
-                        <button 
-                          onClick={() => handleSelectFlight(f)} 
-                          className="px-5 py-2.5 lg:w-full bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
-                        >
-                          Chọn <FaArrowLeft className="rotate-180 text-xs" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
+              <span className="text-xs font-bold text-slate-400">SẮP XẾP:</span>
+              <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)} 
+                className="bg-transparent font-bold text-blue-600 outline-none cursor-pointer text-sm"
+              >
+                <option value="price">Giá tốt nhất</option>
+                <option value="date">Giờ cất cánh</option>
+              </select>
             </div>
-            {fromPos && toPos && (
-              <div className="mt-8 h-[300px] w-full rounded-3xl overflow-hidden shadow-xl border-4 border-white">
-                <Suspense fallback={<div className="bg-slate-100 h-full w-full flex items-center justify-center text-slate-400">Đang tải bản đồ...</div>}>
-                  <FlightMap fromPos={fromPos} toPos={toPos} center={center} />
-                </Suspense>
-              </div>
-            )}
           </div>
+      
+          {/* GRID HIỂN THỊ: 1 cột trên Mobile, 2 cột trên Desktop (lg:grid-cols-2) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {flights.map((flight, index) => {
+              const hasReturn = !!flight.inbound;
+      
+              return (
+                <div 
+                  key={flight.id || index} 
+                  className="flex flex-col bg-white rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                >
+                  {/* Nội dung chuyến bay (Phần trên) */}
+                  <div className="p-6 space-y-8 flex-grow">
+                    <FlightRowLeg 
+                      label={hasReturn ? "Chiều đi" : "Chuyến bay"} 
+                      data={flight.outbound} 
+                      icon={<FaPlaneDeparture className="text-blue-500 text-lg" />} 
+                    />
+      
+                    {hasReturn && (
+                      <div className="relative pt-6">
+                        <div className="absolute top-0 left-0 w-full border-t border-dashed border-slate-200"></div>
+                        <FlightRowLeg 
+                          label="Chiều về" 
+                          data={flight.inbound} 
+                          icon={<FaPlaneArrival className="text-purple-500 text-lg" />} 
+                        />
+                      </div>
+                    )}
+                  </div>
+      
+                  {/* Phần giá và nút chọn (Phần dưới) */}
+                  <div className="bg-slate-50/50 p-6 flex items-center justify-between border-t border-slate-100 mt-auto">
+                    <div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-black text-orange-600 tracking-tighter">
+                          {(flight.price?.total || 0).toLocaleString()}
+                        </span>
+                        <span className="text-sm font-bold text-orange-600">₫</span>
+                      </div>
+                      <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                        {(flight.price?.perPassenger || 0).toLocaleString()}₫ x {flight.passengers || 1} khách
+                      </span>
+                    </div>
+                    
+                    <button 
+                      onClick={() => handleSelectFlight(flight)} 
+                      className="px-7 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                      CHỌN VÉ <FaArrowRight className="text-[10px]" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Bản đồ */}
+          {fromPos && toPos && (
+            <div className="mt-12 h-[350px] w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+              <Suspense fallback={<div className="bg-slate-50 h-full w-full flex items-center justify-center text-slate-300 font-bold italic">Đang tải bản đồ hành trình...</div>}>
+                <FlightMap fromPos={fromPos} toPos={toPos} center={center} />
+              </Suspense>
+            </div>
+          )}
+        </div>
         )}
         {hasSearched && flights.length === 0 && !loading && (
           <div className="text-center py-20">
@@ -713,7 +735,7 @@ function Flights() {
           <div className="flex justify-between items-end mb-8">
             <div>
               <h3 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
-                <FaMapMarkerAlt className="text-blue-500 animate-bounce" /> 
+                <FaMapMarkerAlt className="text-blue-500 animate-bounce" />
                 Điểm đến phổ biến
               </h3>
               <p className="text-slate-500 mt-2 text-sm md:text-base">Gợi ý những hành trình tuyệt vời nhất dành cho bạn</p>
@@ -739,8 +761,8 @@ function Flights() {
                   className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 h-full flex flex-col"
                   onClick={() => {
                     // Logic: Khi click vào card, tự điền điểm đến vào form search
-                    // setFormData(prev => ({ ...prev, destination: dest.name }));
-                    // window.scrollTo({ top: 0, behavior: 'smooth' });
+                    dispatch({ type: 'UPDATE_FIELD', field: 'to', value: dest.name }); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                 >
                   <div className="relative h-64 overflow-hidden">
@@ -845,6 +867,9 @@ function Flights() {
               <article 
                 key={idx} 
                 className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-500 flex flex-col h-full cursor-pointer"
+                onClick={() => {
+                  navigate('/blog/' + post.id)
+                }}
               >
                 {/* Hình ảnh bài viết */}
                 <div className="relative h-52 overflow-hidden">
@@ -853,13 +878,10 @@ function Flights() {
                     alt={post.title} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                   />
-                  {/* Nhãn danh mục */}
                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-tighter shadow-sm">
                     {post.category || 'Tin tức'}
                   </div>
                 </div>
-
-                {/* Nội dung bài viết */}
                 <div className="p-6 flex flex-col flex-1">
                   {/* Ngày đăng */}
                   <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 mb-3 uppercase tracking-widest">
@@ -867,18 +889,12 @@ function Flights() {
                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                     <span>5 phút đọc</span>
                   </div>
-
-                  {/* Tiêu đề */}
                   <h4 className="text-lg font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                     {post.title}
                   </h4>
-
-                  {/* Mô tả ngắn */}
                   <p className="text-sm text-slate-500 mb-6 line-clamp-3 leading-relaxed">
                     {post.excerpt}
                   </p>
-
-                  {/* Nút đọc thêm ở cuối */}
                   <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
                     <span className="text-sm font-black text-slate-700">Đọc thêm</span>
                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
@@ -968,38 +984,6 @@ const SearchButton = ({ label, color, onClick, loading }) => {
     >
       {loading ? <FaSpinner className="animate-spin" /> : label}
     </button>
-  );
-};
-const FlightRowLeg = ({ label, data, icon }) => {
-  if (!data) return null;
-  const airlineName = safeRender(data.airline);
-  const aircraftName = safeRender(data.aircraft);
-  return (
-    <div className="flex items-start gap-4">
-      <div className="bg-slate-100 p-3 rounded-full mt-1">{icon}</div>
-      <div className="flex-1">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{data.flightDuration || "2h 30m"}</span>
-        </div>
-        <div className="flex items-center gap-4 mb-1">
-          <div>
-            <div className="text-lg font-black text-slate-800">{new Date(data.departureDateTime).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div className="text-xs font-bold text-slate-500">{data.originAirportCode}</div>
-          </div>
-          <div className="flex-1 border-t-2 border-dotted border-slate-300 relative top-[-4px]"></div>
-          <div className="text-right">
-            <div className="text-lg font-black text-slate-800">{new Date(data.arrivalDateTime).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div className="text-xs font-bold text-slate-500">{data.destinationAirportCode}</div>
-          </div>
-        </div>
-        <div className="text-sm text-slate-600 flex items-center gap-2">
-          <span className="font-bold text-blue-700">{airlineName}</span>
-          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-          <span className="text-slate-500">{aircraftName}</span>
-        </div>
-      </div>
-    </div>
   );
 };
 

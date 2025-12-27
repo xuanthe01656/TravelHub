@@ -11,6 +11,7 @@ import 'swiper/css/pagination';
 import Select from 'react-select'; 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import HotelCard from '../components/HotelCard';
 import {
   FaPlane, FaReceipt, FaCalendarAlt, FaGlobe, FaTimes, FaSpinner,
   FaWallet, FaUniversity, FaArrowLeft, FaTicketAlt, FaHotel,
@@ -209,7 +210,7 @@ const formatCurrency = (n) => {
 };
 
 function Hotels() {
-  const [formState, dispatch] = useReducer(reducer, initialState);
+  const [hotelState, dispatch] = useReducer(reducer, initialState);
   const [errors, setErrors] = useState({});
   const [hotels, setHotels] = useState([]);
   const [cheapHotels, setCheapHotels] = useState([]);
@@ -302,9 +303,9 @@ function Hotels() {
     setLoading(true);
     setHasSearched(true);
     try {
-      await validationSchema.validate(formState, { abortEarly: false });
+      await validationSchema.validate(hotelState, { abortEarly: false });
       setErrors({});
-      const response = await axios.get('/api/hotels', { params: formState });
+      const response = await axios.get('/api/hotels', { params: hotelState });
       let results = response.data || [];
       results.sort((a, b) => sortBy === 'price' 
         ? (a.price ?? 0) - (b.price ?? 0)
@@ -331,7 +332,7 @@ function Hotels() {
       navigate('/login');
       return;
     }
-    navigate('/confirmation', { state: { hotelData: { ...hotel, passengers: formState.guests || hotel.guests || 1 } } });
+    navigate('/confirmation', { state: { hotelData: { ...hotel, passengers: hotelState.guests || hotel.guests || 1 } } });
   };
 
   const handleLogout = () => {
@@ -433,7 +434,7 @@ function Hotels() {
                   <Select 
                     options={airportOptions} 
                     styles={customSelectStyles} 
-                    value={airportOptions.find((opt) => opt.value === formState.location)} 
+                    value={airportOptions.find((opt) => opt.value === hotelState.location)} 
                     onChange={opt => handleChange('location', opt?.value)} 
                     placeholder="Bạn muốn nghỉ ở đâu?" 
                   />
@@ -446,7 +447,7 @@ function Hotels() {
                     <input 
                       type="date" 
                       className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" 
-                      value={formState.checkInDate} 
+                      value={hotelState.checkInDate} 
                       onChange={(e) => handleChange('checkInDate', e.target.value)} 
                     />
                     {errors.checkInDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.checkInDate}</p>}
@@ -456,7 +457,7 @@ function Hotels() {
                     <input 
                       type="date" 
                       className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" 
-                      value={formState.checkOutDate} 
+                      value={hotelState.checkOutDate} 
                       onChange={(e) => handleChange('checkOutDate', e.target.value)} 
                     />
                     {errors.checkOutDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.checkOutDate}</p>}
@@ -468,7 +469,7 @@ function Hotels() {
                     <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Phòng</label>
                     <select 
                       className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" 
-                      value={formState.rooms} 
+                      value={hotelState.rooms} 
                       onChange={(e) => handleChange('rooms', e.target.value)}
                     >
                       {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Phòng</option>)}
@@ -479,7 +480,7 @@ function Hotels() {
                     <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Khách</label>
                     <select 
                       className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" 
-                      value={formState.guests} 
+                      value={hotelState.guests} 
                       onChange={(e) => handleChange('guests', e.target.value)}
                     >
                       {[...Array(20)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Khách</option>)}
@@ -546,45 +547,39 @@ function Hotels() {
       {/* Search Results */}
       {hasSearched && hotels.length > 0 && (
         <div className="mt-12 animate-fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <h3 className="text-2xl font-bold text-slate-800">Kết quả tìm kiếm ({hotels.length})</h3>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
-              <span className="text-sm font-medium text-slate-500">Sắp xếp:</span>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent font-bold text-blue-600 outline-none cursor-pointer text-sm">
-                <option value="price">Giá tốt nhất</option>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div>
+              <h3 className="text-3xl font-black text-slate-800 tracking-tighter">Ưu đãi phòng tốt nhất</h3>
+              <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">
+                {hotels.length} khách sạn khả dụng tại {hotelState.location || "điểm bạn chọn"}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+              <span className="text-[10px] font-black text-slate-400 ml-2 uppercase">Sắp xếp:</span>
+              <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)} 
+                className="bg-slate-50 px-4 py-2 rounded-xl font-bold text-blue-600 text-xs outline-none border-none cursor-pointer"
+              >
+                <option value="price">Giá từ thấp đến cao</option>
+                <option value="name">Tên khách sạn (A-Z)</option>
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-4">
-            {hotels.map((h, index) => {
-              const displayPrice = h.price;
-              return (
-                <div key={h.id || index} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
-                  <div className="flex flex-col md:flex-row">
-                    <div className="flex-1 p-5 space-y-6">
-                      <HotelRowLeg 
-                        label="Khách sạn" 
-                        data={h} 
-                        icon={<FaHotel className="text-blue-500" />} 
-                      />
-                    </div>
-                    <div className="bg-slate-50 p-5 md:w-64 flex flex-row md:flex-col justify-between items-center border-t md:border-t-0 md:border-l border-slate-100">
-                      <div className="text-left md:text-center">
-                        <span className="block text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Tổng giá</span>
-                        <span className="block text-xl md:text-2xl font-black text-orange-600">{formatCurrency(displayPrice)}</span>
-                        <span className="text-[10px] text-slate-400">Đã bao gồm thuế & phí</span>
-                      </div>
-                      <button 
-                        onClick={() => handleSelectHotel(h)} 
-                        className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition transform flex items-center gap-2"
-                      >
-                        Chọn <FaArrowLeft className="rotate-180" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+
+          {/* Render bằng HotelCard theo lưới 2 cột */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {hotels.map((h, index) => (
+              <HotelCard 
+                key={h.id || index} 
+                hotel={h} 
+                onSelect={handleSelectHotel}
+                // Truyền dữ liệu ngày từ reducer state vào card
+                checkIn={hotelState.checkInDate} 
+                checkOut={hotelState.checkOutDate}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -602,9 +597,13 @@ function Hotels() {
 
       {/* Popular Destinations */}
       <div className="mt-12">
-        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-          <FaMapMarkerAlt className="text-blue-500"/> Khách sạn phổ biến
-        </h3>
+        <div className="flex justify-between items-end mb-8">
+          <div>
+            <h3 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
+              <FaMapMarkerAlt className="text-blue-500 animate-bounce" /> Khách sạn phổ biến
+            </h3>
+          </div>
+        </div>    
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
           spaceBetween={20}
@@ -722,23 +721,60 @@ function Hotels() {
       </div>
 
       {/* Blog Posts */}
-      <div className="mt-12">
-        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-          <FaBlog className="text-red-500"/> Bài viết mới nhất
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {blogPosts.map((post, idx) => (
-            <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
-              <img src={post.image} alt={post.title} className="w-full h-40 object-cover" />
-              <div className="p-4">
-                <h4 className="text-lg font-bold text-slate-800 mb-2">{post.title}</h4>
-                <p className="text-sm text-slate-500 mb-4">{post.excerpt}</p>
-                <button className="text-blue-600 font-bold text-sm hover:underline">Đọc thêm →</button>
-              </div>
-            </div>
-          ))}
+      <div className="mt-16 max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+              <FaBlog className="text-red-500 animate-pulse"/> Bài viết mới nhất
+            </h3>
+            <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors">
+              Xem tất cả
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {blogPosts.map((post, idx) => (
+              <article 
+                key={idx} 
+                className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-500 flex flex-col h-full cursor-pointer"
+                onClick={() => {
+                  navigate('/blog/' + post.id)
+                }}
+              >
+                {/* Hình ảnh bài viết */}
+                <div className="relative h-52 overflow-hidden">
+                  <img 
+                    src={post.image} 
+                    alt={post.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-tighter shadow-sm">
+                    {post.category || 'Tin tức'}
+                  </div>
+                </div>
+                <div className="p-6 flex flex-col flex-1">
+                  {/* Ngày đăng */}
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 mb-3 uppercase tracking-widest">
+                    <span>{post.date || '22/12/2025'}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                    <span>5 phút đọc</span>
+                  </div>
+                  <h4 className="text-lg font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                    {post.title}
+                  </h4>
+                  <p className="text-sm text-slate-500 mb-6 line-clamp-3 leading-relaxed">
+                    {post.excerpt}
+                  </p>
+                  <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
+                    <span className="text-sm font-black text-slate-700">Đọc thêm</span>
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <span className="text-lg">→</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
-      </div>
 
       {/* Purchase History */}
       {isLogged && purchases.length > 0 && (
