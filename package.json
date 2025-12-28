@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
     "@vitejs/plugin-react": "^5.1.2",
     "amadeus": "^11.0.0",
     "axios": "^1.13.2",
@@ -33,6 +34,7 @@
     "lucide-react": "^0.562.0",
     "motion": "^12.23.26",
     "node-cache": "^5.1.2",
+    "nodemon": "^3.1.11",
     "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
