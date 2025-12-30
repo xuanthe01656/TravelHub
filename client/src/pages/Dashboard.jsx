@@ -48,6 +48,8 @@ const initialCarState = {
   pickupDate: '',
   dropoffDate: '',
   driverAge: 25,
+  serviceType: 'rental', // Added: default to rental
+  passengers: 1, // Added: for transfer
 };
 
 function reducer(state, action) {
@@ -147,7 +149,19 @@ const carValidationSchema = Yup.object({
       if (!value || !pickupDate) return true;
       return value.getTime() > new Date(pickupDate).getTime();
     }),
-  driverAge: Yup.number().min(18, 'Tuổi tài xế ít nhất là 18').required(),
+  serviceType: Yup.string().oneOf(['rental', 'transfer']).required('Loại dịch vụ không được để trống'),
+  driverAge: Yup.number()
+    .when('serviceType', {
+      is: 'rental',
+      then: (schema) => schema.min(18, 'Tuổi tài xế ít nhất là 18').required('Tuổi tài xế không được để trống'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+  passengers: Yup.number()
+    .when('serviceType', {
+      is: 'transfer',
+      then: (schema) => schema.min(1, 'Số hành khách ít nhất là 1').required('Số hành khách không được để trống'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
 });
 
 const airports = {
@@ -705,43 +719,121 @@ function Dashboard() {
           </div>
         );
   
-      case 'cars':
+     case 'cars':
+        const isTransfer = carState.serviceType === 'transfer';
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 animate-in fade-in duration-500">
-            <div className="md:col-span-2 lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 items-end">
-              <div className="w-full relative pb-5">
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Điểm nhận</label>
-                <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === carState.pickup)} onChange={opt => handleChange(carDispatch, 'pickup', opt?.value)} placeholder="Sân bay hoặc địa chỉ" />
-                {errors.pickup && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.pickup}</p>}
-              </div>
-              <div className="flex justify-center pb-5">
-                <button type="button" onClick={() => carDispatch({ type: 'SWAP', field1: 'pickup', field2: 'dropoff' })} className="p-2.5 bg-slate-50 border border-slate-200 rounded-full text-blue-600 shadow-sm active:scale-90">⇄</button>
-              </div>
-              <div className="w-full relative pb-5">
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Điểm trả</label>
-                <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === carState.dropoff)} onChange={opt => handleChange(carDispatch, 'dropoff', opt?.value)} placeholder="Sân bay hoặc địa chỉ" />
-                {errors.dropoff && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.dropoff}</p>}
-              </div>
+          <div className="animate-in fade-in duration-500">
+            {/* Tab chọn loại dịch vụ */}
+            <div className="flex bg-slate-100 p-1 rounded-2xl w-fit mb-6">
+              <button 
+                onClick={() => handleChange(carDispatch, 'serviceType', 'rental')}
+                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${carState.serviceType === 'rental' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}
+              >
+                Thuê xe tự lái
+              </button>
+              <button 
+                onClick={() => handleChange(carDispatch, 'serviceType', 'transfer')}
+                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${carState.serviceType === 'transfer' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}
+              >
+                Đưa đón sân bay
+              </button>
             </div>
-            <div className="md:col-span-1 lg:col-span-4 grid grid-cols-2 gap-3">
-              <div className="relative pb-5">
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày nhận</label>
-                <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl font-bold text-sm shadow-sm" value={carState.pickupDate} onChange={(e) => handleChange(carDispatch, 'pickupDate', e.target.value)} />
-                {errors.pickupDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.pickupDate}</p>}
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+              {/* LOGIC ĐIỂM ĐÓN / TRẢ CHO ĐƯA ĐÓN SÂN BAY */}
+              <div className="md:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_40px_1fr] gap-2 items-center">
+                {isTransfer ? (
+                  // Giao diện Đưa đón Sân bay: Một bên là Sân bay, một bên là Địa chỉ khách sạn
+                  <>
+                    <div className="relative">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">
+                        {carState.transferDirection === 'to_airport' ? 'Điểm đón (Khách sạn/Nhà)' : 'Sân bay đón'}
+                      </label>
+                      {carState.transferDirection === 'to_airport' ? (
+                        <div className="relative">
+                          <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                          <input 
+                            type="text" 
+                            placeholder="Nhập địa chỉ của bạn..."
+                            className="w-full h-[48px] pl-10 pr-4 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-500"
+                            value={carState.pickupAddress}
+                            onChange={(e) => handleChange(carDispatch, 'pickupAddress', e.target.value)}
+                          />
+                        </div>
+                      ) : (
+                        <Select options={airportOptions} styles={customSelectStyles} placeholder="Chọn sân bay..." 
+                          onChange={opt => handleChange(carDispatch, 'pickup', opt.value)} />
+                      )}
+                    </div>
+
+                    <div className="flex justify-center mt-5">
+                      <button 
+                        type="button"
+                        onClick={() => carDispatch({ type: 'TOGGLE_DIRECTION' })} // Bạn cần thêm action này vào reducer
+                        className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-transform active:rotate-180"
+                      >
+                        <FaArrowRight className={carState.transferDirection === 'to_airport' ? 'rotate-180' : ''} />
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">
+                        {carState.transferDirection === 'to_airport' ? 'Sân bay đến' : 'Điểm trả (Khách sạn/Nhà)'}
+                      </label>
+                      {carState.transferDirection === 'to_airport' ? (
+                        <Select options={airportOptions} styles={customSelectStyles} placeholder="Chọn sân bay..." 
+                          onChange={opt => handleChange(carDispatch, 'dropoff', opt.value)} />
+                      ) : (
+                        <div className="relative">
+                          <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                          <input 
+                            type="text" 
+                            placeholder="Nhập địa chỉ đến..."
+                            className="w-full h-[48px] pl-10 pr-4 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-500"
+                            value={carState.dropoffAddress}
+                            onChange={(e) => handleChange(carDispatch, 'dropoffAddress', e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  // Giao diện Thuê xe tự lái (như cũ)
+                  <>
+                    <div className="relative">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">Điểm nhận xe</label>
+                      <Select options={airportOptions} styles={customSelectStyles} placeholder="Tỉnh/Thành phố" />
+                    </div>
+                    <div className="flex justify-center mt-5 text-slate-300">⇄</div>
+                    <div className="relative">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">Điểm trả xe</label>
+                      <Select options={airportOptions} styles={customSelectStyles} placeholder="Tỉnh/Thành phố" />
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="relative pb-5">
-                <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày trả</label>
-                <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl font-bold text-sm shadow-sm" value={carState.dropoffDate} onChange={(e) => handleChange(carDispatch, 'dropoffDate', e.target.value)} />
-                {errors.dropoffDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.dropoffDate}</p>}
+
+              {/* Các trường còn lại: Ngày giờ, Số người */}
+              <div className="md:col-span-4 grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">Ngày đón</label>
+                  <div className="relative">
+                    <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                    <input type="date" className="w-full h-[48px] pl-10 pr-4 border border-slate-200 rounded-xl font-bold text-sm" />
+                  </div>
+                </div>
+                <div className="relative">
+                  <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">Giờ đón</label>
+                  <div className="relative">
+                    <FaClock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                    <input type="time" className="w-full h-[48px] pl-10 pr-4 border border-slate-200 rounded-xl font-bold text-sm" />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="md:col-span-1 lg:col-span-3 relative pb-5">
-              <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Tuổi tài xế</label>
-              <input type="number" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl font-bold text-sm shadow-sm outline-none" value={carState.driverAge} onChange={(e) => handleChange(carDispatch, 'driverAge', e.target.value)} min={18} />
-              {errors.driverAge && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.driverAge}</p>}
-            </div>
-            <div className="md:col-span-2 lg:col-span-12 mt-6">
-              <SearchButton label="Tìm Kiếm Xe" color="emerald" onClick={handleCarSearch} loading={loading} />
+
+              <div className="md:col-span-3">
+                <SearchButton label="Tìm xe ngay" color="emerald" onClick={handleCarSearch} loading={loading} />
+              </div>
             </div>
           </div>
         );
@@ -918,55 +1010,60 @@ function Dashboard() {
           );
         }
         return (
-          <div className="mt-12 animate-fade-in">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <h3 className="text-2xl font-bold text-slate-800">Kết quả tìm kiếm ({cars.length})</h3>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
-                <span className="text-sm font-medium text-slate-500">Sắp xếp:</span>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent font-bold text-blue-600 outline-none cursor-pointer text-sm">
-                  <option value="price">Giá tốt nhất</option>
+          <div className="mt-12">
+            <div className="flex flex-col md:flex-row justify-between items-end gap-4 mb-8">
+              <div>
+                <h3 className="text-3xl font-black text-slate-800 tracking-tighter">Xe sẵn sàng cho bạn</h3>
+                <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">
+                  Tìm thấy {cars.length} lựa chọn tại {airports[carState.pickup]?.city || "điểm bạn chọn"}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                <span className="text-[10px] font-black text-slate-400 ml-2 uppercase">Sắp xếp:</span>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} 
+                  className="bg-slate-50 px-4 py-2 rounded-xl font-bold text-blue-600 text-xs outline-none cursor-pointer">
+                  <option value="price">Giá thấp nhất</option>
+                  <option value="rating">Đánh giá tốt nhất</option>
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-4">
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {cars.map((c, index) => (
-                <div key={c.id || index} className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
-                  <div className="flex flex-col md:flex-row">
-                    <div className="flex-1 p-5 space-y-6">
-                      <div className="flex items-start gap-4">
-                        <div className="bg-slate-100 p-3 rounded-full mt-1"><FaCar className="text-blue-500" /></div>
-                        <div className="flex-1">
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Xe</span>
-                          <div className="text-sm text-slate-600 flex items-center gap-2 mt-2">
-                            <span className="font-bold text-blue-700">{safeRender(c.model)}</span>
-                            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                            <span className="text-slate-500">{safeRender(c.type)}</span>
-                          </div>
-                          <div className="flex items-center gap-4 mt-1">
-                            <div>
-                              <div className="text-lg font-black text-slate-800">{new Date(c.pickupDate).toLocaleDateString('vi-VN')}</div>
-                              <div className="text-xs font-bold text-slate-500">{c.pickup}</div>
-                            </div>
-                            <div className="flex-1 border-t-2 border-dotted border-slate-300 relative top-[-4px]"></div>
-                            <div className="text-right">
-                              <div className="text-lg font-black text-slate-800">{new Date(c.dropoffDate).toLocaleDateString('vi-VN')}</div>
-                              <div className="text-xs font-bold text-slate-500">{c.dropoff}</div>
-                            </div>
-                          </div>
-                        </div>
+                <div key={c.id || index} className="group bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row">
+                  {/* Ảnh xe */}
+                  <div className="md:w-2/5 relative h-56 md:h-auto overflow-hidden">
+                    <img src={c.image || 'https://via.placeholder.com/400x300?text=Car'} alt={c.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-blue-600 uppercase">
+                      {c.type || 'Phổ thông'}
+                    </div>
+                  </div>
+
+                  {/* Nội dung chi tiết */}
+                  <div className="p-6 md:w-3/5 flex flex-col justify-between">
+                    <div>
+                      <h4 className="text-xl font-black text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">{c.name}</h4>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-500">
+                          <FaUsers className="text-blue-500" /> {c.seats || 5} chỗ
+                        </span>
+                        <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-500">
+                          <FaChair className="text-blue-500" /> {c.transmission || 'Số tự động'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-emerald-500 font-bold text-sm mb-4">
+                        <FaStar className="mb-0.5" /> <span>{c.rating || '4.9'}</span>
+                        <span className="text-slate-300 font-medium ml-1">({c.reviews || 120} đánh giá)</span>
                       </div>
                     </div>
-                    <div className="bg-slate-50 p-5 md:w-64 flex flex-row md:flex-col justify-between items-center border-t md:border-t-0 md:border-l border-slate-100">
-                      <div className="text-left md:text-center">
-                        <span className="block text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Tổng giá</span>
-                        <span className="block text-xl md:text-2xl font-black text-orange-600">{formatCurrency(c.price)}</span>
-                        <span className="text-[10px] text-slate-400">Đã bao gồm thuế & phí</span>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                      <div>
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase">Giá thuê 1 ngày</span>
+                        <span className="text-2xl font-black text-orange-600">{formatCurrency(c.price)}</span>
                       </div>
-                      <button 
-                        onClick={() => handleSelectCar(c)} 
-                        className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition transform flex items-center gap-2"
-                      >
-                        Chọn <FaArrowLeft className="rotate-180" />
+                      <button onClick={() => handleSelectCar(c)} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition transform flex items-center gap-2">
+                        Đặt xe <FaArrowRight />
                       </button>
                     </div>
                   </div>

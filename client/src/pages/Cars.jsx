@@ -242,7 +242,7 @@ const formatCurrency = (n) => {
 
 // ── API Wrapper for flexibility ────────────────────────────────────────
 const searchVehicles = async (mode, params) => {
-  const endpoint = mode === 'car' ? '/api/cars' : '/api/transfers'; // Can change to Amadeus proxy endpoint
+  const endpoint = mode === 'car' ? '/api/cars' : '/api/transfers'; // Proxy to Amadeus endpoints
   const response = await axios.get(endpoint, { params });
   return response.data || [];
 };
@@ -385,24 +385,39 @@ function Cars() {
       if (mode === 'car') {
         await carValidationSchema.validate(carState, { abortEarly: false });
         setCarErrors({});
+        const pickup = airports[carState.pickup];
+        const dropoff = airports[carState.dropoff];
+        if (!pickup || !dropoff) {
+          throw new Error('Vị trí không hợp lệ');
+        }
         params = {
-          pickupLocationCode: carState.pickup, // Adjusted for Amadeus-like param
-          dropoffLocationCode: carState.dropoff,
-          pickupDateTime: carState.pickupDate + 'T00:00:00', // Format for Amadeus
-          dropoffDateTime: carState.dropoffDate + 'T00:00:00',
+          pickUpLatitude: pickup.lat,
+          pickUpLongitude: pickup.lon,
+          dropOffLatitude: dropoff.lat,
+          dropOffLongitude: dropoff.lon,
+          pickUpDateTime: `${carState.pickupDate}T00:00:00`, // ISO format for Amadeus
+          dropOffDateTime: `${carState.dropoffDate}T00:00:00`,
           driverAge: carState.driverAge,
-          vehicleCategory: carState.vehicleType, // Filter
+          vehicleCategory: carState.vehicleType || undefined, // Optional filter
+          radius: 10, // Default radius in km for Amadeus search
         };
         results = await searchVehicles(mode, params);
         setCars(results);
       } else {
         await transferValidationSchema.validate(transferState, { abortEarly: false });
         setTransferErrors({});
+        const start = airports[transferState.start];
+        const end = airports[transferState.end];
+        if (!start || !end) {
+          throw new Error('Vị trí không hợp lệ');
+        }
         params = {
-          startLocationCode: transferState.start,
-          endLocationCode: transferState.end,
-          startDateTime: transferState.dateTime,
-          vehicleCategory: transferState.vehicleType,
+          startLatitude: start.lat,
+          startLongitude: start.lon,
+          endLatitude: end.lat,
+          endLongitude: end.lon,
+          startDateTime: transferState.dateTime + ':00', // Add seconds for ISO
+          vehicleCategory: transferState.vehicleType || undefined,
         };
         results = await searchVehicles(mode, params);
         setTransfers(results);
@@ -486,29 +501,32 @@ function Cars() {
           spaceBetween={0} slidesPerView={1}
           autoplay={{ delay: 5000, disableOnInteraction: false }}
           pagination={{ clickable: true }} navigation={true}
-          className="w-full h-[180px] md:h-[320px]"
+          className="w-full h-[180px] sm:h-[240px] md:h-[320px]"
         >
           {[{
             color: "from-indigo-600 to-purple-600",
             title: "Khuyến Mãi Đặc Biệt",
             desc: "Giảm tới 50% cho thuê xe nội địa.",
-            btn: "Khám Phá"
+            btn: "Khám Phá",
+            src: ""
           }, {
             color: "from-emerald-500 to-teal-500",
             title: "Thuê Xe Giá Sốc",
             desc: "Chỉ từ 500.000 VND cho các chuyến đi ASEAN.",
-            btn: "Đặt Ngay"
+            btn: "Đặt Ngay",
+            src: ""
           }, {
             color: "from-orange-500 to-rose-500",
             title: "Du Lịch Cuối Tuần",
             desc: "Ưu đãi thuê xe cho cặp đôi.",
-            btn: "Xem Ngay"
+            btn: "Xem Ngay",
+            src: ""
           }].map((banner, idx) => (
             <SwiperSlide key={idx}>
               <div className={`bg-gradient-to-r ${banner.color} text-white w-full h-full flex flex-col items-center justify-center text-center p-4`}>
-                <h2 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
-                <p className="text-sm md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
-                <button className="bg-white text-slate-900 px-6 py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
+                <h2 className="text-xl sm:text-3xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
+                <p className="text-sm sm:text-lg md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
+                <button className="bg-white text-slate-900 px-4 py-2 sm:px-6 sm:py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
                   <FaCar /> {banner.btn}
                 </button>
               </div>
@@ -546,8 +564,8 @@ function Cars() {
           <form onSubmit={handleSearch}>
             {mode === 'car' && (
               <div className="animate-in fade-in duration-500">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                  <div className="lg:col-span-5 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+                  <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 items-center">
                     <div className="w-full relative pb-5">
                       <label className="block text-[11px] md:text-xs font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">
                         Điểm nhận
@@ -592,7 +610,7 @@ function Cars() {
                     </div>
                   </div>
                   
-                  <div className="lg:col-span-4 grid grid-cols-2 gap-3">
+                  <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="relative pb-5">
                       <label className="block text-[11px] md:text-xs font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày nhận</label>
                       <input 
@@ -646,7 +664,7 @@ function Cars() {
             )}
             {mode === 'transfer' && (
               <div className="animate-in fade-in duration-500">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
                   <div className="lg:col-span-4 relative pb-5">
                     <label className="block text-[11px] md:text-xs font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">
                       Điểm đón
@@ -719,7 +737,7 @@ function Cars() {
           <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
             <FaMapMarkerAlt className="text-blue-500"/> Bản đồ vị trí
           </h3>
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 h-96">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 h-64 sm:h-80 md:h-96">
             <MapContainer center={mapCenter} zoom={6} style={{ height: '100%', width: '100%' }}>
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -788,7 +806,7 @@ function Cars() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
               {(mode === 'car' ? cars : transfers).map((item, index) => (
                 <CarCard 
                   key={item.id || index} 
@@ -885,7 +903,7 @@ function Cars() {
           <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
             <FaGlobe className="text-green-500"/> Dịch vụ khác
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {otherServices.map((service, idx) => (
               <button
                 key={idx}
@@ -994,7 +1012,7 @@ function Cars() {
             <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
               <FaReceipt className="text-blue-500"/> Lịch sử thuê
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {purchases.map((p, idx) => (
                 <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
                   <div className="flex justify-between items-start mb-4">
