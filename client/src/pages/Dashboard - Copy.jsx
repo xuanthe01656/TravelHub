@@ -20,7 +20,7 @@ import {
   FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
   FaChair, FaCar, FaGlobe, FaBars, FaTimes, FaCreditCard, FaSpinner,
   FaWallet, FaUniversity, FaArrowLeft, FaClock, FaTicketAlt, FaHotel, FaBusAlt, FaMapMarkedAlt,
-  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach,FaArrowRight,FaUserFriends
+  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach,FaArrowRight
 } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
@@ -418,16 +418,11 @@ function Dashboard() {
     } catch (err) {
       if (err.name === 'ValidationError') {
         const formattedErrors = {};
-        if (err.inner && err.inner.length > 0) {
-          err.inner.forEach((error) => {
-            if (error.path) formattedErrors[error.path] = error.message;
-          });
-        } else if (err.path) {
-          formattedErrors[err.path] = err.message;
-        }
+        err.inner.forEach((error) => formattedErrors[error.path] = error.message);
         setErrors(formattedErrors);
+      } else {
+        toast.error('Lỗi tìm kiếm xe: ' + (err.response?.data?.message || err.message));
       }
-      
     } finally {
       setLoading(false);
     }
@@ -614,10 +609,9 @@ function Dashboard() {
         return (
           <div className="animate-in fade-in duration-500">
             {/* Trip Type Selector */}
-            <div className="flex bg-slate-100 p-1.5 rounded-2xl w-fit mb-8 shadow-inner">
+            <div className="flex justify-center md:justify-start gap-4 mb-6">
               {['oneway', 'roundtrip'].map((type) => (
-                <label key={type} className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${flightState.tripType === type ? 'bg-white shadow-md text-blue-600' 
-                : 'text-slate-500 hover:bg-slate-200/50'}`}>
+                <label key={type} className={`cursor-pointer px-5 py-2.5 rounded-full text-sm font-bold transition-all ${flightState.tripType === type ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
                   <input type="radio" name="tripType" value={type} checked={flightState.tripType === type} onChange={(e) => handleChange(flightDispatch, 'tripType', e.target.value)} className="hidden" />
                   {type === 'oneway' ? 'Một chiều' : 'Khứ hồi'}
                 </label>
@@ -725,176 +719,124 @@ function Dashboard() {
           </div>
         );
   
-        case 'cars':
-          const isTransfer = carState.serviceType === 'transfer';
-          const isToAirport = carState.transferDirection === 'to_airport';
-        
-          return (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-6xl mx-auto p-4">
-              {/* TABS DỊCH VỤ */}
-              <div className="flex bg-slate-100 p-1.5 rounded-2xl w-fit mb-8 shadow-inner">
-                {['rental', 'transfer'].map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => {
-                      handleChange(carDispatch, 'serviceType', type);
-                      setErrors({}); // Xóa lỗi cũ khi đổi tab
-                    }}
-                    className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                      carState.serviceType === type 
-                        ? 'bg-white shadow-md text-blue-600' 
-                        : 'text-slate-500 hover:bg-slate-200/50'
-                    }`}
-                  >
-                    {type === 'rental' ? 'Thuê xe tự lái' : 'Đưa đón sân bay'}
-                  </button>
-                ))}
-              </div>
-        
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* KHỐI 1: ĐỊA ĐIỂM (6 cột) */}
-                <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-[1fr_48px_1fr] gap-2 items-start">
-                  
-                  {/* CỘT TRÁI: PICKUP */}
-                  <div className="relative min-h-[85px]">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">
-                      {isTransfer ? (isToAirport ? 'Điểm đón (Nhà/KS)' : 'Sân bay đón') : 'Điểm nhận xe'}
-                    </label>
-                    {isTransfer && isToAirport ? (
-                      <div className="relative group">
-                        <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500" />
-                        <input
-                          type="text"
-                          placeholder="Nhập địa chỉ..."
-                          className={`w-full h-[52px] pl-10 pr-4 bg-white border ${errors.pickupAddress ? 'border-red-500' : 'border-slate-200'} rounded-xl font-semibold text-sm outline-none focus:border-blue-500`}
-                          value={carState.pickupAddress || ''}
-                          onChange={(e) => handleChange(carDispatch, 'pickupAddress', e.target.value)}
-                        />
-                        {errors.pickupAddress && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickupAddress}</p>}
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <Select
-                          options={airportOptions}
-                          styles={customSelectStyles}
-                          placeholder="Chọn điểm..."
-                          value={airportOptions.find(opt => opt.value === carState.pickup)}
-                          onChange={opt => handleChange(carDispatch, 'pickup', opt?.value)}
-                        />
-                        {errors.pickup && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickup}</p>}
-                      </div>
-                    )}
-                  </div>
-        
-                  {/* NÚT CHUYỂN ĐỔI */}
-                  <div className="flex justify-center pt-8">
-                    <button
-                      type="button"
-                      onClick={() => carDispatch({ type: 'TOGGLE_DIRECTION' })}
-                      className={`w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 shadow-sm transition-transform duration-500 ${!isTransfer ? 'opacity-20 cursor-default' : 'active:scale-90'}`}
-                      disabled={!isTransfer}
-                    >
-                      <FaArrowRight className={isToAirport ? '' : 'rotate-180'} />
-                    </button>
-                  </div>
-        
-                  {/* CỘT PHẢI: DROPOFF */}
-                  <div className="relative min-h-[85px]">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">
-                      {isTransfer ? (isToAirport ? 'Sân bay đến' : 'Điểm trả (Nhà/KS)') : 'Điểm trả xe'}
-                    </label>
-                    {isTransfer && !isToAirport ? (
-                      <div className="relative group">
-                        <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500" />
-                        <input
-                          type="text"
-                          placeholder="Nhập địa chỉ trả..."
-                          className={`w-full h-[52px] pl-10 pr-4 bg-white border ${errors.dropoffAddress ? 'border-red-500' : 'border-slate-200'} rounded-xl font-semibold text-sm outline-none focus:border-blue-500`}
-                          value={carState.dropoffAddress || ''}
-                          onChange={(e) => handleChange(carDispatch, 'dropoffAddress', e.target.value)}
-                        />
-                        {errors.dropoffAddress && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoffAddress}</p>}
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <Select
-                          options={airportOptions}
-                          styles={customSelectStyles}
-                          placeholder="Chọn điểm..."
-                          value={airportOptions.find(opt => opt.value === carState.dropoff)}
-                          onChange={opt => handleChange(carDispatch, 'dropoff', opt?.value)}
-                        />
-                        {errors.dropoff && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoff}</p>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-        
-                {/* KHỐI 2: THỜI GIAN & KHÁCH (4 cột) */}
-                <div className="lg:col-span-4 grid grid-cols-2 gap-3 items-start">
-                  <div className="relative min-h-[85px]">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">Ngày đón</label>
+     case 'cars':
+        const isTransfer = carState.serviceType === 'transfer';
+        return (
+          <div className="animate-in fade-in duration-500">
+            {/* Tab chọn loại dịch vụ */}
+            <div className="flex bg-slate-100 p-1 rounded-2xl w-fit mb-6">
+              <button 
+                onClick={() => handleChange(carDispatch, 'serviceType', 'rental')}
+                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${carState.serviceType === 'rental' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}
+              >
+                Thuê xe tự lái
+              </button>
+              <button 
+                onClick={() => handleChange(carDispatch, 'serviceType', 'transfer')}
+                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${carState.serviceType === 'transfer' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}
+              >
+                Đưa đón sân bay
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+              {/* LOGIC ĐIỂM ĐÓN / TRẢ CHO ĐƯA ĐÓN SÂN BAY */}
+              <div className="md:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_40px_1fr] gap-2 items-center">
+                {isTransfer ? (
+                  // Giao diện Đưa đón Sân bay: Một bên là Sân bay, một bên là Địa chỉ khách sạn
+                  <>
                     <div className="relative">
-                      <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        type="date"
-                        className={`w-full h-[52px] pl-10 pr-2 border ${errors.pickupDate ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
-                        value={carState.pickupDate || ''}
-                        onChange={(e) => handleChange(carDispatch, 'pickupDate', e.target.value)}
-                      />
-                    </div>
-                    {errors.pickupDate && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickupDate}</p>}
-                  </div>
-        
-                  <div className="relative min-h-[85px]">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">
-                      {isTransfer ? 'Số khách' : 'Ngày trả'}
-                    </label>
-                    <div className="relative">
-                      {isTransfer ? (
-                        <>
-                          <FaUserFriends className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                          <input
-                            type="number"
-                            placeholder="1"
-                            className={`w-full h-[52px] pl-10 pr-4 border ${errors.passengers ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
-                            value={carState.passengers || ''}
-                            onChange={(e) => handleChange(carDispatch, 'passengers', e.target.value)}
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">
+                        {carState.transferDirection === 'to_airport' ? 'Điểm đón (Khách sạn/Nhà)' : 'Sân bay đón'}
+                      </label>
+                      {carState.transferDirection === 'to_airport' ? (
+                        <div className="relative">
+                          <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                          <input 
+                            type="text" 
+                            placeholder="Nhập địa chỉ của bạn..."
+                            className="w-full h-[48px] pl-10 pr-4 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-500"
+                            value={carState.pickupAddress}
+                            onChange={(e) => handleChange(carDispatch, 'pickupAddress', e.target.value)}
                           />
-                        </>
+                        </div>
                       ) : (
-                        <>
-                          <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                          <input
-                            type="date"
-                            className={`w-full h-[52px] pl-10 pr-2 border ${errors.dropoffDate ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
-                            value={carState.dropoffDate || ''}
-                            onChange={(e) => handleChange(carDispatch, 'dropoffDate', e.target.value)}
-                          />
-                        </>
+                        <Select options={airportOptions} styles={customSelectStyles} placeholder="Chọn sân bay..." 
+                          onChange={opt => handleChange(carDispatch, 'pickup', opt.value)} />
                       )}
                     </div>
-                    {errors[isTransfer ? 'passengers' : 'dropoffDate'] && (
-                      <p className="text-red-500 text-[10px] mt-1 absolute font-bold">
-                        {errors[isTransfer ? 'passengers' : 'dropoffDate']}
-                      </p>
-                    )}
+
+                    <div className="flex justify-center mt-5">
+                      <button 
+                        type="button"
+                        onClick={() => carDispatch({ type: 'TOGGLE_DIRECTION' })} // Bạn cần thêm action này vào reducer
+                        className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-transform active:rotate-180"
+                      >
+                        <FaArrowRight className={carState.transferDirection === 'to_airport' ? 'rotate-180' : ''} />
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">
+                        {carState.transferDirection === 'to_airport' ? 'Sân bay đến' : 'Điểm trả (Khách sạn/Nhà)'}
+                      </label>
+                      {carState.transferDirection === 'to_airport' ? (
+                        <Select options={airportOptions} styles={customSelectStyles} placeholder="Chọn sân bay..." 
+                          onChange={opt => handleChange(carDispatch, 'dropoff', opt.value)} />
+                      ) : (
+                        <div className="relative">
+                          <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                          <input 
+                            type="text" 
+                            placeholder="Nhập địa chỉ đến..."
+                            className="w-full h-[48px] pl-10 pr-4 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-500"
+                            value={carState.dropoffAddress}
+                            onChange={(e) => handleChange(carDispatch, 'dropoffAddress', e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  // Giao diện Thuê xe tự lái (như cũ)
+                  <>
+                    <div className="relative">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">Điểm nhận xe</label>
+                      <Select options={airportOptions} styles={customSelectStyles} placeholder="Tỉnh/Thành phố" />
+                    </div>
+                    <div className="flex justify-center mt-5 text-slate-300">⇄</div>
+                    <div className="relative">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">Điểm trả xe</label>
+                      <Select options={airportOptions} styles={customSelectStyles} placeholder="Tỉnh/Thành phố" />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Các trường còn lại: Ngày giờ, Số người */}
+              <div className="md:col-span-4 grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">Ngày đón</label>
+                  <div className="relative">
+                    <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                    <input type="date" className="w-full h-[48px] pl-10 pr-4 border border-slate-200 rounded-xl font-bold text-sm" />
                   </div>
                 </div>
-        
-                {/* KHỐI 3: SEARCH */}
-                <div className="lg:col-span-2 pt-[22px]">
-                  <SearchButton 
-                    label="Tìm xe" 
-                    color="emerald" 
-                    onClick={handleCarSearch} 
-                    loading={loading}
-                    className="h-[52px] w-full"
-                  />
+                <div className="relative">
+                  <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1">Giờ đón</label>
+                  <div className="relative">
+                    <FaClock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                    <input type="time" className="w-full h-[48px] pl-10 pr-4 border border-slate-200 rounded-xl font-bold text-sm" />
+                  </div>
                 </div>
               </div>
+
+              <div className="md:col-span-3">
+                <SearchButton label="Tìm xe ngay" color="emerald" onClick={handleCarSearch} loading={loading} />
+              </div>
             </div>
-          );
+          </div>
+        );
       default:
         return null;
     }

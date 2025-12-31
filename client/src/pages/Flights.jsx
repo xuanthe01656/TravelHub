@@ -506,14 +506,15 @@ function Flights() {
           <form onSubmit={(e) => e.preventDefault()}>
             <div className="animate-in fade-in duration-500">
               {/* Trip Type Selector */}
-              <div className="flex justify-center md:justify-start gap-4 mb-6">
-                {['oneway', 'roundtrip'].map((type) => (
-                  <label key={type} className={`cursor-pointer px-5 py-2.5 rounded-full text-sm font-bold transition-all ${formState.tripType === type ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
-                    <input type="radio" name="tripType" value={type} checked={formState.tripType === type} onChange={(e) => handleChange('tripType', e.target.value)} className="hidden" />
-                    {type === 'oneway' ? 'Một chiều' : 'Khứ hồi'}
-                  </label>
-                ))}
-              </div>
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl w-fit mb-8 shadow-inner">
+              {['oneway', 'roundtrip'].map((type) => (
+                <label key={type} className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${formState.tripType === type ? 'bg-white shadow-md text-blue-600' 
+                : 'text-slate-500 hover:bg-slate-200/50'}`}>
+                  <input type="radio" name="tripType" value={type} checked={formState.tripType === type} onChange={(e) => handleChange('tripType', e.target.value)} className="hidden" />
+                  {type === 'oneway' ? 'Một chiều' : 'Khứ hồi'}
+                </label>
+              ))}
+            </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
                 <div className="md:col-span-2 lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 items-end">
                   <div className="w-full relative pb-5">
