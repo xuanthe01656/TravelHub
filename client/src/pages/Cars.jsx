@@ -125,6 +125,8 @@ function Cars() {
   const navigate = useNavigate();
   const location = useLocation();
   const bankGuide = location.state?.bankGuide;
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [activeField, setActiveField] = useState(null); 
   
   useDocumentTitle('Thuê Xe');
 
@@ -149,7 +151,20 @@ function Cars() {
   // };
 
   //handleChange(carDispatch, field, value, errors, setErrors);
-
+  const searchAddress = async (text, field) => {
+    if (text.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+  
+    setActiveField(field);
+  
+    const res = await fetch(
+      `/api/geocode?q=${encodeURIComponent(text)}`
+    );
+    const data = await res.json();
+    setAddressSuggestions(data);
+  };  
   const handleCarSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -360,8 +375,22 @@ function Cars() {
                     placeholder="Nhập địa chỉ..."
                     className={`w-full h-[52px] pl-10 pr-4 bg-white border ${errors.pickupAddress ? 'border-red-500' : 'border-slate-200'} rounded-xl font-semibold text-sm outline-none focus:border-blue-500`}
                     value={carState.pickupAddress || ''}
-                    onChange={(e) => handleChange(carDispatch, 'pickupAddress', e.target.value, errors, setErrors)}
+                    onChange={(e) => {
+                      handleChange(
+                        carDispatch,
+                        'pickupAddress',
+                        e.target.value,
+                        errors,
+                        setErrors
+                      );
+                      searchAddress(e.target.value, 'pickup');
+                    }}
                   />
+                  {addressSuggestions.length > 0 && ( 
+                    <ul className="absolute z-10 bg-white border rounded-xl mt-1 w-full max-h-60 overflow-y-auto shadow-lg"> 
+                      {addressSuggestions.map((sug, idx) => ( 
+                        <li key={idx} onClick={() => { handleChange(carDispatch, 'pickupAddress', sug.fullAddress, errors, setErrors); setAddressSuggestions([]); // đóng dropdown sau khi chọn 
+                      }} className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm" > {sug.fullAddress} </li> ))} </ul> )}
                   {errors.pickupAddress && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickupAddress}</p>}
                 </div>
               ) : (
@@ -403,7 +432,17 @@ function Cars() {
                     placeholder="Nhập địa chỉ trả..."
                     className={`w-full h-[52px] pl-10 pr-4 bg-white border ${errors.dropoffAddress ? 'border-red-500' : 'border-slate-200'} rounded-xl font-semibold text-sm outline-none focus:border-blue-500`}
                     value={carState.dropoffAddress || ''}
-                    onChange={(e) => handleChange(carDispatch, 'dropoffAddress', e.target.value, errors, setErrors)}
+                    onChange={(e) => {
+                      handleChange(
+                        carDispatch,
+                        'dropoffAddress',
+                        e.target.value,
+                        errors,
+                        setErrors
+                      );
+                      searchAddress(e.target.value, 'dropoff');
+                    }}
+                    // onChange={(e) => handleChange(carDispatch, 'dropoffAddress', e.target.value, errors, setErrors)}
                   />
                   {errors.dropoffAddress && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoffAddress}</p>}
                 </div>
@@ -414,7 +453,17 @@ function Cars() {
                     styles={customSelectStyles}
                     placeholder="Chọn điểm..."
                     value={airportOptions.find(opt => opt.value === carState.dropoff)}
-                    onChange={opt => handleChange(carDispatch, 'dropoff', opt?.value, errors, setErrors)}
+                    onChange={(e) => {
+                      handleChange(
+                        carDispatch,
+                        'dropoffAddress',
+                        e.target.value,
+                        errors,
+                        setErrors
+                      );
+                      searchAddress(e.target.value, 'dropoff');
+                    }}
+                    // onChange={opt => handleChange(carDispatch, 'dropoff', opt?.value, errors, setErrors)}
                   />
                   {errors.dropoff && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoff}</p>}
                 </div>
