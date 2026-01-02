@@ -15,6 +15,19 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import FlightRowLeg from '../components/FlightRowLeg';
 import HotelCard from '../components/HotelCard';
+import CarCard from '../components/CarCard';
+import reducer from '../utils/reducer';
+import { airports, airportOptions } from '../utils/airports';
+import formatCurrency from '../utils/formatCurrency';
+import handleChange from '../utils/handleChange';
+import useTokenHandler from '../hooks/useTokenHandler';
+import usePurchases from '../hooks/usePurchases';
+import BankGuideModal from '../components/Common/BankGuideModal';
+import PurchaseHistory from '../components/Common/PurchaseHistory';
+import TestimonialsSwiper from '../components/Common/TestimonialsSwiper';
+import BlogPostsGrid from '../components/Common/BlogPostsGrid';
+import PopularDestinationsSwiper from '../components/Common/PopularDestinationsSwiper';
+import SearchButton from '../components/Common/SearchButton';
 import {
   FaPlaneDeparture, FaPlaneArrival, FaPlane, FaShoppingCart, FaLock, FaReceipt,
   FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
@@ -48,23 +61,12 @@ const initialCarState = {
   pickupDate: '',
   dropoffDate: '',
   driverAge: 25,
-  serviceType: 'rental', // Added: default to rental
-  passengers: 1, // Added: for transfer
+  serviceType: 'rental', 
+  passengers: 1,
+  pickupAddress: '',
+  dropoffAddress: '',
+  transferDirection: 'to_airport',
 };
-
-function reducer(state, action) {
-  switch (action.type) {
-      case 'CHANGE':
-          return { ...state, [action.field]: action.value };
-      case 'RESET':
-          return action.initial || state;
-      case 'SWAP':
-          const { field1, field2 } = action;
-          return { ...state, [field1]: state[field2], [field2]: state[field1] };
-      default:
-          return state;
-  }
-}
 
 const flightValidationSchema = Yup.object({
   from: Yup.string().required('Điểm đi không được để trống'),
@@ -128,85 +130,75 @@ const hotelValidationSchema = Yup.object({
 });
 
 const carValidationSchema = Yup.object({
-  pickup: Yup.string().required('Điểm nhận xe không được để trống'),
-  dropoff: Yup.string().required('Điểm trả xe không được để trống'),
+  // 1. Điểm nhận/trả chung (Dành cho Thuê xe tự lái)
+  pickup: Yup.string().when('serviceType', {
+    is: 'rental',
+    then: (schema) => schema.required('Vui lòng chọn điểm nhận xe'),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  dropoff: Yup.string().when('serviceType', {
+    is: 'rental',
+    then: (schema) => schema.required('Vui lòng chọn điểm trả xe'),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+
+  // 2. Địa chỉ cụ thể (Dành cho Đưa đón sân bay - Sửa lỗi thiếu ở file cũ)
+  pickupAddress: Yup.string().when(['serviceType', 'transferDirection'], {
+    is: (serviceType, transferDirection) => 
+      serviceType === 'transfer' && transferDirection === 'to_airport',
+    then: (schema) => schema.required('Vui lòng nhập địa chỉ đón (Nhà/KS)'),
+  }),
+  dropoffAddress: Yup.string().when(['serviceType', 'transferDirection'], {
+    is: (serviceType, transferDirection) => 
+      serviceType === 'transfer' && transferDirection === 'from_airport',
+    then: (schema) => schema.required('Vui lòng nhập địa chỉ trả (Nhà/KS)'),
+  }),
+
+  // 3. Validation Ngày tháng
   pickupDate: Yup.date()
     .transform((value, originalValue) => (originalValue === '' ? null : value))
     .nullable()
-    .required('Ngày nhận xe không được để trống')
-    .typeError('Ngày không hợp lệ')
-    .test('min-pickup-date', 'Ngày nhận xe phải từ hôm nay trở đi', function(value) {
+    .required('Ngày nhận xe/đón không được để trống')
+    .test('min-date', 'Ngày chọn không được ở quá khứ', (value) => {
       if (!value) return true;
-      const today = new Date().setHours(0, 0, 0, 0);
-      return value.getTime() >= today;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return value >= today;
     }),
+
   dropoffDate: Yup.date()
-    .transform((value, originalValue) => originalValue === '' ? null : value)
+    .transform((value, originalValue) => (originalValue === '' ? null : value))
     .nullable()
-    .required('Ngày trả xe không được để trống')
-    .test('dropoff-date-min', 'Ngày trả xe phải sau ngày nhận xe', function(value) {
-      const { pickupDate } = this.parent;
-      if (!value || !pickupDate) return true;
-      return value.getTime() > new Date(pickupDate).getTime();
+    .when('serviceType', {
+      is: 'rental',
+      then: (schema) => schema.required('Ngày trả xe không được để trống')
+        .test('is-after-pickup', 'Ngày trả phải sau ngày nhận', function(value) {
+          const { pickupDate } = this.parent;
+          return value && pickupDate && value > new Date(pickupDate);
+        }),
+      otherwise: (schema) => schema.notRequired(),
     }),
-  serviceType: Yup.string().oneOf(['rental', 'transfer']).required('Loại dịch vụ không được để trống'),
+
+  // 4. Các trường số lượng
+  serviceType: Yup.string().oneOf(['rental', 'transfer']).required(),
+  
   driverAge: Yup.number()
     .when('serviceType', {
       is: 'rental',
-      then: (schema) => schema.min(18, 'Tuổi tài xế ít nhất là 18').required('Tuổi tài xế không được để trống'),
-      otherwise: (schema) => schema.notRequired(),
+      then: (schema) => schema.min(18, 'Tài xế phải từ 18 tuổi trở lên').required('Vui lòng nhập tuổi'),
     }),
+    
   passengers: Yup.number()
     .when('serviceType', {
       is: 'transfer',
-      then: (schema) => schema.min(1, 'Số hành khách ít nhất là 1').required('Số hành khách không được để trống'),
-      otherwise: (schema) => schema.notRequired(),
+      then: (schema) => schema.min(1, 'Ít nhất phải có 1 hành khách').required('Vui lòng nhập số khách'),
     }),
 });
-
-const airports = {
-  HAN: { lat: 21.221111, lon: 105.807222, city: 'Hà Nội' },         
-  SGN: { lat: 10.8188, lon: 106.6519, city: 'TP. Hồ Chí Minh' },    
-  DAD: { lat: 16.043889, lon: 108.199444, city: 'Đà Nẵng' },
-  HPH: { lat: 20.819167, lon: 106.724722, city: 'Hải Phòng' },       
-  VDO: { lat: 21.117778, lon: 107.414167, city: 'Vân Đồn' },
-  HUI: { lat: 16.401667, lon: 107.702778, city: 'Huế' },             
-  PQC: { lat: 10.171667, lon: 103.991111, city: 'Phú Quốc' },
-  BMV: { lat: 12.668056, lon: 108.12, city: 'Buôn Ma Thuột' },
-  TBB: { lat: 13.049444, lon: 109.333611, city: 'Tuy Hòa' },
-  CAH: { lat: 9.175556, lon: 105.179444, city: 'Cà Mau' },
-  VCL: { lat: 15.406111, lon: 108.705556, city: 'Chu Lai' },
-  VCS: { lat: 8.7325, lon: 106.628889, city: 'Côn Đảo' },
-  VTG: { lat: 10.366667, lon: 107.083333, city: 'Vũng Tàu' },
-  VDH: { lat: 17.515, lon: 106.590556, city: 'Đồng Hới' },
-  PXU: { lat: 14.004444, lon: 108.017222, city: 'Pleiku' },
-  UIH: { lat: 13.955, lon: 109.042222, city: 'Quy Nhơn' },
-  VKG: { lat: 9.959722, lon: 105.133889, city: 'Rạch Giá' },
-  THD: { lat: 19.901667, lon: 105.467778, city: 'Thanh Hóa' },       
-  DLI: { lat: 11.750556, lon: 108.373611, city: 'Đà Lạt' },          
-  CXR: { lat: 11.998153, lon: 109.219372, city: 'Nha Trang' },       
-  VCA: { lat: 10.085278, lon: 105.711944, city: 'Cần Thơ' },         
-  VII: { lat: 18.7375, lon: 105.670833, city: 'Vinh' },
-  SIN: { lat: 1.3644, lon: 103.9915, city: 'Singapore' },
-  BKK: { lat: 13.6811, lon: 100.7472, city: 'Bangkok' },
-  TYO: { lat: 35.5523, lon: 139.7798, city: 'Tokyo' },
-  SEL: { lat: 37.4602, lon: 126.4407, city: 'Seoul' },
-};
-
-const airportOptions = Object.keys(airports).map((iata) => ({
-    value: iata,
-    label: `${airports[iata].city} (${iata})`,
-}));
-
 const safeRender = (data) => {
   if (typeof data === 'object' && data !== null) {
     return data.name || data.code || 'N/A';
   }
   return data || 'N/A';
-};
-
-const formatCurrency = (n) => {
-  return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' VND';
 };
 
 function FlightMap({ fromPos, toPos, center }) {
@@ -232,7 +224,9 @@ function Dashboard() {
   const [hotels, setHotels] = useState([]);
   const [cars, setCars] = useState([]);
   const [cheapFlights, setCheapFlights] = useState([]);
-  const [purchases, setPurchases] = useState([]);
+  const isLogged = localStorage.getItem('token');
+  const handleTokenError = useTokenHandler();
+  const { purchases, fetchPurchases } = usePurchases(isLogged, handleTokenError);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [fromPos, setFromPos] = useState(null);
@@ -245,22 +239,6 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const bankGuide = location.state?.bankGuide;
-  const isLogged = localStorage.getItem('token');
-  const tokenErrorHandled = useRef(false);
-  const handleTokenError = (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      if (tokenErrorHandled.current) return true;
-      tokenErrorHandled.current = true;
-      localStorage.removeItem('token');
-      setUserProfile(null);
-      toast.error('Phiên đăng nhập hết hạn.');
-      if (!['/flights', '/hotels', '/cars', '/dashboard'].includes(window.location.pathname)) {
-        navigate('/login');
-      }
-      return true;
-    }
-    return false;
-  };
   useDocumentTitle('Trang chủ');
   useEffect(() => {
     fetchCheapFlights();
@@ -312,17 +290,6 @@ function Dashboard() {
     console.error("Lỗi lấy vé rẻ:", err);
   }
 };
-
-  const fetchPurchases = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      const response = await axios.get('/api/purchases', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPurchases(response.data || []);
-    } catch (err) { handleTokenError(err); }
-  };
 
   const handleChange = (dispatch, field, value) => {
     dispatch({ type: 'CHANGE', field, value });
@@ -618,7 +585,7 @@ function Dashboard() {
               {['oneway', 'roundtrip'].map((type) => (
                 <label key={type} className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${flightState.tripType === type ? 'bg-white shadow-md text-blue-600' 
                 : 'text-slate-500 hover:bg-slate-200/50'}`}>
-                  <input type="radio" name="tripType" value={type} checked={flightState.tripType === type} onChange={(e) => handleChange(flightDispatch, 'tripType', e.target.value)} className="hidden" />
+                  <input type="radio" name="tripType" value={type} checked={flightState.tripType === type} onChange={(e) => handleChange(flightDispatch, 'tripType', e.target.value, errors, setErrors)} className="hidden" />
                   {type === 'oneway' ? 'Một chiều' : 'Khứ hồi'}
                 </label>
               ))}
@@ -627,7 +594,7 @@ function Dashboard() {
               <div className="md:col-span-2 lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 items-end">
                 <div className="w-full relative pb-5">
                   <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Điểm đi</label>
-                  <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === flightState.from)} onChange={opt => handleChange(flightDispatch, 'from', opt?.value)} placeholder="Chọn điểm đi" />
+                  <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === flightState.from)} onChange={opt => handleChange(flightDispatch, 'from', opt?.value, errors, setErrors)} placeholder="Chọn điểm đi" />
                   {errors.from && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.from}</p>}
                 </div>
                 
@@ -639,20 +606,20 @@ function Dashboard() {
   
                 <div className="w-full relative pb-5">
                   <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Điểm đến</label>
-                  <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === flightState.to)} onChange={opt => handleChange(flightDispatch, 'to', opt?.value)} placeholder="Chọn điểm đến" />
+                  <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === flightState.to)} onChange={opt => handleChange(flightDispatch, 'to', opt?.value, errors, setErrors)} placeholder="Chọn điểm đến" />
                   {errors.to && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.to}</p>}
                 </div>
               </div>
               <div className={`md:col-span-1 lg:col-span-4 grid gap-3 ${flightState.tripType === 'roundtrip' ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 <div className="relative pb-5">
                   <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày đi</label>
-                  <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" value={flightState.departureDate} onChange={(e) => handleChange(flightDispatch, 'departureDate', e.target.value)} />
+                  <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" value={flightState.departureDate} onChange={(e) => handleChange(flightDispatch, 'departureDate', e.target.value, errors, setErrors)} />
                   {errors.departureDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.departureDate}</p>}
                 </div>
                 {flightState.tripType === 'roundtrip' && (
                   <div className="relative pb-5">
                     <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ngày về</label>
-                    <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" value={flightState.returnDate} onChange={(e) => handleChange(flightDispatch, 'returnDate', e.target.value)} />
+                    <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" value={flightState.returnDate} onChange={(e) => handleChange(flightDispatch, 'returnDate', e.target.value, errors, setErrors)} />
                     {errors.returnDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.returnDate}</p>}
                   </div>
                 )}
@@ -660,14 +627,14 @@ function Dashboard() {
               <div className="md:col-span-1 lg:col-span-3 grid grid-cols-2 gap-3">
                 <div className="relative pb-5">
                   <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Hành khách</label>
-                  <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" value={flightState.passengers} onChange={(e) => handleChange(flightDispatch, 'passengers', e.target.value)}>
+                  <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" value={flightState.passengers} onChange={(e) => handleChange(flightDispatch, 'passengers', e.target.value, errors, setErrors)}>
                     {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Khách</option>)}
                   </select>
                   {errors.passengers && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.passengers}</p>}
                 </div>
                 <div className="relative pb-5">
                   <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Hạng vé</label>
-                  <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" value={flightState.class} onChange={(e) => handleChange(flightDispatch, 'class', e.target.value)}>
+                  <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" value={flightState.class} onChange={(e) => handleChange(flightDispatch, 'class', e.target.value, errors, setErrors)}>
                     <option value="economy">Phổ thông</option>
                     <option value="business">Thương gia</option>
                   </select>
@@ -676,9 +643,10 @@ function Dashboard() {
               </div>
             </div>
             <div className="md:col-span-2 lg:col-span-12 mt-6">
-              {/* <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleFlightSearch(e, false, false)} loading={loading} /> */}
+              {/* <SearchButton label="Google Sheet" color="emerald" onClick={(e) => handleFlightSearch(e, false, false)} loading={loading} />
               <SearchButton label="Amadeus" color="indigo" onClick={(e) => handleFlightSearch(e, true, false)} loading={loading} />
-              {/* <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleFlightSearch(e, false, true)} loading={loading} /> */}
+              <SearchButton label="Singapore Air" color="blue" onClick={(e) => handleFlightSearch(e, false, true)} loading={loading} /> */}
+              <SearchButton label="Tìm máy bay" color="emerald" onClick={handleFlightSearch} loading={loading} />
             </div>
           </div>
         );
@@ -688,39 +656,39 @@ function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 animate-in fade-in duration-500">
             <div className="md:col-span-2 lg:col-span-5 relative pb-5">
               <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Vị trí</label>
-              <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === hotelState.location)} onChange={opt => handleChange(hotelDispatch, 'location', opt?.value)} placeholder="Bạn muốn nghỉ ở đâu?" />
+              <Select options={airportOptions} styles={customSelectStyles} value={airportOptions.find((opt) => opt.value === hotelState.location)} onChange={opt => handleChange(hotelDispatch, 'location', opt?.value, errors, setErrors)} placeholder="Bạn muốn nghỉ ở đâu?" />
               {errors.location && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.location}</p>}
             </div>
             <div className="md:col-span-1 lg:col-span-4 grid grid-cols-2 gap-3">
               <div className="relative pb-5">
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Nhận phòng</label>
-                <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl font-bold text-sm shadow-sm" value={hotelState.checkInDate} onChange={(e) => handleChange(hotelDispatch, 'checkInDate', e.target.value)} />
+                <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl font-bold text-sm shadow-sm" value={hotelState.checkInDate} onChange={(e) => handleChange(hotelDispatch, 'checkInDate', e.target.value, errors, setErrors)} />
                 {errors.checkInDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.checkInDate}</p>}
               </div>
               <div className="relative pb-5">
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Trả phòng</label>
-                <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl font-bold text-sm shadow-sm" value={hotelState.checkOutDate} onChange={(e) => handleChange(hotelDispatch, 'checkOutDate', e.target.value)} />
+                <input type="date" className="w-full h-[48px] px-4 border border-slate-200 rounded-xl font-bold text-sm shadow-sm" value={hotelState.checkOutDate} onChange={(e) => handleChange(hotelDispatch, 'checkOutDate', e.target.value, errors, setErrors)} />
                 {errors.checkOutDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.checkOutDate}</p>}
               </div>
             </div>
             <div className="md:col-span-1 lg:col-span-3 grid grid-cols-2 gap-3">
               <div className="relative pb-5">
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Phòng</label>
-                <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm shadow-sm outline-none" value={hotelState.rooms} onChange={(e) => handleChange(hotelDispatch, 'rooms', e.target.value)}>
+                <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm shadow-sm outline-none" value={hotelState.rooms} onChange={(e) => handleChange(hotelDispatch, 'rooms', e.target.value, errors, setErrors)}>
                   {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Phòng</option>)}
                 </select>
                 {errors.rooms && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.rooms}</p>}
               </div>
               <div className="relative pb-5">
                 <label className="block text-[11px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Khách</label>
-                <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm shadow-sm outline-none" value={hotelState.guests} onChange={(e) => handleChange(hotelDispatch, 'guests', e.target.value)}>
+                <select className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm shadow-sm outline-none" value={hotelState.guests} onChange={(e) => handleChange(hotelDispatch, 'guests', e.target.value, errors, setErrors)}>
                   {[...Array(20)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Khách</option>)}
                 </select>
                 {errors.guests && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.guests}</p>}
               </div>
             </div>
             <div className="md:col-span-2 lg:col-span-12 mt-6">
-              <SearchButton label="Tìm Kiếm Khách Sạn" color="indigo" onClick={handleHotelSearch} loading={loading} />
+              <SearchButton label="Tìm khách sạn" color="emerald" onClick={handleHotelSearch} loading={loading} />
             </div>
           </div>
         );
@@ -737,7 +705,7 @@ function Dashboard() {
                   <button
                     key={type}
                     onClick={() => {
-                      handleChange(carDispatch, 'serviceType', type);
+                      handleChange(carDispatch, 'serviceType', type, errors, setErrors);
                       setErrors({}); // Xóa lỗi cũ khi đổi tab
                     }}
                     className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${
@@ -768,7 +736,7 @@ function Dashboard() {
                           placeholder="Nhập địa chỉ..."
                           className={`w-full h-[52px] pl-10 pr-4 bg-white border ${errors.pickupAddress ? 'border-red-500' : 'border-slate-200'} rounded-xl font-semibold text-sm outline-none focus:border-blue-500`}
                           value={carState.pickupAddress || ''}
-                          onChange={(e) => handleChange(carDispatch, 'pickupAddress', e.target.value)}
+                          onChange={(e) => handleChange(carDispatch, 'pickupAddress', e.target.value, errors, setErrors)}
                         />
                         {errors.pickupAddress && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickupAddress}</p>}
                       </div>
@@ -779,7 +747,7 @@ function Dashboard() {
                           styles={customSelectStyles}
                           placeholder="Chọn điểm..."
                           value={airportOptions.find(opt => opt.value === carState.pickup)}
-                          onChange={opt => handleChange(carDispatch, 'pickup', opt?.value)}
+                          onChange={opt => handleChange(carDispatch, 'pickup', opt?.value, errors, setErrors)}
                         />
                         {errors.pickup && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickup}</p>}
                       </div>
@@ -811,7 +779,7 @@ function Dashboard() {
                           placeholder="Nhập địa chỉ trả..."
                           className={`w-full h-[52px] pl-10 pr-4 bg-white border ${errors.dropoffAddress ? 'border-red-500' : 'border-slate-200'} rounded-xl font-semibold text-sm outline-none focus:border-blue-500`}
                           value={carState.dropoffAddress || ''}
-                          onChange={(e) => handleChange(carDispatch, 'dropoffAddress', e.target.value)}
+                          onChange={(e) => handleChange(carDispatch, 'dropoffAddress', e.target.value, errors, setErrors)}
                         />
                         {errors.dropoffAddress && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoffAddress}</p>}
                       </div>
@@ -822,7 +790,7 @@ function Dashboard() {
                           styles={customSelectStyles}
                           placeholder="Chọn điểm..."
                           value={airportOptions.find(opt => opt.value === carState.dropoff)}
-                          onChange={opt => handleChange(carDispatch, 'dropoff', opt?.value)}
+                          onChange={opt => handleChange(carDispatch, 'dropoff', opt?.value, errors, setErrors)}
                         />
                         {errors.dropoff && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoff}</p>}
                       </div>
@@ -840,7 +808,7 @@ function Dashboard() {
                         type="date"
                         className={`w-full h-[52px] pl-10 pr-2 border ${errors.pickupDate ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
                         value={carState.pickupDate || ''}
-                        onChange={(e) => handleChange(carDispatch, 'pickupDate', e.target.value)}
+                        onChange={(e) => handleChange(carDispatch, 'pickupDate', e.target.value, errors, setErrors)}
                       />
                     </div>
                     {errors.pickupDate && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickupDate}</p>}
@@ -859,7 +827,7 @@ function Dashboard() {
                             placeholder="1"
                             className={`w-full h-[52px] pl-10 pr-4 border ${errors.passengers ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
                             value={carState.passengers || ''}
-                            onChange={(e) => handleChange(carDispatch, 'passengers', e.target.value)}
+                            onChange={(e) => handleChange(carDispatch, 'passengers', e.target.value, errors, setErrors)}
                           />
                         </>
                       ) : (
@@ -869,7 +837,7 @@ function Dashboard() {
                             type="date"
                             className={`w-full h-[52px] pl-10 pr-2 border ${errors.dropoffDate ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
                             value={carState.dropoffDate || ''}
-                            onChange={(e) => handleChange(carDispatch, 'dropoffDate', e.target.value)}
+                            onChange={(e) => handleChange(carDispatch, 'dropoffDate', e.target.value, errors, setErrors, errors, setErrors)}
                           />
                         </>
                       )}
@@ -884,13 +852,7 @@ function Dashboard() {
         
                 {/* KHỐI 3: SEARCH */}
                 <div className="lg:col-span-2 pt-[22px]">
-                  <SearchButton 
-                    label="Tìm xe" 
-                    color="emerald" 
-                    onClick={handleCarSearch} 
-                    loading={loading}
-                    className="h-[52px] w-full"
-                  />
+                  <SearchButton label="Tìm xe" color="emerald" onClick={handleCarSearch} loading={loading} />
                 </div>
               </div>
             </div>
@@ -1086,46 +1048,16 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {cars.map((c, index) => (
-                <div key={c.id || index} className="group bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row">
-                  {/* Ảnh xe */}
-                  <div className="md:w-2/5 relative h-56 md:h-auto overflow-hidden">
-                    <img src={c.image || 'https://via.placeholder.com/400x300?text=Car'} alt={c.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-blue-600 uppercase">
-                      {c.type || 'Phổ thông'}
-                    </div>
-                  </div>
-
-                  {/* Nội dung chi tiết */}
-                  <div className="p-6 md:w-3/5 flex flex-col justify-between">
-                    <div>
-                      <h4 className="text-xl font-black text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">{c.name}</h4>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-500">
-                          <FaUsers className="text-blue-500" /> {c.seats || 5} chỗ
-                        </span>
-                        <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-500">
-                          <FaChair className="text-blue-500" /> {c.transmission || 'Số tự động'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 text-emerald-500 font-bold text-sm mb-4">
-                        <FaStar className="mb-0.5" /> <span>{c.rating || '4.9'}</span>
-                        <span className="text-slate-300 font-medium ml-1">({c.reviews || 120} đánh giá)</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                      <div>
-                        <span className="block text-[10px] font-bold text-slate-400 uppercase">Giá thuê 1 ngày</span>
-                        <span className="text-2xl font-black text-orange-600">{formatCurrency(c.price)}</span>
-                      </div>
-                      <button onClick={() => handleSelectCar(c)} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition transform flex items-center gap-2">
-                        Đặt xe <FaArrowRight />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <CarCard 
+                  key={c.id || index} 
+                  car={c} 
+                  onSelect={handleSelectCar}
+                  pickupDate={carState.pickupDate}
+                  dropoffDate={carState.dropoffDate}
+                  isTransfer={carState.serviceType === 'transfer'}
+                />
               ))}
             </div>
           </div>
@@ -1279,81 +1211,7 @@ function Dashboard() {
         </div>
       )}
         {renderResults()}
-        <div className="mt-16 max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-end mb-8">
-            <div>
-              <h3 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
-                <FaMapMarkerAlt className="text-blue-500 animate-bounce" /> 
-                Điểm đến phổ biến
-              </h3>
-              <p className="text-slate-500 mt-2 text-sm md:text-base">Gợi ý những hành trình tuyệt vời nhất dành cho bạn</p>
-            </div>
-          </div>
-
-          <Swiper
-            modules={[Navigation, Pagination, Autoplay]}
-            spaceBetween={20}
-            slidesPerView={1}
-            navigation
-            pagination={{ clickable: true, dynamicBullets: true }}
-            autoplay={{ delay: 4000, disableOnInteraction: false }}
-            breakpoints={{
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 4 },
-            }}
-            className="pb-14 destination-swiper"
-          >
-            {popularDestinations.map((dest, idx) => (
-              <SwiperSlide key={idx}>
-                <div 
-                  className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 h-full flex flex-col"
-                  onClick={() => {
-                    // Logic: Khi click vào card, tự điền điểm đến vào form search
-                    // setFormData(prev => ({ ...prev, destination: dest.name }));
-                    // window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                >
-                  <div className="relative h-64 overflow-hidden">
-                    <img 
-                      src={dest.image} 
-                      alt={dest.name} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
-                    <div className="absolute bottom-4 left-5">
-                      <h4 className="text-xl font-black text-white tracking-tight drop-shadow-lg">
-                        {dest.name}
-                      </h4>
-                      <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
-                        <FaMapMarkerAlt className="text-blue-400" /> {dest.location}
-                      </div>
-                    </div>
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-xl">
-                      <p className="text-[9px] text-slate-500 font-bold uppercase leading-none">{dest.priceLabel}</p>
-                      <p className="text-blue-600 font-black text-sm">{formatCurrency(dest.price)}</p>
-                    </div>
-                  </div>
-
-                  {/* Content Area */}
-                  <div className="p-5 flex flex-col flex-1">
-                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2 mb-5">
-                      {dest.description}
-                    </p>
-                    
-                    <div className="mt-auto flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Khám phá ngay</span>
-                      <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                        <FaArrowRight className="-rotate-45 group-hover:rotate-0 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
-
-        {/* <div className="mt-12">
+        <PopularDestinationsSwiper popularDestinations={popularDestinations} title="Địa điểm phổ biến" subtitle="Gợi ý những điểm tốt nhất dành cho bạn" onCardClick={(dest) => { /* logic tự điền form */ }} />        {/* <div className="mt-12">
           <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaGlobe className="text-green-500"/> Dịch vụ khác</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {otherServices.map((service, idx) => (
@@ -1369,185 +1227,14 @@ function Dashboard() {
           </div>
         </div> */}
 
-        <div className="mt-12">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaQuoteLeft className="text-purple-500"/> Đánh giá từ khách hàng</h3>
-          <Swiper
-            modules={[Navigation, Pagination, Autoplay]}
-            spaceBetween={20}
-            slidesPerView={1}
-            navigation
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 4000 }}
-            breakpoints={{
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-            }}
-            className="pb-10"
-          >
-            {testimonials.map((testimonial, idx) => (
-              <SwiperSlide key={idx}>
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 h-full">
-                  <div className="flex items-center mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <FaStar key={i} className={`text-yellow-400 ${i < Math.floor(testimonial.rating) ? 'fill-current' : 'opacity-30'}`} />
-                    ))}
-                  </div>
-                  <p className="text-sm text-slate-600 mb-4">"{testimonial.content}"</p>
-                  <span className="text-sm font-bold text-slate-800">- {testimonial.name}</span>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
-
-        <div className="mt-16 max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-              <FaBlog className="text-red-500 animate-pulse"/> Bài viết mới nhất
-            </h3>
-            <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors"
-                  onClick={() => {
-                    navigate('/blogs')
-                }}
-            >
-              Xem tất cả
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {blogPosts.map((post, idx) => (
-              <article 
-                key={idx} 
-                className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-500 flex flex-col h-full cursor-pointer"
-                onClick={() => {
-                  navigate('/blog/' + post.id)
-                }}
-              >
-                {/* Hình ảnh bài viết */}
-                <div className="relative h-52 overflow-hidden">
-                  <img 
-                    src={post.image} 
-                    alt={post.title} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                  />
-                  {/* Nhãn danh mục */}
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-tighter shadow-sm">
-                    {post.category || 'Tin tức'}
-                  </div>
-                </div>
-
-                {/* Nội dung bài viết */}
-                <div className="p-6 flex flex-col flex-1">
-                  {/* Ngày đăng */}
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 mb-3 uppercase tracking-widest">
-                    <span>{post.date || '22/12/2025'}</span>
-                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                    <span>5 phút đọc</span>
-                  </div>
-
-                  {/* Tiêu đề */}
-                  <h4 className="text-lg font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
-                    {post.title}
-                  </h4>
-
-                  {/* Mô tả ngắn */}
-                  <p className="text-sm text-slate-500 mb-6 line-clamp-3 leading-relaxed">
-                    {post.excerpt}
-                  </p>
-
-                  {/* Nút đọc thêm ở cuối */}
-                  <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
-                    <span className="text-sm font-black text-slate-700">Đọc thêm</span>
-                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all"
-                     
-                    >
-                      <span className="text-lg">→</span>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        {isLogged && purchases.length > 0 && (
-          <div className="mt-16">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FaReceipt className="text-blue-500"/> Lịch sử đặt vé</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {purchases.map((p, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-blue-50 p-2 rounded-lg text-blue-600 font-bold text-lg">{p.from}</div>
-                      <FaArrowLeft className="rotate-180 text-slate-300" />
-                      <div className="bg-blue-50 p-2 rounded-lg text-blue-600 font-bold text-lg">{p.to}</div>
-                    </div>
-                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${p.status === 'Đã hủy' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                      {p.status || 'Hoàn tất'}
-                    </span>
-                  </div>
-                  <div className="space-y-2 text-sm text-slate-600">
-                    <div className="flex justify-between">
-                      <span>Ngày mua:</span>
-                      <span className="font-medium">{new Date(p.date).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Tổng tiền:</span>
-                      <span className="font-bold text-slate-800">{formatCurrency(p.totalPrice || p.price)}</span>
-                    </div>
-                    {p.bankName && <div className="text-xs text-slate-400 mt-2 pt-2 border-t">TT qua {p.bankName}: {p.bankNote}</div>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <TestimonialsSwiper testimonials={testimonials} />
+        <BlogPostsGrid blogPosts={blogPosts} />
+        <PurchaseHistory isLogged={isLogged} purchases={purchases} title="Lịch sử đặt vé" />
       </main>
-      {bankGuide && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-fade-in">
-          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-md w-full relative">
-            <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><FaTimes className="text-xl" /></button>
-            <h3 className="text-xl font-bold text-green-600 mb-4 flex items-center gap-2">
-              <FaUniversity /> Chuyển khoản ngay
-            </h3>
-            <p className="text-sm text-slate-600 mb-4">Quét mã QR hoặc chuyển khoản thủ công trong <strong>{bankGuide.expireMinutes} phút</strong>.</p>
-            
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mb-6">
-              {bankGuide.vietQR ? (
-                <div className="flex justify-center mb-4">
-                  <img src={bankGuide.vietQR} alt="VietQR" className="w-48 h-48 rounded-xl shadow-md border-4 border-white" />
-                </div>
-              ) : null}
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Ngân hàng:</span> <span className="font-bold">{bankGuide.bank}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Số TK:</span> <span className="font-bold font-mono text-lg">{bankGuide.accountNumber}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Chủ TK:</span> <span className="font-bold">{bankGuide.accountName}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Nội dung:</span> <span className="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{bankGuide.content}</span></div>
-              <div className="flex justify-between text-sm items-center pt-2 border-t"><span className="text-slate-500">Số tiền:</span> <span className="font-black text-xl text-red-500">{formatCurrency(bankGuide.amount)}</span></div>
-            </div>
-            
-            <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">
-              Đã Chuyển Khoản Xong
-            </button>
-          </div>
-        </div>
-      )}
+      <BankGuideModal bankGuide={bankGuide} />
       <Footer />
     </div>
   );
 }
-const SearchButton = ({ label, color, onClick, loading }) => {
-  const colors = {
-    emerald: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200',
-    indigo: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200',
-    blue: 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'
-  };
-  return (
-    <button type="button" onClick={onClick} disabled={loading}
-      className={`h-[50px] ${colors[color]} text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2 w-full`}
-    >
-      {loading ? <FaSpinner className="animate-spin" /> : label}
-    </button>
-  );
-};
 
 export default Dashboard;

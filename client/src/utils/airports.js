@@ -1,0 +1,33 @@
+export const airports = {
+    HAN: { lat: 21.221111, lon: 105.807222, city: 'Hà Nội' },
+    SGN: { lat: 10.8188, lon: 106.6519, city: 'TP. Hồ Chí Minh' },
+    DAD: { lat: 16.043889, lon: 108.199444, city: 'Đà Nẵng' },
+    HPH: { lat: 20.819167, lon: 106.724722, city: 'Hải Phòng' },
+    VDO: { lat: 21.117778, lon: 107.414167, city: 'Vân Đồn' },
+    HUI: { lat: 16.401667, lon: 107.702778, city: 'Huế' },
+    PQC: { lat: 10.171667, lon: 103.991111, city: 'Phú Quốc' },
+    BMV: { lat: 12.668056, lon: 108.12, city: 'Buôn Ma Thuột' },
+    TBB: { lat: 13.049444, lon: 109.333611, city: 'Tuy Hòa' },
+    CAH: { lat: 9.175556, lon: 105.179444, city: 'Cà Mau' },
+    VCL: { lat: 15.406111, lon: 108.705556, city: 'Chu Lai' },
+    VCS: { lat: 8.7325, lon: 106.628889, city: 'Côn Đảo' },
+    VTG: { lat: 10.366667, lon: 107.083333, city: 'Vũng Tàu' },
+    VDH: { lat: 17.515, lon: 106.590556, city: 'Đồng Hới' },
+    PXU: { lat: 14.004444, lon: 108.017222, city: 'Pleiku' },
+    UIH: { lat: 13.955, lon: 109.042222, city: 'Quy Nhơn' },
+    VKG: { lat: 9.959722, lon: 105.133889, city: 'Rạch Giá' },
+    THD: { lat: 19.901667, lon: 105.467778, city: 'Thanh Hóa' },
+    DLI: { lat: 11.750556, lon: 108.373611, city: 'Đà Lạt' },
+    CXR: { lat: 11.998153, lon: 109.219372, city: 'Nha Trang' },
+    VCA: { lat: 10.085278, lon: 105.711944, city: 'Cần Thơ' },
+    VII: { lat: 18.7375, lon: 105.670833, city: 'Vinh' },
+    SIN: { lat: 1.3644, lon: 103.9915, city: 'Singapore' },
+    BKK: { lat: 13.6811, lon: 100.7472, city: 'Bangkok' },
+    TYO: { lat: 35.5523, lon: 139.7798, city: 'Tokyo' },
+    SEL: { lat: 37.4602, lon: 126.4407, city: 'Seoul' },
+  };
+  
+  export const airportOptions = Object.keys(airports).map((iata) => ({
+    value: iata,
+    label: `${airports[iata].city} (${iata})`,
+  }));

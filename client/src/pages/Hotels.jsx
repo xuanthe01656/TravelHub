@@ -12,6 +12,18 @@ import Select from 'react-select';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HotelCard from '../components/HotelCard';
+import reducer from '../utils/reducer';
+import { airports, airportOptions } from '../utils/airports';
+import formatCurrency from '../utils/formatCurrency';
+import handleChange from '../utils/handleChange';
+import useTokenHandler from '../hooks/useTokenHandler';
+import usePurchases from '../hooks/usePurchases';
+import BankGuideModal from '../components/Common/BankGuideModal';
+import PurchaseHistory from '../components/Common/PurchaseHistory';
+import TestimonialsSwiper from '../components/Common/TestimonialsSwiper';
+import BlogPostsGrid from '../components/Common/BlogPostsGrid';
+import PopularDestinationsSwiper from '../components/Common/PopularDestinationsSwiper';
+import SearchButton from '../components/Common/SearchButton';
 import {
   FaPlane, FaReceipt, FaCalendarAlt, FaGlobe, FaTimes, FaSpinner,
   FaWallet, FaUniversity, FaArrowLeft, FaTicketAlt, FaHotel,
@@ -27,17 +39,6 @@ const initialState = {
   rooms: 1,
   guests: 2,
 };
-
-function reducer(state, action) {
-  switch (action.type) {
-      case 'CHANGE':
-          return { ...state, [action.field]: action.value };
-      case 'RESET':
-          return initialState;
-      default:
-          return state;
-  }
-}
 
 const validationSchema = Yup.object({
   location: Yup.string().required('Vị trí không được để trống'),
@@ -63,40 +64,6 @@ const validationSchema = Yup.object({
   rooms: Yup.number().min(1, 'Số phòng ít nhất là 1').required(),
   guests: Yup.number().min(1, 'Số khách ít nhất là 1').required(),
 });
-
-const airports = {
-  HAN: { lat: 21.221111, lon: 105.807222, city: 'Hà Nội' },         
-  SGN: { lat: 10.8188, lon: 106.6519, city: 'TP. Hồ Chí Minh' },    
-  DAD: { lat: 16.043889, lon: 108.199444, city: 'Đà Nẵng' },
-  HPH: { lat: 20.819167, lon: 106.724722, city: 'Hải Phòng' },       
-  VDO: { lat: 21.117778, lon: 107.414167, city: 'Vân Đồn' },
-  HUI: { lat: 16.401667, lon: 107.702778, city: 'Huế' },             
-  PQC: { lat: 10.171667, lon: 103.991111, city: 'Phú Quốc' },
-  BMV: { lat: 12.668056, lon: 108.12, city: 'Buôn Ma Thuột' },
-  TBB: { lat: 13.049444, lon: 109.333611, city: 'Tuy Hòa' },
-  CAH: { lat: 9.175556, lon: 105.179444, city: 'Cà Mau' },
-  VCL: { lat: 15.406111, lon: 108.705556, city: 'Chu Lai' },
-  VCS: { lat: 8.7325, lon: 106.628889, city: 'Côn Đảo' },
-  VTG: { lat: 10.366667, lon: 107.083333, city: 'Vũng Tàu' },
-  VDH: { lat: 17.515, lon: 106.590556, city: 'Đồng Hới' },
-  PXU: { lat: 14.004444, lon: 108.017222, city: 'Pleiku' },
-  UIH: { lat: 13.955, lon: 109.042222, city: 'Quy Nhơn' },
-  VKG: { lat: 9.959722, lon: 105.133889, city: 'Rạch Giá' },
-  THD: { lat: 19.901667, lon: 105.467778, city: 'Thanh Hóa' },       
-  DLI: { lat: 11.750556, lon: 108.373611, city: 'Đà Lạt' },          
-  CXR: { lat: 11.998153, lon: 109.219372, city: 'Nha Trang' },       
-  VCA: { lat: 10.085278, lon: 105.711944, city: 'Cần Thơ' },         
-  VII: { lat: 18.7375, lon: 105.670833, city: 'Vinh' },
-  SIN: { lat: 1.3644, lon: 103.9915, city: 'Singapore' },
-  BKK: { lat: 13.6811, lon: 100.7472, city: 'Bangkok' },
-  TYO: { lat: 35.5523, lon: 139.7798, city: 'Tokyo' },
-  SEL: { lat: 37.4602, lon: 126.4407, city: 'Seoul' },
-};
-
-const airportOptions = Object.keys(airports).map((iata) => ({
-    value: iata,
-    label: `${airports[iata].city} (${iata})`,
-}));
 
 // Demo data - Tối ưu cho khách sạn
 const popularDestinations = [
@@ -198,23 +165,15 @@ const otherServices = [
   { icon: <FaTrain />, name: 'Vé Tàu', path: '/train' },
 ];
 
-const safeRender = (data) => {
-  if (typeof data === 'object' && data !== null) {
-    return data.name || data.code || 'N/A';
-  }
-  return data || 'N/A';
-};
-
-const formatCurrency = (n) => {
-  return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' VND';
-};
 
 function Hotels() {
-  const [hotelState, dispatch] = useReducer(reducer, initialState);
+  const [hotelState, hotelDispatch] = useReducer(reducer, initialState);
   const [errors, setErrors] = useState({});
   const [hotels, setHotels] = useState([]);
+  const isLogged = localStorage.getItem('token');
+  const handleTokenError = useTokenHandler();
+  const { purchases, fetchPurchases } = usePurchases(isLogged, handleTokenError);
   const [cheapHotels, setCheapHotels] = useState([]);
-  const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -224,23 +183,6 @@ function Hotels() {
   const navigate = useNavigate();
   const location = useLocation();
   const bankGuide = location.state?.bankGuide;
-  const isLogged = localStorage.getItem('token');
-  const tokenErrorHandled = useRef(false);
-  
-  const handleTokenError = (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      if (tokenErrorHandled.current) return true;
-      tokenErrorHandled.current = true;
-      localStorage.removeItem('token');
-      setUserProfile(null);
-      toast.error('Phiên đăng nhập hết hạn.');
-      if (!['/flights', '/hotels', '/cars', '/tours'].includes(window.location.pathname)) {
-        navigate('/login');
-      }
-      return true;
-    }
-    return false;
-  };
   
   useDocumentTitle('Đặt khách sạn');
   
@@ -275,30 +217,7 @@ function Hotels() {
       setCheapHotels(cheap);
     } catch (err) { console.error("Lỗi lấy khách sạn rẻ", err); }
   };
-
-  const fetchPurchases = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      const response = await axios.get('/api/purchases', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPurchases(response.data || []);
-    } catch (err) { handleTokenError(err); }
-  };
-
-  const handleChange = (field, value) => {
-    dispatch({ type: 'CHANGE', field, value });
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
-
-  const handleSearch = async (e) => {
+  const handleCarSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
     setHasSearched(true);
@@ -387,23 +306,23 @@ function Hotels() {
           className="w-full h-[180px] md:h-[320px]"
         >
           {[{
-            color: "from-indigo-600 to-purple-600",
-            title: "Khuyến Mãi Đặc Biệt",
-            desc: "Giảm tới 50% cho khách sạn nội địa.",
-            btn: "Khám Phá"
+            title: "Khuyến Mãi Khách Sạn",
+            desc: "Giảm tới 50% cho đặt phòng cao cấp.",
+            btn: "Khám Phá",
+            url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"
           }, {
-            color: "from-emerald-500 to-teal-500",
-            title: "Khách Sạn Quốc Tế Giá Sốc",
-            desc: "Chỉ từ 1.000.000 VND cho các khách sạn ASEAN.",
-            btn: "Đặt Ngay"
+            title: "Resort Nghỉ Dưỡng",
+            desc: "Ưu đãi đặc biệt cho kỳ nghỉ cuối tuần.",
+            btn: "Đặt Ngay",
+            url: "https://images.unsplash.com/photo-1520250491191-9276974f52f9?auto=format&fit=crop&w=800&q=80"
           }, {
-            color: "from-orange-500 to-rose-500",
-            title: "Nghỉ Dưỡng Cuối Tuần",
-            desc: "Ưu đãi phòng cho cặp đôi.",
-            btn: "Xem Ngay"
+            title: "Khách Sạn Trung Tâm",
+            desc: "Vị trí tiện lợi, dịch vụ 5 sao.",
+            btn: "Xem Ngay",
+            url: "https://images.unsplash.com/photo-1549637641-d69588745819?auto=format&fit=crop&w=800&q=80"
           }].map((banner, idx) => (
             <SwiperSlide key={idx}>
-              <div className={`bg-gradient-to-r ${banner.color} text-white w-full h-full flex flex-col items-center justify-center text-center p-4`}>
+              <div className={`relative bg-black/40 text-white w-full h-full flex flex-col items-center justify-center text-center p-4`} style={{ backgroundImage: `url(${banner.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <h2 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
                 <p className="text-sm md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
                 <button className="bg-white text-slate-900 px-6 py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
@@ -435,7 +354,7 @@ function Hotels() {
                     options={airportOptions} 
                     styles={customSelectStyles} 
                     value={airportOptions.find((opt) => opt.value === hotelState.location)} 
-                    onChange={opt => handleChange('location', opt?.value)} 
+                    onChange={opt => handleChange(hotelDispatch,'location', opt?.value,errors, setErrors)} 
                     placeholder="Bạn muốn nghỉ ở đâu?" 
                   />
                   {errors.location && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.location}</p>}
@@ -448,7 +367,7 @@ function Hotels() {
                       type="date" 
                       className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" 
                       value={hotelState.checkInDate} 
-                      onChange={(e) => handleChange('checkInDate', e.target.value)} 
+                      onChange={(e) => handleChange(hotelDispatch,'checkInDate', e.target.value,errors, setErrors)} 
                     />
                     {errors.checkInDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.checkInDate}</p>}
                   </div>
@@ -458,7 +377,7 @@ function Hotels() {
                       type="date" 
                       className="w-full h-[48px] px-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm text-slate-700 shadow-sm" 
                       value={hotelState.checkOutDate} 
-                      onChange={(e) => handleChange('checkOutDate', e.target.value)} 
+                      onChange={(e) => handleChange(hotelDispatch,'checkOutDate', e.target.value,errors, setErrors)} 
                     />
                     {errors.checkOutDate && <p className="text-red-500 text-[10px] mt-1 font-bold absolute left-0 bottom-0 leading-tight">{errors.checkOutDate}</p>}
                   </div>
@@ -470,7 +389,7 @@ function Hotels() {
                     <select 
                       className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" 
                       value={hotelState.rooms} 
-                      onChange={(e) => handleChange('rooms', e.target.value)}
+                      onChange={(e) => handleChange(hotelDispatch,'rooms', e.target.value,errors, setErrors)}
                     >
                       {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Phòng</option>)}
                     </select>
@@ -481,7 +400,7 @@ function Hotels() {
                     <select 
                       className="w-full h-[48px] px-3 border border-slate-200 rounded-xl bg-white font-bold text-sm text-slate-700 shadow-sm outline-none appearance-none cursor-pointer" 
                       value={hotelState.guests} 
-                      onChange={(e) => handleChange('guests', e.target.value)}
+                      onChange={(e) => handleChange(hotelDispatch,'guests', e.target.value,errors, setErrors)}
                     >
                       {[...Array(20)].map((_, i) => <option key={i+1} value={i+1}>{i+1} Khách</option>)}
                     </select>
@@ -491,12 +410,7 @@ function Hotels() {
               </div>
               
               <div className="grid grid-cols-1 mt-6 md:mt-8">
-                <SearchButton 
-                  label="Tìm Kiếm Khách Sạn" 
-                  color="indigo" 
-                  onClick={handleSearch} 
-                  loading={loading} 
-                />
+                <SearchButton label="Tìm khách sạn" color="emerald" onClick={handleCarSearch} loading={loading} />
               </div>
             </div>
           </form>
@@ -596,77 +510,7 @@ function Hotels() {
       )}
 
       {/* Popular Destinations */}
-      <div className="mt-12">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h3 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
-              <FaMapMarkerAlt className="text-blue-500 animate-bounce" /> Khách sạn phổ biến
-            </h3>
-          </div>
-        </div>    
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay]}
-          spaceBetween={20}
-          slidesPerView={1}
-          navigation
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 3000 }}
-          breakpoints={{
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 4 },
-          }}
-          className="pb-10"
-        >
-          {popularDestinations.map((dest, idx) => (
-              <SwiperSlide key={idx}>
-                <div 
-                  className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 h-full flex flex-col"
-                  onClick={() => {
-                    // Logic: Khi click vào card, tự điền điểm đến vào form search
-                    // setFormData(prev => ({ ...prev, destination: dest.name }));
-                    // window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                >
-                  <div className="relative h-64 overflow-hidden">
-                    <img 
-                      src={dest.image} 
-                      alt={dest.name} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
-                    <div className="absolute bottom-4 left-5">
-                      <h4 className="text-xl font-black text-white tracking-tight drop-shadow-lg">
-                        {dest.name}
-                      </h4>
-                      <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
-                        <FaMapMarkerAlt className="text-blue-400" /> {dest.location}
-                      </div>
-                    </div>
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-xl">
-                      <p className="text-[9px] text-slate-500 font-bold uppercase leading-none">{dest.priceLabel}</p>
-                      <p className="text-blue-600 font-black text-sm">{formatCurrency(dest.price)}</p>
-                    </div>
-                  </div>
-
-                  {/* Content Area */}
-                  <div className="p-5 flex flex-col flex-1">
-                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2 mb-5">
-                      {dest.description}
-                    </p>
-                    
-                    <div className="mt-auto flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Khám phá ngay</span>
-                      <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                        <FaArrowRight className="-rotate-45 group-hover:rotate-0 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-        </Swiper>
-      </div>
-
+      <PopularDestinationsSwiper popularDestinations={popularDestinations} title="Địa điểm thuê khách sạn phổ biến" subtitle="Gợi ý những điểm thuê khách sạn tốt nhất dành cho bạn" onCardClick={(dest) => { /* logic tự điền form */ }} />
       {/* Other Services */}
       <div className="mt-12">
         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
@@ -687,213 +531,17 @@ function Hotels() {
       </div>
 
       {/* Testimonials */}
-      <div className="mt-12">
-        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-          <FaQuoteLeft className="text-purple-500"/> Đánh giá từ khách hàng
-        </h3>
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay]}
-          spaceBetween={20}
-          slidesPerView={1}
-          navigation
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 4000 }}
-          breakpoints={{
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-          }}
-          className="pb-10"
-        >
-          {testimonials.map((testimonial, idx) => (
-            <SwiperSlide key={idx}>
-              <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 h-full">
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar key={i} className={`text-yellow-400 ${i < Math.floor(testimonial.rating) ? 'fill-current' : 'opacity-30'}`} />
-                  ))}
-                </div>
-                <p className="text-sm text-slate-600 mb-4">"{testimonial.content}"</p>
-                <span className="text-sm font-bold text-slate-800">- {testimonial.name}</span>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
-
+      <TestimonialsSwiper testimonials={testimonials} />
       {/* Blog Posts */}
-      <div className="mt-16 max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-              <FaBlog className="text-red-500 animate-pulse"/> Bài viết mới nhất
-            </h3>
-            <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors">
-              Xem tất cả
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {blogPosts.map((post, idx) => (
-              <article 
-                key={idx} 
-                className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-500 flex flex-col h-full cursor-pointer"
-                onClick={() => {
-                  navigate('/blog/' + post.id)
-                }}
-              >
-                {/* Hình ảnh bài viết */}
-                <div className="relative h-52 overflow-hidden">
-                  <img 
-                    src={post.image} 
-                    alt={post.title} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                  />
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-tighter shadow-sm">
-                    {post.category || 'Tin tức'}
-                  </div>
-                </div>
-                <div className="p-6 flex flex-col flex-1">
-                  {/* Ngày đăng */}
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 mb-3 uppercase tracking-widest">
-                    <span>{post.date || '22/12/2025'}</span>
-                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                    <span>5 phút đọc</span>
-                  </div>
-                  <h4 className="text-lg font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
-                    {post.title}
-                  </h4>
-                  <p className="text-sm text-slate-500 mb-6 line-clamp-3 leading-relaxed">
-                    {post.excerpt}
-                  </p>
-                  <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
-                    <span className="text-sm font-black text-slate-700">Đọc thêm</span>
-                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                      <span className="text-lg">→</span>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
+      <BlogPostsGrid blogPosts={blogPosts} />
       {/* Purchase History */}
-      {isLogged && purchases.length > 0 && (
-        <div className="mt-16">
-          <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <FaReceipt className="text-blue-500"/> Lịch sử đặt phòng
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {purchases.map((p, idx) => (
-              <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-50 p-2 rounded-lg text-blue-600 font-bold text-lg">{p.location || p.from}</div>
-                    <FaArrowLeft className="rotate-180 text-slate-300" />
-                    <div className="bg-blue-50 p-2 rounded-lg text-blue-600 font-bold text-lg">{p.name || p.to}</div>
-                  </div>
-                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${p.status === 'Đã hủy' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                    {p.status || 'Hoàn tất'}
-                  </span>
-                </div>
-                <div className="space-y-2 text-sm text-slate-600">
-                  <div className="flex justify-between">
-                    <span>Ngày đặt:</span>
-                    <span className="font-medium">{new Date(p.date).toLocaleDateString('vi-VN')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tổng tiền:</span>
-                    <span className="font-bold text-slate-800">{formatCurrency(p.totalPrice || p.price)}</span>
-                  </div>
-                  {p.bankName && <div className="text-xs text-slate-400 mt-2 pt-2 border-t">TT qua {p.bankName}: {p.bankNote}</div>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <PurchaseHistory isLogged={isLogged} purchases={purchases} title="Lịch sử đặt khách sạn" />
     </main>
-
     {/* Bank Guide Modal */}
-    {bankGuide && (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-fade-in">
-        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-md w-full relative">
-          <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-            <FaTimes className="text-xl" />
-          </button>
-          <h3 className="text-xl font-bold text-green-600 mb-4 flex items-center gap-2">
-            <FaUniversity /> Chuyển khoản ngay
-          </h3>
-          <p className="text-sm text-slate-600 mb-4">Quét mã QR hoặc chuyển khoản thủ công trong <strong>{bankGuide.expireMinutes} phút</strong>.</p>
-          
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mb-6">
-            {bankGuide.vietQR ? (
-              <div className="flex justify-center mb-4">
-                <img src={bankGuide.vietQR} alt="VietQR" className="w-48 h-48 rounded-xl shadow-md border-4 border-white" />
-              </div>
-            ) : null}
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Ngân hàng:</span> <span className="font-bold">{bankGuide.bank}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Số TK:</span> <span className="font-bold font-mono text-lg">{bankGuide.accountNumber}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Chủ TK:</span> <span className="font-bold">{bankGuide.accountName}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Nội dung:</span> <span className="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{bankGuide.content}</span></div>
-            <div className="flex justify-between text-sm items-center pt-2 border-t"><span className="text-slate-500">Số tiền:</span> <span className="font-black text-xl text-red-500">{formatCurrency(bankGuide.amount)}</span></div>
-          </div>
-          
-          <button onClick={() => navigate(location.pathname, { replace: true, state: {} })} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">
-            Đã Chuyển Khoản Xong
-          </button>
-        </div>
-      </div>
-    )}
+    <BankGuideModal bankGuide={bankGuide} />
 
     <Footer />
   </div>
 );
 }
-
-const SearchButton = ({ label, color, onClick, loading }) => {
-const colors = {
-  emerald: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200',
-  indigo: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200',
-  blue: 'bg-blue-500 hover:bg-blue-600 shadow-blue-200'
-};
-return (
-  <button type="button" onClick={onClick} disabled={loading}
-    className={`h-[50px] ${colors[color]} text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2`}
-  >
-    {loading ? <FaSpinner className="animate-spin" /> : label}
-  </button>
-);
-};
-
-const HotelRowLeg = ({ label, data, icon }) => {
-if (!data) return null;
-const hotelName = safeRender(data.name);
-return (
-  <div className="flex items-start gap-4">
-    <div className="bg-slate-100 p-3 rounded-full mt-1">{icon}</div>
-    <div className="flex-1">
-      <div className="flex justify-between items-center mb-1">
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-      </div>
-      <div className="flex items-center gap-4 mb-1">
-        <div>
-          <div className="text-lg font-black text-slate-800">{new Date(data.checkInDate).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
-          <div className="text-xs font-bold text-slate-500">Check-in</div>
-        </div>
-        <div className="flex-1 border-t-2 border-dotted border-slate-300 relative top-[-4px]"></div>
-        <div className="text-right">
-          <div className="text-lg font-black text-slate-800">{new Date(data.checkOutDate).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
-          <div className="text-xs font-bold text-slate-500">Check-out</div>
-        </div>
-      </div>
-      <div className="text-sm text-slate-600 flex items-center gap-2">
-        <span className="font-bold text-blue-700">{hotelName}</span>
-        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-        <span className="text-slate-500">{data.location}</span>
-      </div>
-    </div>
-  </div>
-);
-};
-
 export default Hotels;
