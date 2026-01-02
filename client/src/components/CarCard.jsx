@@ -19,8 +19,8 @@ const CarCard = ({ car, onSelect, pickupDate, dropoffDate, isTransfer }) => {
       {/* 1. Ảnh xe: Tỉ lệ khung hình cố định để tránh nhảy layout */}
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-50">
         <img 
-          src={car.image || `https://placehold.co/600x400?text=${encodeURIComponent(car.name)}`} 
-          alt={car.name} 
+          src={car.image || `https://placehold.co/600x400?text=${encodeURIComponent(car.vehicle.name || 'Car')}`} 
+          alt={car.vehicle.name} 
           className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
         />
         <div className="absolute top-3 left-3 md:top-4 md:left-4 bg-blue-600 text-white text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase">
@@ -44,12 +44,12 @@ const CarCard = ({ car, onSelect, pickupDate, dropoffDate, isTransfer }) => {
 
         {/* 3. Thông số kỹ thuật: Grid 2 cột nhỏ gọn */}
         <div className="grid grid-cols-2 gap-2">
-          <Badge icon={<FaUserFriends />} label={`${car.seats || 5} Ghế`} />
+          <Badge icon={<FaUserFriends />} label={`${car.vehicle.seats || 5} Ghế`} />
           
           {isTransfer ? (
-            <Badge icon={<FaSuitcase />} label={`${car.luggage || 2} Vali`} />
+            <Badge icon={<FaSuitcase />} label={`${car.vehicle.fuel || 2} Vali`} />
           ) : (
-            <Badge icon={<FaCog />} label={car.transmission || 'Tự động'} />
+            <Badge icon={<FaCog />} label={car.vehicle.transmission || 'Tự động'} />
           )}
 
           {!isTransfer && (
@@ -91,7 +91,7 @@ const CarCard = ({ car, onSelect, pickupDate, dropoffDate, isTransfer }) => {
           </span>
           <div className="flex items-baseline gap-0.5">
             <span className="text-lg md:text-xl font-black text-blue-600">
-              {(car.price || 0).toLocaleString()}
+              {(car.pricing.totalVND || 0).toLocaleString()}
             </span>
             <span className="text-[10px] font-bold text-blue-600">đ</span>
           </div>
