@@ -94,7 +94,15 @@ app.use(
           "https://d1ndzh98l6en5v.cloudfront.net", 
           "https://media.drivania.com",
           "https://io.groundspan.com",
-          "https://qa20.groundspan.com"
+          "https://qa20.groundspan.com",
+          "http://www.sapa-tour.net",
+          "https://image.vietnam.travel",
+          "https://i.natgeofe.com",
+          "https://sungetawaystravel.com",
+          "https://static.vinwonders.com",
+          "https://dynamic-media-cdn.tripadvisor.com",
+          "https://www.shutterstock.com",
+          "https://media.istockphoto.com"
         ],
         "script-src": ["'self'", "'unsafe-inline'"], // Cho phép chạy script của Vite
       },
