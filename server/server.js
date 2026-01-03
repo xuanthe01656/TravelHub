@@ -10,6 +10,7 @@ const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const app = express();
+const path = require("path");
 const port = process.env.PORT || 3001;
 const amadeus = require("./amadeus");
 const http = require('http');
@@ -33,7 +34,7 @@ const {
 // Danh sách sân bay (có thể mở rộng từ config)
 const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','VDO','DIN','VDH','THD','VCL','TBB','VKG','PXU','BMV','CAH','VCS'];  
   const server = http.createServer(app);
-
+  
   const io = new Server(server, {
     cors: {
       origin: "*", 
@@ -935,7 +936,8 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Internal Server Error' });
 });
-
+app.use(express.static(path.join(__dirname, "client/build"))); 
+  app.get((req, res) => { res.sendFile(path.join(__dirname, "client/build", "index.html")); });
 server.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
