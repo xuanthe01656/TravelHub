@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Circle, MessageCircle, ArrowLeft, MoreVertical } from 'lucide-react';
 
-// Khởi tạo socket ngoài component
-const socket = io("http://10.93.17.241:3001", {
+import { io } from "socket.io-client";
+
+const getSocketURL = () => {
+  if (window.location.protocol === 'https:') {
+    return "/"; 
+  }
+  return `http://${window.location.hostname}:3001`;
+};
+
+const socket = io(getSocketURL(), {
   transports: ["websocket"],
   reconnectionAttempts: 5
 });
-
 const AdminChat = () => {
   const [chats, setChats] = useState({});
   const [selectedId, setSelectedId] = useState(null);

@@ -58,11 +58,9 @@ function App() {
         <Route path="/admin-support" element={<AdminChat />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
-      {!isAdminPage && <ChatBox /> && <ContactWidgets />}
+      {!isAdminPage && <ContactWidgets />}
       {!isAdminPage && <ChatBox />}
       <BackToTop />
-      
-      {/* {localStorage.getItem('token') && <ChatBox />} */}
       <ToastContainer />
     </BrowserRouter>
   );

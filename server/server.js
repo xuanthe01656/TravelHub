@@ -39,8 +39,9 @@ const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','V
   
   const io = new Server(server, {
     cors: {
-      origin: "*", 
-      methods: ["GET", "POST"]
+      origin: true,
+      methods: ["GET", "POST"],
+      credentials: true
     }
   });
   
@@ -89,7 +90,10 @@ app.use(
         "connect-src": [
           "'self'", 
           "https://test.api.amadeus.com", 
-          "https://*.railway.app"
+          "wss://*.railway.app",
+          "https://*.railway.app",
+          "ws:",
+          "wss:"
         ],
         "img-src": ["'self'", "data:", "https:"],
         "script-src": [
