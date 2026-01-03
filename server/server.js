@@ -86,25 +86,18 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         "default-src": ["'self'"],
-        "connect-src": ["'self'", "https://test.api.amadeus.com", "https://travelhub-production.up.railway.app"],
-        "img-src": [
+        "connect-src": [
           "'self'", 
-          "data:", 
-          "https://images.unsplash.com", 
-          "https://d1ndzh98l6en5v.cloudfront.net", 
-          "https://media.drivania.com",
-          "https://io.groundspan.com",
-          "https://qa20.groundspan.com",
-          "http://www.sapa-tour.net",
-          "https://image.vietnam.travel",
-          "https://i.natgeofe.com",
-          "https://sungetawaystravel.com",
-          "https://static.vinwonders.com",
-          "https://dynamic-media-cdn.tripadvisor.com",
-          "https://www.shutterstock.com",
-          "https://media.istockphoto.com"
+          "https://test.api.amadeus.com", 
+          "https://*.railway.app"
         ],
-        "script-src": ["'self'", "'unsafe-inline'"], // Cho phép chạy script của Vite
+        "img-src": ["'self'", "data:", "https:"],
+        "script-src": [
+          "'self'", 
+          "'unsafe-inline'", 
+          "'unsafe-eval'"
+        ],
+        "style-src": ["'self'", "'unsafe-inline'"],
       },
     },
   })
