@@ -1,20 +1,26 @@
+// server.js - Backend Node.js/Express cho các API
 require('dotenv').config({ path: '../.env' });
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const http = require('http');
-const { Server } = require('socket.io');
 const cors = require('cors');
 const compression = require('compression');
 const helmet = require('helmet');
-const NodeCache = require('node-cache');
 const rateLimit = require('express-rate-limit');
 const app = express();
 const port = process.env.PORT || 3001;
 const amadeus = require("./amadeus");
+const http = require('http');
+const { Server } = require('socket.io');
+const axios = require("axios");
+//const Redis = require('ioredis');
+//const redis = new Redis(process.env.REDIS_URL);
+//redis.on('error', (err) => console.error('Redis Error:', err));
+const NodeCache = require('node-cache');
 const myCache = new NodeCache({ stdTTL: 1800, checkperiod: 600 });
+
 const {
   getUsers,
   addUser,
@@ -23,50 +29,53 @@ const {
   getPurchases,
   addPurchase,
 } = require('./sheetsService');
-const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: ["http://localhost:5173", "http://localhost:3001", "http://10.241.243.79:5173","http://10.203.17.131:5173"], 
-    methods: ["GET", "POST"]
-  }
-});
+// Danh sách sân bay (có thể mở rộng từ config)
+const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','VDO','DIN','VDH','THD','VCL','TBB','VKG','PXU','BMV','CAH','VCS'];  
+  const server = http.createServer(app);
 
-io.on('connection', (socket) => {
-  console.log("Kết nối mới:", socket.id);
-
-  // Khai báo vai trò
-  socket.on("join", (role) => {
-    if (role === "admin") {
-      socket.join("admin_group");
-      console.log(`Admin kết nối: ${socket.id}`);
+  const io = new Server(server, {
+    cors: {
+      origin: "*", 
+      methods: ["GET", "POST"]
     }
   });
-
-  // KHÁCH HÀNG GỬI (Khớp với client_msg trong ChatBox.jsx)
-  socket.on("client_msg", (data) => {
-    const payload = {
-      senderId: socket.id, // ID để admin biết ai nhắn
-      text: data.text,
-      time: new Date().toLocaleTimeString()
-    };
-    // Gửi cho nhóm admin (Khớp với admin_receive_msg trong AdminChat.jsx)
-    io.to("admin_group").emit("admin_receive_msg", payload);
-  });
-
-  // ADMIN PHẢN HỒI (Khớp với admin_reply_msg trong AdminChat.jsx)
-  socket.on("admin_reply_msg", ({ targetId, text }) => {
-    // Gửi về đúng khách hàng (Khớp với admin_reply trong ChatBox.jsx)
-    io.to(targetId).emit("admin_reply", {
-      text: text,
-      time: new Date().toLocaleTimeString()
+  
+  io.on('connection', (socket) => {
+    console.log("Kết nối mới:", socket.id);
+  
+    // Khai báo vai trò
+    socket.on("join", (role) => {
+      if (role === "admin") {
+        socket.join("admin_group");
+        console.log(`Admin kết nối: ${socket.id}`);
+      }
+    });
+  
+    // KHÁCH HÀNG GỬI (Khớp với client_msg trong ChatBox.jsx)
+    socket.on("client_msg", (data) => {
+      const payload = {
+        senderId: socket.id, // ID để admin biết ai nhắn
+        text: data.text,
+        time: new Date().toLocaleTimeString()
+      };
+      // Gửi cho nhóm admin (Khớp với admin_receive_msg trong AdminChat.jsx)
+      io.to("admin_group").emit("admin_receive_msg", payload);
+    });
+  
+    // ADMIN PHẢN HỒI (Khớp với admin_reply_msg trong AdminChat.jsx)
+    socket.on("admin_reply_msg", ({ targetId, text }) => {
+      // Gửi về đúng khách hàng (Khớp với admin_reply trong ChatBox.jsx)
+      io.to(targetId).emit("admin_reply", {
+        text: text,
+        time: new Date().toLocaleTimeString()
+      });
+    });
+  
+    socket.on('disconnect', () => {
+      console.log("Người dùng thoát:", socket.id);
     });
   });
-
-  socket.on('disconnect', () => {
-    console.log("Người dùng thoát:", socket.id);
-  });
-});
 // Middleware
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(helmet());
@@ -94,38 +103,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-
-// Map city to airport
-const cityToAirport = {
-    'hcm': 'SGN','hồ chí minh': 'SGN','tp hcm': 'SGN','sài gòn': 'SGN',
-    'ha noi': 'HAN','hà nội': 'HAN',
-    'da nang': 'DAD','đà nẵng': 'DAD',
-    'phu quoc': 'PQC','phú quốc': 'PQC',
-    'nha trang': 'CXR','cam ranh': 'CXR',
-    'can tho': 'VCA','cần thơ': 'VCA',
-    'vinh': 'VII',
-    'hue': 'HUI','huế': 'HUI','phu bai': 'HUI','phú bài': 'HUI',
-    'da lat': 'DLI','đà lạt': 'DLI','lien khuong': 'DLI','liên khương': 'DLI',
-    'hai phong': 'HPH','hải phòng': 'HPH','cat bi': 'HPH','cát bi': 'HPH',
-    'van don': 'VDO','vân đồn': 'VDO','quang ninh': 'VDO','quảng ninh': 'VDO',
-    'dien bien': 'DIN','điện biên': 'DIN',
-    'dong hoi': 'VDH','đồng hới': 'VDH','quang binh': 'VDH','quảng bình': 'VDH',
-    'thanh hoa': 'THD','thanh hóa': 'THD','tho xuan': 'THD','thọ xuân': 'THD',
-    'chu lai': 'VCL','quang nam': 'VCL','quảng nam': 'VCL',
-    'tuy hoa': 'TBB','tuy hòa': 'TBB','phu yen': 'TBB','phú yên': 'TBB',
-    'rach gia': 'VKG','rạch giá': 'VKG','kien giang': 'VKG','kiên giang': 'VKG',
-    'pleiku': 'PXU','gia lai': 'PXU',
-    'buon ma thuot': 'BMV','buôn ma thuột': 'BMV','dak lak': 'BMV','đắk lắk': 'BMV',
-    'ca mau': 'CAH','cà mau': 'CAH',
-    'con dao': 'VCS','côn đảo': 'VCS'
-  };  
-
-// function normalizeInput(input) {
-//   if (!input) return null;
-//   // Sử dụng normalize để loại bỏ dấu
-//   const key = input.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-//   return cityToAirport[key] || input.toUpperCase();
-// }
 // API Register
 app.post('/api/register', async (req, res) => {
   const { name, email, password } = req.body;
@@ -176,11 +153,9 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// API Session (Protected) - Dùng để kiểm tra token còn sống hay không
 app.get('/api/session', authenticateToken, (req, res) => {
   res.json({ loggedIn: true, user: req.user });
 });
-// API Get User Profile (Protected) - Dùng để lấy tên hiển thị
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
@@ -202,35 +177,31 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-//api flights
 const normalizeInput = (str) => str ? str.trim().toUpperCase() : null;
 const transformFlightOffer = (offer, dictionaries, numAdults) => {
   const getSegmentDetails = (itinerary) => {
     const firstSegment = itinerary.segments[0];
     const lastSegment = itinerary.segments[itinerary.segments.length - 1];
     
-    // Tổng hợp danh sách các hãng bay trong hành trình này
     const carrierCode = firstSegment.carrierCode;
     const carrierName = dictionaries.carriers[carrierCode] || carrierCode;
     const aircraftCode = firstSegment.aircraft.code;
     const aircraftName = dictionaries.aircraft[aircraftCode] || aircraftCode;
 
     return {
-      // Thông tin thời gian & địa điểm
       origin: firstSegment.departure.iataCode,
       destination: lastSegment.arrival.iataCode,
-      departureTime: firstSegment.departure.at, // ISO String
-      arrivalTime: lastSegment.arrival.at,      // ISO String
+      departureTime: firstSegment.departure.at, 
+      arrivalTime: lastSegment.arrival.at,      
       
-      // Thời lượng bay tổng (bao gồm cả thời gian transit)
       duration: itinerary.duration.replace('PT', '').replace('H', 'h ').replace('M', 'm'),
       
-      // Thông tin hãng bay & Chuyến bay
       flightNumber: `${firstSegment.carrierCode} ${firstSegment.number}`,
       airline: carrierName,
-      logo: `https://pics.avs.io/200/200/${firstSegment.carrierCode}.png`, // Logo hãng bay
+      logo: `https://pics.avs.io/200/200/${firstSegment.carrierCode}.png`, 
       aircraft: aircraftName,
       
+      // Kiểm tra xem có transit không
       stops: itinerary.segments.length - 1, 
       segments: itinerary.segments.map(seg => ({
         from: seg.departure.iataCode,
@@ -244,13 +215,12 @@ const transformFlightOffer = (offer, dictionaries, numAdults) => {
   const priceEUR = parseFloat(offer.price.total);
   const priceVND = Math.round(priceEUR * exchangeRate);
 
-  // Xử lý dữ liệu trả về thống nhất
   const result = {
     id: offer.id,
     type: offer.itineraries.length > 1 ? 'roundtrip' : 'oneway',
     price: {
-      total: priceVND * numAdults, // Tổng tiền thanh toán
-      perPassenger: priceVND,      // Giá vé lẻ
+      total: priceVND * numAdults, 
+      perPassenger: priceVND,
       currency: 'VND'
     },
     outbound: getSegmentDetails(offer.itineraries[0]),
@@ -273,24 +243,25 @@ app.get('/api/flights', async (req, res) => {
     const origin = normalizeInput(from);
     const destination = normalizeInput(to);
     const numAdults = parseInt(passengers, 10) || 1;
-    // 1. VALIDATION
+
     if (!origin || !destination || !departureDate) {
       return res.status(400).json({ message: 'Vui lòng nhập Điểm đi, Điểm đến và Ngày đi.' });
     }
-    // 2. CHECK CACHE
+
     const cacheKey = `flight:${origin}:${destination}:${departureDate}:${returnDate || ''}:${numAdults}:${seatClass}`;
-    const cachedData = myCache.get(cacheKey); // Sử dụng myCache (Node-Cache) đã tạo ở bài trước
+    const cachedData = myCache.get(cacheKey);
+    
     if (cachedData) {
       console.log(">>> Flight Cache Hit");
       return res.json(cachedData);
     }
-    // 3. PREPARE AMADEUS PARAMS
     const travelClassMap = {
       economy: 'ECONOMY',
       premium: 'PREMIUM_ECONOMY',
       business: 'BUSINESS',
       first: 'FIRST'
     };
+
     const amadeusParams = {
       originLocationCode: origin,
       destinationLocationCode: destination,
@@ -298,22 +269,20 @@ app.get('/api/flights', async (req, res) => {
       adults: numAdults,
       travelClass: travelClassMap[seatClass.toLowerCase()] || 'ECONOMY',
       currencyCode: 'EUR',
-      max: 20 // Giới hạn 20 kết quả để load cho nhanh
+      max: 20
     };
 
     if (tripType === 'roundtrip' && returnDate) {
       amadeusParams.returnDate = returnDate;
     }
+
     console.log(">>> Fetching Flights from Amadeus...");
-    // 4. CALL API
     const response = await amadeus.shopping.flightOffersSearch.get(amadeusParams);
-    // Amadeus trả về Dictionaries chứa tên đầy đủ của hãng bay và máy bay
+
     const dictionaries = response.result.dictionaries || { carriers: {}, aircraft: {} };
     const offers = response.data || [];
-    // 5. TRANSFORM DATA
-    const formattedResults = offers.map(offer => transformFlightOffer(offer, dictionaries, numAdults));
 
-    // 6. SAVE CACHE (TTL 15 phút - Giá vé máy bay biến động nhanh hơn khách sạn)
+    const formattedResults = offers.map(offer => transformFlightOffer(offer, dictionaries, numAdults));
     if (formattedResults.length > 0) {
       myCache.set(cacheKey, formattedResults, 900);
     }
@@ -323,7 +292,6 @@ app.get('/api/flights', async (req, res) => {
   } catch (err) {
     console.error('Flight API Error:', err);
     
-    // Xử lý lỗi đặc thù của Amadeus
     if (err.response) {
       const errorDetail = err.response.data?.errors?.[0];
       if (errorDetail?.code === 400 || errorDetail?.title === 'INVALID FORMAT') {
@@ -334,207 +302,404 @@ app.get('/api/flights', async (req, res) => {
     res.status(500).json({ message: 'Không tìm thấy chuyến bay phù hợp hoặc lỗi hệ thống.' });
   }
 });
-// API Get cheap flights (Public)
-app.get('/api/flights/cheap', async (req, res) => {
-  try {
-    const { lat, lng } = req.query;
-    let originCode = 'SGN'; // Mặc định là Sài Gòn
+  app.get('/api/flights/cheap', async (req, res) => {
+    try {
+      const { lat, lng } = req.query;
+      let originCode = 'SGN';
 
-    // 1. Nếu có GPS, tìm sân bay gần nhất
-    if (lat && lng) {
-      try {
-        const airportRes = await amadeus.referenceData.locations.airports.get({
-          longitude: lng,
-          latitude: lat,
-          sort: 'distance',
-          'page[limit]': 1
-        });
-        if (airportRes.data.length > 0) {
-          originCode = airportRes.data[0].iataCode;
+      // 1. Xác định sân bay xuất phát từ GPS (nếu có)
+      if (lat && lng) {
+        const cacheKeyAirport = `airport_${lat}_${lng}`;
+        const cachedAirport = myCache.get(cacheKeyAirport);
+
+        if (cachedAirport) {
+          originCode = cachedAirport;
+        } else {
+          try {
+            const airportRes = await amadeus.referenceData.locations.airports.get({
+              longitude: lng,
+              latitude: lat,
+              sort: 'distance',
+              'page[limit]': 1
+            });
+            if (airportRes.data.length > 0) {
+              originCode = airportRes.data[0].iataCode;
+              myCache.set(cacheKeyAirport, originCode);
+            }
+          } catch (e) {
+            console.error("Lỗi Amadeus (Airports):", e.code);
+          }
         }
-      } catch (e) {
-        console.error("Lỗi tìm sân bay qua GPS:", e.message);
       }
+
+      // 2. Kiểm tra cache
+      const cacheKeyFlights = `cheap_flights_${originCode}`;
+      const cachedFlights = myCache.get(cacheKeyFlights);
+      if (cachedFlights) {
+        console.log(`Trả về dữ liệu từ Cache cho: ${originCode}`);
+        return res.json(cachedFlights);
+      }
+
+      // 3. Tạo danh sách 7 ngày gần nhất (từ ngày mai)
+      const today = new Date();
+      today.setDate(today.getDate() + 1);
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        dates.push(d.toISOString().split('T')[0]);
+      }
+
+      // 4. Gọi API từng ngày, cách nhau 2s
+      const exchangeRate = 25400;
+      const allResults = [];
+
+      for (const date of dates) {
+        try {
+          const response = await amadeus.shopping.flightDestinations.get({
+            origin: originCode,
+            departureDate: date,
+            oneWay: true
+          });
+
+          const formatted = response.data.map(f => ({
+            origin: f.origin,
+            destination: f.destination,
+            departureDate: f.departureDate,
+            priceVND: Math.round(f.price.total * exchangeRate),
+            isGpsBased: !!(lat && lng)
+          }));
+
+          allResults.push(...formatted);
+        } catch (apiErr) {
+          if (apiErr.code === 'ClientError' && apiErr.response.statusCode === 429) {
+            return res.status(429).json({
+              message: "Hệ thống đang quá tải, vui lòng thử lại sau vài phút",
+              error: "Rate limit exceeded"
+            });
+          }
+          console.error("Lỗi Amadeus (Flights):", apiErr);
+        }
+
+        // Delay 2 giây trước khi gọi request tiếp theo
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      // 5. Lọc vé rẻ nhất cho mỗi điểm đến
+      const cheapestByDestination = {};
+      for (const flight of allResults) {
+        const dest = flight.destination;
+        if (!cheapestByDestination[dest] || flight.priceVND < cheapestByDestination[dest].priceVND) {
+          cheapestByDestination[dest] = flight;
+        }
+      }
+
+      let cheapestFlights = Object.values(cheapestByDestination);
+
+      // 6. Sắp xếp theo giá tăng dần và lấy top 10
+      cheapestFlights.sort((a, b) => a.priceVND - b.priceVND);
+      cheapestFlights = cheapestFlights.slice(0, 10);
+
+      // 7. Lưu cache và trả kết quả
+      myCache.set(cacheKeyFlights, cheapestFlights);
+      res.json(cheapestFlights);
+
+    } catch (err) {
+      console.error("Lỗi hệ thống:", err);
+      res.status(500).json({ message: "Không thể lấy thông tin vé máy bay" });
     }
+  });
 
-    // 2. Tìm vé rẻ trong 30 ngày tới từ originCode
-    const today = new Date();
-    const future = new Date();
-    future.setDate(today.getDate() + 30);
+  const transformHotelData = (offer) => ({
+    id: offer.hotel.hotelId,
+    name: offer.hotel.name,
+    location: {
+      lat: offer.hotel.latitude,
+      lng: offer.hotel.longitude
+    },
+    price: parseFloat(offer.offers[0].price.total),
+    currency: offer.offers[0].price.currency || 'VND',
+    roomType: offer.offers[0].room?.typeEstimated?.category || 'Standard',
+    amenities: offer.hotel.amenities || [],
+    image: `https://placehold.co/600x400?text=${encodeURIComponent(offer.hotel.name)}`
+  });
+  app.get('/api/hotels', async (req, res) => {
+    try {
+      const { location, checkInDate, checkOutDate, guests, rooms } = req.query;
+  
+      if (!location || !checkInDate || !checkOutDate) {
+        return res.status(400).json({ message: "Thiếu tham số tìm kiếm." });
+      }
+  
+      // 1. TẠO CACHE KEY
+      const cacheKey = `hotels_${location}_${checkInDate}_${checkOutDate}_${guests}_${rooms}`;
+  
+      // 2. KIỂM TRA CACHE TRONG RAM
+      const cachedData = myCache.get(cacheKey);
+      if (cachedData) {
+        console.log(">>> Lấy dữ liệu từ NODE-CACHE (RAM)");
+        return res.json(cachedData);
+      }
+  
+      console.log(">>> Gọi trực tiếp AMADEUS API");
+  
+      // 3. LẤY DANH SÁCH HOTEL ID THEO THÀNH PHỐ
+      const hotelList = await amadeus.referenceData.locations.hotels.byCity.get({
+        cityCode: location
+      });
+  
+      if (!hotelList.data || hotelList.data.length === 0) {
+        return res.json([]);
+      }
+  
+      const hotelIds = hotelList.data.slice(0, 40).map(h => h.hotelId).join(',');
+  
+      // 4. LẤY GIÁ PHÒNG THỰC TẾ
+      const response = await amadeus.shopping.hotelOffersSearch.get({
+        hotelIds,
+        adults: guests || 1,
+        checkInDate,
+        checkOutDate,
+        roomQuantity: rooms || 1,
+        currencyCode: 'VND',
+        bestRateOnly: true
+      });
+      const results = response.data.map(transformHotelData);
+      
+      if (results.length > 0) {
+        myCache.set(cacheKey, results); 
+      }
+  
+      res.json(results);
+  
+    } catch (error) {
+      console.error("Lỗi API:", error);
+      const statusCode = error.response?.status || 500;
+      res.status(statusCode).json({ 
+        message: error.response?.data?.errors?.[0]?.detail || "Lỗi hệ thống đặt phòng." 
+      });
+    }
+  });
+  const transformCarData = (data, isTransfer = false, rates = { EUR: 27000, USD: 25500, VND: 1 }) => {
+    if (!data) return null;
+  
+    // 1. Xử lý tiền tệ linh hoạt (Hỗ trợ EUR, USD, VND...)
+    const getPriceVND = () => {
+      let amount = 0;
+      let currency = 'EUR';
+  
+      if (isTransfer) {
+        // Dữ liệu Transfer: Ưu tiên converted, sau đó quotation
+        const priceSource = data.converted || data.quotation;
+        amount = parseFloat(priceSource?.monetaryAmount || 0);
+        currency = priceSource?.currencyCode || 'EUR';
+      } else {
+        // Dữ liệu Car Rental
+        amount = parseFloat(data.price?.total || 0);
+        currency = data.price?.currency || 'EUR';
+      }
+  
+      const rate = rates[currency] || rates['EUR']; // Mặc định dùng EUR nếu không khớp
+      return Math.round(amount * rate);
+    };
+  
+    const totalVND = getPriceVND();
+  
+    // 2. Logic cho ĐƯA ĐÓN (Transfer)
+    if (isTransfer) {
+      const seatCount = data.vehicle?.seats?.[0]?.count || 4;
+      const bagCount = data.vehicle?.baggages?.[0]?.count || 2;
+  
+      // Quy đổi quãng đường MI -> KM
+      let distanceValue = data.distance?.value || 0;
+      if (data.distance?.unit === 'MI') {
+        distanceValue = Math.round((distanceValue * 1.60934) * 10) / 10;
+      }
+      const distanceStr = distanceValue > 0 ? `Quãng đường: ${distanceValue} Km` : null;
+  
+      return {
+        id: data.id,
+        isTransfer: true, // Thêm flag để CarCard nhận diện
+        name: data.vehicle.description || "Xe đưa đón riêng",
+        vendor: data.serviceProvider?.name || "Đối tác vận chuyển",
+        image: data.vehicle.imageURL || "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2",
+        
+        vehicle: {
+          name: data.vehicle.description,
+          seats: seatCount,
+          transmission: 'Có tài xế',
+          fuel: bagCount // Trả về số lượng Vali để render cạnh icon Vali
+        },
+  
+        pricing: {
+          totalVND: totalVND,
+          currency: 'VND'
+        },
+  
+        category: data.vehicle.category === 'BU' ? 'Business' : 'Standard',
+        tags: [
+          ...(data.cancellationRules?.some(r => r.feeValue === "0") ? ["Hủy miễn phí"] : []),
+          ...(distanceStr ? [distanceStr] : [])
+        ],
+        pickupTime: data.start?.dateTime ? data.start.dateTime.split('T')[1].substring(0, 5) : '24/7'
+      };
+    }
+  
+    // 3. Logic cho TỰ LÁI (Rental)
+    return {
+      id: data.id,
+      isTransfer: false, // Flag nhận diện xe tự lái
+      name: data.vehicle?.description || "Xe tự lái",
+      vendor: data.provider?.name || "Đối tác uy tín",
+      image: data.image || `https://placehold.co/600x400?text=${data.vehicle?.category}`,
+      
+      vehicle: {
+        name: data.vehicle?.description,
+        seats: data.vehicle?.nbSeats || 5,
+        transmission: data.vehicle?.transmissionType === 'Automatic' ? 'Tự động' : 'Số sàn',
+        fuel: data.vehicle?.fuelType || 'Xăng/Dầu'
+      },
+  
+      pricing: {
+        totalVND: totalVND,
+        currency: 'VND'
+      },
+  
+      category: data.vehicle?.category || 'Tiêu chuẩn',
+      tags: [],
+      pickupTime: null
+    };
+  };
+  app.get('/api/cars', async (req, res) => {
+    try {
+      const {
+        serviceType,
+        pickup, pickupAddress, pickupLat, pickupLon,
+        dropoff, dropoffAddress, dropoffLat, dropoffLon,
+        pickupDate, dropoffDate,
+        passengers = 1, cityName, postalCode, pickupCountry, dropoffCountry
+      } = req.query;
+  
+      // Cache Key
+      const cacheKey = `cars_${serviceType}_${pickup || pickupLat}_${dropoff || dropoffLat}_${pickupDate}`;
+      const cached = myCache.get(cacheKey);
+      if (cached) return res.json(cached);
+      const rates = { 
+        USD: 25400, 
+        EUR: 27200, 
+        VND: 1 
+      };
+      let result = [];
+  
+      if (serviceType === 'rental') {
+        // --- THUÊ XE TỰ LÁI (Giữ nguyên logic cũ) ---
+        const response = await amadeus.shopping.carRentals.get({
+          pickUpLocation: pickup,
+          pickUpDate: pickupDate.split('T')[0],
+          ...(dropoffDate && { dropOffDate: dropoffDate.split('T')[0] })
+        });
+        if (response.data) {
+          result = response.data.map(car => transformCarData(car,false, rates));
+        }
+  
+      } else if (serviceType === 'transfer') {
+        const formatAddr = (addr) => {
+        if (!addr) return "";
+            let clean = addr.replace(/\r?\n|\r/g, " ").trim();
+            return clean.length > 35 ? clean.substring(0, 32) + "..." : clean;
+        };
+    
+        const transferBody = {
+            startDateTime: pickupDate.includes('T') 
+                ? (pickupDate.length === 16 ? `${pickupDate}:00` : pickupDate) 
+                : `${pickupDate}T10:00:00`,
+            passengers: parseInt(passengers),
+            transferType: "PRIVATE"
+        };
+    
+        // 2. Xử lý Điểm đón (Start)
+        if (pickup && pickup.length === 3) {
+            transferBody.startLocationCode = pickup.toUpperCase();
+        } else {
+            // Cắt ngắn addressLine để tránh lỗi 11823
+            transferBody.startAddressLine = formatAddr(pickupAddress);
+            transferBody.startCityName = cityName || "DA NANG";
+            transferBody.startZipCode = postalCode || "84236";
+            transferBody.startCountryCode = pickupCountry || "VN";
+            transferBody.startGeoCode = `${pickupLat},${pickupLon}`;
+        }
+    
+        // 3. Xử lý Điểm trả (End) tương tự
+        if (dropoff && dropoff.length === 3) {
+            transferBody.endLocationCode = dropoff.toUpperCase();
+        } else {
+            transferBody.endAddressLine = formatAddr(dropoffAddress);
+            transferBody.endCityName = cityName || "DA NANG";
+            transferBody.endZipCode = postalCode || "84236";
+            transferBody.endCountryCode = dropoffCountry || "VN";
+            transferBody.endGeoCode = `${dropoffLat},${dropoffLon}`;
+        }
+  
+        console.log(">>> Body Transfer gửi Amadeus (Flattened):", JSON.stringify(transferBody));
+  
+        try {
+          // Gửi POST với body phẳng
+          const response = await amadeus.shopping.transferOffers.post(JSON.stringify(transferBody));
+          console.log(JSON.stringify(response.result.data));
+          if (response.result && response.result.data) {
+            result = response.result.data.map(offer => transformCarData(offer,true, rates));
+            console.log(`>>> Tìm thấy ${result.length} xe đưa đón.`);
+          }
+        } catch (err) {
+          console.error(">>> Lỗi chi tiết từ Amadeus:", err.response?.result?.errors || err.message);
+          result = [];
+        }
+      }
+  
+      myCache.set(cacheKey, result);
+      res.json(result);
+  
+    } catch (err) {
+      console.error("--- Lỗi API Tổng ---", err);
+      res.status(500).json([]);
+    }
+  });
+const geoCache = new NodeCache({ stdTTL: 3600 }); // cache 1h
 
-    const response = await amadeus.shopping.flightDestinations.get({
-      origin: originCode,
-      departureDate: `${today.toISOString().split('T')[0]},${future.toISOString().split('T')[0]}`,
-      oneWay: true
+app.get("/api/geocode", async (req, res) => {
+  const { q } = req.query;
+  if (!q || q.length < 3) return res.json([]);
+
+  const cached = geoCache.get(q);
+  if (cached) return res.json(cached);
+
+  try {
+    const { data } = await axios.get("https://nominatim.openstreetmap.org/search", {
+      params: { q, format: "json", addressdetails: 1, limit: 5 },
+      headers: { "User-Agent": "travel-webapp-amadeus" }
     });
 
-    const exchangeRate = 25400; // Tỉ giá USD/VND
-
-    // 3. Map dữ liệu về cấu trúc chuẩn để Frontend dễ đọc
-    const formatted = response.data.map(f => ({
-      origin: f.origin,
-      destination: f.destination,
-      departureDate: f.departureDate,
-      priceVND: Math.round(f.price.total * exchangeRate),
-      isGpsBased: !!(lat && lng) // Đánh dấu nếu đây là vé tìm theo vị trí
+    const result = data.map(item => ({
+      fullAddress: item.display_name,
+      latitude: Number(item.lat),
+      longitude: Number(item.lon),
+      country: item.address?.country_code?.toUpperCase()
     }));
 
-    res.json(formatted);
+    geoCache.set(q, result);
+    res.json(result);
   } catch (err) {
-    console.error("Amadeus API Error:", err);
-    res.status(500).json({ message: "Lỗi hệ thống" });
+    console.error("Geocode error:", err);
+    if (err.response) {
+      res.status(err.response.status).json({ error: "Geocode failed", status: err.response.status, data: err.response.data });
+    } else if (err.request) {
+      res.status(500).json({ error: "No response from geocode service", details: err.message });
+    } else {
+      res.status(500).json({ error: "Geocode request setup failed", details: err.message });
+    }
   }
 });
-// API hotels
-const transformHotelData = (offer) => ({
-  id: offer.hotel.hotelId,
-  name: offer.hotel.name,
-  location: {
-    lat: offer.hotel.latitude,
-    lng: offer.hotel.longitude
-  },
-  price: parseFloat(offer.offers[0].price.total),
-  currency: offer.offers[0].price.currency || 'VND',
-  roomType: offer.offers[0].room?.typeEstimated?.category || 'Standard',
-  amenities: offer.hotel.amenities || [],
-  image: `https://placehold.co/600x400?text=${encodeURIComponent(offer.hotel.name)}`
-});
-app.get('/api/hotels', async (req, res) => {
-  try {
-    const { location, checkInDate, checkOutDate, guests, rooms } = req.query;
 
-    if (!location || !checkInDate || !checkOutDate) {
-      return res.status(400).json({ message: "Thiếu tham số tìm kiếm." });
-    }
-
-    // 1. TẠO CACHE KEY
-    const cacheKey = `hotels_${location}_${checkInDate}_${checkOutDate}_${guests}_${rooms}`;
-
-    // 2. KIỂM TRA CACHE TRONG RAM
-    const cachedData = myCache.get(cacheKey);
-    if (cachedData) {
-      console.log(">>> Lấy dữ liệu từ NODE-CACHE (RAM)");
-      return res.json(cachedData);
-    }
-
-    console.log(">>> Gọi trực tiếp AMADEUS API");
-
-    // 3. LẤY DANH SÁCH HOTEL ID THEO THÀNH PHỐ
-    const hotelList = await amadeus.referenceData.locations.hotels.byCity.get({
-      cityCode: location
-    });
-
-    if (!hotelList.data || hotelList.data.length === 0) {
-      return res.json([]);
-    }
-
-    const hotelIds = hotelList.data.slice(0, 40).map(h => h.hotelId).join(',');
-
-    // 4. LẤY GIÁ PHÒNG THỰC TẾ
-    const response = await amadeus.shopping.hotelOffersSearch.get({
-      hotelIds,
-      adults: guests || 1,
-      checkInDate,
-      checkOutDate,
-      roomQuantity: rooms || 1,
-      currencyCode: 'VND',
-      bestRateOnly: true
-    });
-
-    // 5. CHUYỂN ĐỔI VÀ LƯU VÀO CACHE
-    const results = response.data.map(transformHotelData);
-    
-    if (results.length > 0) {
-      // Lưu vào cache với key vừa tạo
-      myCache.set(cacheKey, results); 
-    }
-
-    res.json(results);
-
-  } catch (error) {
-    console.error("Lỗi API:", error);
-    const statusCode = error.response?.status || 500;
-    res.status(statusCode).json({ 
-      message: error.response?.data?.errors?.[0]?.detail || "Lỗi hệ thống đặt phòng." 
-    });
-  }
-});
-// API cars
-const transformCarData = (car, exchangeRate = 25400) => {
-  return {
-    id: car.id,
-    provider: car.provider.name,
-    vehicle: {
-      name: car.vehicle.description,
-      type: car.vehicle.category,
-      transmission: car.vehicle.transmissionType === 'Automatic' ? 'Tự động' : 'Số sàn',
-      fuel: car.vehicle.fuelType || 'Xăng/Dầu',
-      seats: car.vehicle.nbSeats || 5
-    },
-    pricing: {
-      totalEUR: parseFloat(car.price.total),
-      totalVND: Math.round(car.price.total * exchangeRate),
-      currency: 'VND'
-    },
-    // Ảnh giả lập dựa trên loại xe (vì API xe thường không trả về link ảnh trực tiếp)
-    image: `https://source.unsplash.com/800x600/?car,${car.vehicle.category.toLowerCase()}`
-  };
-};
- app.get('/api/cars', async (req, res) => {
-  try {
-    const { pickup, pickupDate, dropoffDate } = req.query;
-
-    // 1. Validation
-    if (!pickup || !pickupDate) {
-      return res.status(400).json({ message: "Thiếu địa điểm hoặc ngày nhận xe." });
-    }
-
-    // 2. Kiểm tra Cache (In-memory)
-    const cacheKey = `cars_${pickup}_${pickupDate}_${dropoffDate || ''}`;
-    const cachedCars = myCache.get(cacheKey);
-    if (cachedCars) {
-      console.log(">>> Lấy dữ liệu xe từ CACHE");
-      return res.json(cachedCars);
-    }
-
-    console.log(">>> Gọi Amadeus Car Rental API");
-
-    // 3. Gọi Amadeus API
-    // Lưu ý: Trong môi trường Sandbox, Car Rental chủ yếu có dữ liệu tại các sân bay lớn (IATA)
-    const response = await amadeus.shopping.carRentals.get({
-      pickUpLocation: pickup, // Ví dụ: 'SGN'
-      pickUpDate: pickupDate,         // Định dạng: YYYY-MM-DD
-      // Nếu có ngày trả xe thì thêm vào, nếu không Amadeus mặc định thuê trong 1 ngày
-      ...(dropoffDate && { dropoffDate }) 
-    });
-
-    if (!response.data || response.data.length === 0) {
-      return res.json([]);
-    }
-
-    // 4. Mapping dữ liệu qua Adapter
-    const exchangeRate = 25400; // Có thể lấy từ một API tỷ giá khác để chính xác hơn
-    const formattedCars = response.data.map(car => transformCarData(car, exchangeRate));
-
-    // 5. Lưu vào Cache (Thời gian sống 30 phút)
-    myCache.set(cacheKey, formattedCars);
-
-    res.json(formattedCars);
-
-  } catch (err) {
-    console.error("--- Lỗi API Cars ---", err);
-    
-    // Phân loại lỗi
-    if (err.code === 'NetworkError') {
-      return res.status(503).json({ message: "Không thể kết nối tới dịch vụ thuê xe." });
-    }
-
-    // Với Sandbox, nếu địa điểm không hỗ trợ thuê xe, Amadeus thường trả về lỗi 400
-    // Trong trường hợp đó ta trả về mảng rỗng để không làm sập giao diện Frontend
-    res.json([]); 
-  }
-});
-// API Buy ticket (Protected)
 app.post('/api/buy-ticket', authenticateToken, async (req, res) => {
   try {
     const { flightId, outboundId, returnId, passengers, class: seatClass, method } = req.body;
@@ -772,5 +937,5 @@ app.use((err, req, res, next) => {
 });
 
 server.listen(port, () => {
-  console.log(`Server & Socket running on http://localhost:${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
