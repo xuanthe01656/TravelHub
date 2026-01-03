@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "init-tailwind": "node node_modules/tailwindcss/dist/lib.js init -p",
-    "start": "node client/src/server/server.js"
+    "start": "node server/server.js"
   },
   "keywords": [],
   "author": "",
