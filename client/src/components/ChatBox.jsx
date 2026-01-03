@@ -25,7 +25,11 @@ const ChatBox = () => {
     useEffect(() => {
         // Lắng nghe phản hồi RIÊNG từ Admin gửi cho mình
         socket.on("admin_reply", (data) => {
-            setMessages((prev) => [...prev, { ...data, sender: 'admin' }]);
+            setMessages((prev) => [...prev, { 
+                ...data, 
+                sender: 'admin',
+                time: data.timestamp ? new Date(data.timestamp).toLocaleTimeString('vi-VN') : new Date().toLocaleTimeString('vi-VN')
+            }]);
         });
 
         return () => socket.off("admin_reply");
@@ -39,7 +43,7 @@ const ChatBox = () => {
         if (message.trim()) {
             const msgData = { 
                 text: message, 
-                senderId: socket.id, // Gửi ID của mình để admin biết là ai
+                senderId: socket.id,
                 time: new Date().toLocaleTimeString() 
             };
             
