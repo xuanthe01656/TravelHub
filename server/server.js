@@ -81,7 +81,26 @@ const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','V
   });
 // Middleware
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        "default-src": ["'self'"],
+        "connect-src": ["'self'", "https://test.api.amadeus.com", "https://travelhub-production.up.railway.app"],
+        "img-src": [
+          "'self'", 
+          "data:", 
+          "https://images.unsplash.com", 
+          "https://d1ndzh98l6en5v.cloudfront.net", 
+          "https://media.drivania.com",
+          "https://io.groundspan.com",
+          "https://qa20.groundspan.com"
+        ],
+        "script-src": ["'self'", "'unsafe-inline'"], // Cho phép chạy script của Vite
+      },
+    },
+  })
+);
 app.use(compression());
 app.use(bodyParser.json());
 
