@@ -21,7 +21,7 @@ const axios = require("axios");
 //redis.on('error', (err) => console.error('Redis Error:', err));
 const NodeCache = require('node-cache');
 const myCache = new NodeCache({ stdTTL: 1800, checkperiod: 600 });
-
+app.use(express.static(path.join(__dirname, '../dist')));
 const {
   getUsers,
   addUser,
