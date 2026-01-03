@@ -44,7 +44,7 @@ const ChatBox = () => {
             const msgData = { 
                 text: message, 
                 senderId: socket.id,
-                time: new Date().toLocaleTimeString() 
+                time: new Date().toLocaleTimeString('vi-VN') 
             };
             
             // Gửi cho Server để chuyển tới Admin
