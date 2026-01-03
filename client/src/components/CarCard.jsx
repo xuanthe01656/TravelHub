@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   FaUserFriends, FaCog, FaGasPump, FaArrowRight, 
-  FaSnowflake, FaSuitcase, FaClock, FaCalendarAlt 
+  FaSnowflake, FaSuitcase, FaClock, FaCalendarAlt, FaRoute 
 } from 'react-icons/fa';
 
 const CarCard = ({ car, onSelect, pickupDate, dropoffDate, isTransfer }) => {
@@ -16,14 +16,14 @@ const CarCard = ({ car, onSelect, pickupDate, dropoffDate, isTransfer }) => {
   return (
     <div className="group flex flex-col bg-white rounded-[24px] md:rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden h-full">
       
-      {/* 1. Ảnh xe: Tỉ lệ khung hình cố định để tránh nhảy layout */}
+      {/* 1. Ảnh xe */}
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-50">
         <img 
-          src={car.image || `https://placehold.co/600x400?text=${encodeURIComponent(car.vehicle.name || 'Car')}`} 
-          alt={car.vehicle.name} 
+          src={car.image || `https://placehold.co/600x400?text=${encodeURIComponent(car.vehicle?.name || 'Car')}`} 
+          alt={car.vehicle?.name} 
           className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
         />
-        <div className="absolute top-3 left-3 md:top-4 md:left-4 bg-blue-600 text-white text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase">
+        <div className={`absolute top-3 left-3 md:top-4 md:left-4 text-white text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase ${isTransfer ? 'bg-indigo-600' : 'bg-blue-600'}`}>
           {isTransfer ? 'Đưa đón' : (car.category || 'Tự lái')}
         </div>
       </div>
@@ -42,24 +42,32 @@ const CarCard = ({ car, onSelect, pickupDate, dropoffDate, isTransfer }) => {
           </p>
         </div>
 
-        {/* 3. Thông số kỹ thuật: Grid 2 cột nhỏ gọn */}
+        {/* 3. Thông số kỹ thuật - Grid 2 cột */}
         <div className="grid grid-cols-2 gap-2">
-          <Badge icon={<FaUserFriends />} label={`${car.vehicle.seats || 5} Ghế`} />
+          <Badge icon={<FaUserFriends />} label={`${car.vehicle?.seats || 5} Ghế`} />
           
           {isTransfer ? (
-            <Badge icon={<FaSuitcase />} label={`${car.vehicle.fuel || 2} Vali`} />
+            <Badge icon={<FaSuitcase />} label={`${car.vehicle?.fuel || 2} Vali`} />
           ) : (
-            <Badge icon={<FaCog />} label={car.vehicle.transmission || 'Tự động'} />
+            <Badge icon={<FaCog />} label={car.vehicle?.transmission || 'Tự động'} />
           )}
 
-          {!isTransfer && (
-            <Badge icon={<FaGasPump />} label={car.fuelType || 'Xăng'} />
+          {/* HIỂN THỊ QUÃNG ĐƯỜNG: 
+              Nếu là Transfer, hiển thị quãng đường (lấy từ tags hoặc thuộc tính distance)
+              Nếu là Rental, hiển thị loại nhiên liệu */}
+          {isTransfer ? (
+            <Badge 
+              icon={<FaRoute className="text-green-500" />} 
+              label={car.tags?.find(t => t.includes('Quãng đường')) || 'Nội thành'} 
+            />
+          ) : (
+            <Badge icon={<FaGasPump />} label={car.vehicle?.fuel || 'Xăng'} />
           )}
 
-          <Badge icon={<FaSnowflake />} label="Máy lạnh" />
+          <Badge icon={<FaSnowflake className="text-cyan-400" />} label="Máy lạnh" />
         </div>
 
-        {/* 4. Lịch trình: Responsive linh hoạt */}
+        {/* 4. Lịch trình */}
         <div className="mt-auto bg-slate-50 rounded-xl md:rounded-2xl p-3 border border-slate-100">
           {isTransfer ? (
             <div className="flex items-center justify-center gap-4">
@@ -83,36 +91,35 @@ const CarCard = ({ car, onSelect, pickupDate, dropoffDate, isTransfer }) => {
         </div>
       </div>
 
-      {/* 5. Footer giá tiền: Luôn nằm dưới cùng */}
+      {/* 5. Footer giá tiền */}
       <div className="bg-slate-50/80 p-4 md:p-5 flex items-center justify-between border-t border-slate-100 mt-auto">
         <div className="flex flex-col">
           <span className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase leading-none mb-1">
-            {isTransfer ? 'Giá từ' : 'Giá / ngày'}
+            {isTransfer ? 'Tổng phí (VND)' : 'Giá / ngày'}
           </span>
           <div className="flex items-baseline gap-0.5">
             <span className="text-lg md:text-xl font-black text-blue-600">
-              {(car.pricing.totalVND || 0).toLocaleString()}
+              {(car.pricing?.totalVND || 0).toLocaleString('vi-VN')}
             </span>
-            <span className="text-[10px] font-bold text-blue-600">đ</span>
+            <span className="text-[10px] font-bold text-blue-600 ml-0.5">đ</span>
           </div>
         </div>
         <button 
           onClick={() => onSelect(car)} 
           className="px-4 py-2.5 md:px-6 md:py-3 bg-blue-600 text-white rounded-xl md:rounded-2xl font-black text-[10px] md:text-[11px] shadow-lg shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
         >
-          {isTransfer ? 'ĐẶT NGAY' : 'CHỌN XE'} <FaArrowRight size={10} />
+          {isTransfer ? 'ĐẶT XE' : 'CHỌN XE'} <FaArrowRight size={10} />
         </button>
       </div>
     </div>
   );
 };
 
-// --- Sub-components để code sạch hơn ---
-
+// Sub-components
 const Badge = ({ icon, label }) => (
-  <div className="flex items-center gap-2 text-slate-600 bg-white/50 p-2 rounded-lg md:rounded-xl border border-slate-100">
-    <span className="text-blue-500 text-[10px] md:text-xs">{icon}</span>
-    <span className="text-[9px] md:text-[10px] font-bold truncate">{label}</span>
+  <div className="flex items-center gap-2 text-slate-600 bg-white/50 p-2 rounded-lg md:rounded-xl border border-slate-100 overflow-hidden">
+    <span className="text-blue-500 text-[10px] md:text-xs shrink-0">{icon}</span>
+    <span className="text-[9px] md:text-[10px] font-bold truncate italic">{label}</span>
   </div>
 );
 

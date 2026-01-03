@@ -243,6 +243,8 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const bankGuide = location.state?.bankGuide;
+  const [activeField, setActiveField] = useState(null); 
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
   useDocumentTitle('Trang chủ');
   useEffect(() => {
     fetchCheapFlights();
@@ -378,29 +380,90 @@ function Dashboard() {
     e.preventDefault();
     setLoading(true);
     setHasSearched(true);
+  
     try {
+      // 1. Validate dữ liệu
       await carValidationSchema.validate(carState, { abortEarly: false });
       setErrors({});
-      const response = await axios.get('/api/cars', { params: carState });
+  
+      // 2. Chuẩn bị Payload sạch (chỉ gửi những gì cần thiết)
+      const isTransfer = carState.serviceType === 'transfer';
+      const isToAirport = carState.transferDirection === 'to_airport';
+  
+      const cleanParams = {
+        serviceType: carState.serviceType,
+        pickupDate: carState.pickupDate,
+        passengers: carState.passengers,
+        // Rental
+        dropoffDate: !isTransfer ? carState.dropoffDate : undefined,
+        driverAge: !isTransfer ? carState.driverAge : undefined,
+      };
+  
+      // 3. Logic xử lý Điểm đón/trả thông minh
+      if (isTransfer) {
+        if (isToAirport) {
+          // Đi từ nhà (Địa chỉ) -> Sân bay (IATA)
+          cleanParams.pickupAddress = carState.pickupAddress;
+          cleanParams.pickupLat = carState.pickupLat;
+          cleanParams.pickupLon = carState.pickupLon;
+          cleanParams.dropoff = carState.dropoff; // Mã IATA sân bay
+        } else {
+          // Đi từ Sân bay (IATA) -> Nhà (Địa chỉ)
+          cleanParams.pickup = carState.pickup; // Mã IATA sân bay
+          cleanParams.dropoffAddress = carState.dropoffAddress;
+          cleanParams.dropoffLat = carState.dropoffLat;
+          cleanParams.dropoffLon = carState.dropoffLon;
+        }
+      } else {
+        // Nếu là Rental: Thường chỉ dùng mã IATA sân bay
+        cleanParams.pickup = carState.pickup;
+        cleanParams.dropoff = carState.dropoff || carState.pickup;
+      }
+  
+      console.log(">>> Gửi API với params:", cleanParams);
+  
+      // 4. Gọi API
+      const response = await axios.get('/api/cars', { params: cleanParams });
       let results = response.data || [];
+  
+      // 5. Sắp xếp & Hiển thị
       results.sort((a, b) => sortBy === 'price' ? (a.price ?? 0) - (b.price ?? 0) : 0);
       setCars(results);
       toast.success(`Tìm thấy ${results.length} xe!`);
+  
     } catch (err) {
       if (err.name === 'ValidationError') {
         const formattedErrors = {};
-        if (err.inner && err.inner.length > 0) {
-          err.inner.forEach((error) => {
-            if (error.path) formattedErrors[error.path] = error.message;
-          });
-        } else if (err.path) {
-          formattedErrors[err.path] = err.message;
-        }
+        err.inner?.forEach((error) => {
+          if (error.path) formattedErrors[error.path] = error.message;
+        });
         setErrors(formattedErrors);
+        toast.error("Vui lòng kiểm tra lại thông tin!");
+      } else {
+        console.error("Lỗi tìm kiếm:", err);
+        toast.error("Không thể tìm thấy xe phù hợp.");
       }
-      
     } finally {
       setLoading(false);
+    }
+  };
+  const searchAddress = async (text, field) => {
+    if (text.length < 3) {
+      setAddressSuggestions([]);
+      setActiveField(null);
+      return;
+    }
+    // Đánh dấu field nào đang được tìm kiếm để hiển thị dropdown đúng vị trí
+    setActiveField(field); 
+
+    try {
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(text)}`);
+      const data = await res.json();
+      // Đảm bảo data trả về có cấu trúc: [{ fullAddress, lat, lon }, ...]
+      setAddressSuggestions(data);
+    } catch (error) {
+      console.error("Lỗi Geocoding:", error);
+      setAddressSuggestions([]);
     }
   };
   const handleSelectFlight = (flight) => {
@@ -700,7 +763,7 @@ function Dashboard() {
         case 'cars':
           const isTransfer = carState.serviceType === 'transfer';
           const isToAirport = carState.transferDirection === 'to_airport';
-        
+
           return (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-6xl mx-auto p-4">
               {/* TABS DỊCH VỤ */}
@@ -710,7 +773,7 @@ function Dashboard() {
                     key={type}
                     onClick={() => {
                       handleChange(carDispatch, 'serviceType', type, errors, setErrors);
-                      setErrors({}); // Xóa lỗi cũ khi đổi tab
+                      setErrors({});
                     }}
                     className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${
                       carState.serviceType === type 
@@ -722,42 +785,61 @@ function Dashboard() {
                   </button>
                 ))}
               </div>
-        
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* KHỐI 1: ĐỊA ĐIỂM (6 cột) */}
+                {/* KHỐI 1: ĐỊA ĐIỂM */}
                 <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-[1fr_48px_1fr] gap-2 items-start">
                   
-                  {/* CỘT TRÁI: PICKUP */}
+                  {/* CỘT TRÁI: PICKUP (Điểm đón) */}
                   <div className="relative min-h-[85px]">
                     <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">
                       {isTransfer ? (isToAirport ? 'Điểm đón (Nhà/KS)' : 'Sân bay đón') : 'Điểm nhận xe'}
                     </label>
+                    
                     {isTransfer && isToAirport ? (
+                      // Trường hợp Đưa đi sân bay: Nhập địa chỉ thủ công
                       <div className="relative group">
-                        <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500" />
+                        <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                           type="text"
-                          placeholder="Nhập địa chỉ..."
+                          placeholder="Nhập địa chỉ đón..."
                           className={`w-full h-[52px] pl-10 pr-4 bg-white border ${errors.pickupAddress ? 'border-red-500' : 'border-slate-200'} rounded-xl font-semibold text-sm outline-none focus:border-blue-500`}
                           value={carState.pickupAddress || ''}
-                          onChange={(e) => handleChange(carDispatch, 'pickupAddress', e.target.value, errors, setErrors)}
+                          onChange={(e) => {
+                            handleChange(carDispatch, 'pickupAddress', e.target.value, errors, setErrors);
+                            searchAddress(e.target.value, 'pickup');
+                          }}
                         />
-                        {errors.pickupAddress && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickupAddress}</p>}
+                        {/* Gợi ý cho Pickup */}
+                        {activeField === 'pickup' && addressSuggestions.length > 0 && (
+                          <ul className="absolute z-[100] bg-white border rounded-xl mt-1 w-full max-h-60 overflow-y-auto shadow-2xl">
+                            {addressSuggestions.map((sug, idx) => (
+                              <li key={idx} onClick={() => {
+                                handleChange(carDispatch, 'pickupAddress', sug.fullAddress, errors, setErrors);
+                                handleChange(carDispatch, 'pickupLat', sug.latitude, errors, setErrors);
+                                handleChange(carDispatch, 'pickupLon', sug.longitude, errors, setErrors);
+                                handleChange(carDispatch, 'pickupCountry', sug.country, errors, setErrors);
+                                setAddressSuggestions([]);
+                              }} className="px-3 py-3 cursor-pointer hover:bg-blue-50 text-sm border-b last:border-none">
+                                {sug.fullAddress}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     ) : (
-                      <div className="relative">
-                        <Select
-                          options={airportOptions}
-                          styles={customSelectStyles}
-                          placeholder="Chọn điểm..."
-                          value={airportOptions.find(opt => opt.value === carState.pickup)}
-                          onChange={opt => handleChange(carDispatch, 'pickup', opt?.value, errors, setErrors)}
-                        />
-                        {errors.pickup && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickup}</p>}
-                      </div>
+                      // Trường hợp Thuê xe HOẶC Đón từ sân bay: Chọn List Sân bay
+                      <Select
+                        options={airportOptions}
+                        styles={customSelectStyles}
+                        placeholder="Chọn sân bay..."
+                        value={airportOptions.find(opt => opt.value === carState.pickup)}
+                        onChange={opt => handleChange(carDispatch, 'pickup', opt?.value, errors, setErrors)}
+                      />
                     )}
+                    {errors.pickup && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickup}</p>}
                   </div>
-        
+
                   {/* NÚT CHUYỂN ĐỔI */}
                   <div className="flex justify-center pt-8">
                     <button
@@ -769,55 +851,76 @@ function Dashboard() {
                       <FaArrowRight className={isToAirport ? '' : 'rotate-180'} />
                     </button>
                   </div>
-        
-                  {/* CỘT PHẢI: DROPOFF */}
+
+                  {/* CỘT PHẢI: DROPOFF (Điểm trả) */}
                   <div className="relative min-h-[85px]">
                     <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">
                       {isTransfer ? (isToAirport ? 'Sân bay đến' : 'Điểm trả (Nhà/KS)') : 'Điểm trả xe'}
                     </label>
+
                     {isTransfer && !isToAirport ? (
+                      // Trường hợp Đón từ sân bay về nhà: Nhập địa chỉ trả thủ công
                       <div className="relative group">
-                        <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500" />
+                        <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                           type="text"
                           placeholder="Nhập địa chỉ trả..."
                           className={`w-full h-[52px] pl-10 pr-4 bg-white border ${errors.dropoffAddress ? 'border-red-500' : 'border-slate-200'} rounded-xl font-semibold text-sm outline-none focus:border-blue-500`}
                           value={carState.dropoffAddress || ''}
-                          onChange={(e) => handleChange(carDispatch, 'dropoffAddress', e.target.value, errors, setErrors)}
+                          onChange={(e) => {
+                            handleChange(carDispatch, 'dropoffAddress', e.target.value, errors, setErrors);
+                            searchAddress(e.target.value, 'dropoff');
+                          }}
                         />
-                        {errors.dropoffAddress && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoffAddress}</p>}
+                        {/* Gợi ý cho Dropoff */}
+                        {activeField === 'dropoff' && addressSuggestions.length > 0 && (
+                          <ul className="absolute z-[100] bg-white border rounded-xl mt-1 w-full max-h-60 overflow-y-auto shadow-2xl">
+                            {addressSuggestions.map((sug, idx) => (
+                              <li key={idx} onClick={() => {
+                                handleChange(carDispatch, 'dropoffAddress', sug.fullAddress, errors, setErrors);
+                                handleChange(carDispatch, 'dropoffLat', sug.latitude, errors, setErrors);
+                                handleChange(carDispatch, 'dropoffLon', sug.longitude, errors, setErrors);
+                                handleChange(carDispatch, 'dropoffCountry', sug.country, errors, setErrors);
+                                setAddressSuggestions([]);
+                              }} className="px-3 py-3 cursor-pointer hover:bg-blue-50 text-sm border-b last:border-none">
+                                {sug.fullAddress}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     ) : (
-                      <div className="relative">
-                        <Select
-                          options={airportOptions}
-                          styles={customSelectStyles}
-                          placeholder="Chọn điểm..."
-                          value={airportOptions.find(opt => opt.value === carState.dropoff)}
-                          onChange={opt => handleChange(carDispatch, 'dropoff', opt?.value, errors, setErrors)}
-                        />
-                        {errors.dropoff && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoff}</p>}
-                      </div>
+                      // Trường hợp Thuê xe HOẶC Đi ra sân bay: Chọn List Sân bay
+                      <Select
+                        options={airportOptions}
+                        styles={customSelectStyles}
+                        placeholder="Chọn sân bay..."
+                        value={airportOptions.find(opt => opt.value === carState.dropoff)}
+                        onChange={opt => handleChange(carDispatch, 'dropoff', opt?.value, errors, setErrors)}
+                      />
                     )}
+                    {errors.dropoff && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.dropoff}</p>}
                   </div>
                 </div>
-        
-                {/* KHỐI 2: THỜI GIAN & KHÁCH (4 cột) */}
+
+                {/* KHỐI 2: THỜI GIAN & KHÁCH */}
                 <div className="lg:col-span-4 grid grid-cols-2 gap-3 items-start">
                   <div className="relative min-h-[85px]">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">Ngày đón</label>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">
+                      {isTransfer ? 'Ngày & Giờ đón' : 'Ngày nhận xe'}
+                    </label>
                     <div className="relative">
-                      <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      {isTransfer ? <FaClock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /> : <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />}
                       <input
-                        type="date"
+                        type={isTransfer ? "datetime-local" : "date"}
                         className={`w-full h-[52px] pl-10 pr-2 border ${errors.pickupDate ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
                         value={carState.pickupDate || ''}
                         onChange={(e) => handleChange(carDispatch, 'pickupDate', e.target.value, errors, setErrors)}
+                        min={isTransfer ? new Date().toISOString().slice(0, 16) : new Date().toISOString().split('T')[0]}
                       />
                     </div>
-                    {errors.pickupDate && <p className="text-red-500 text-[10px] mt-1 absolute font-bold">{errors.pickupDate}</p>}
                   </div>
-        
+
                   <div className="relative min-h-[85px]">
                     <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 ml-1">
                       {isTransfer ? 'Số khách' : 'Ngày trả'}
@@ -828,7 +931,7 @@ function Dashboard() {
                           <FaUserFriends className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                           <input
                             type="number"
-                            placeholder="1"
+                            min="1"
                             className={`w-full h-[52px] pl-10 pr-4 border ${errors.passengers ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
                             value={carState.passengers || ''}
                             onChange={(e) => handleChange(carDispatch, 'passengers', e.target.value, errors, setErrors)}
@@ -841,19 +944,14 @@ function Dashboard() {
                             type="date"
                             className={`w-full h-[52px] pl-10 pr-2 border ${errors.dropoffDate ? 'border-red-500' : 'border-slate-200'} rounded-xl font-bold text-sm outline-none focus:border-blue-500`}
                             value={carState.dropoffDate || ''}
-                            onChange={(e) => handleChange(carDispatch, 'dropoffDate', e.target.value, errors, setErrors, errors, setErrors)}
+                            onChange={(e) => handleChange(carDispatch, 'dropoffDate', e.target.value, errors, setErrors)}
                           />
                         </>
                       )}
                     </div>
-                    {errors[isTransfer ? 'passengers' : 'dropoffDate'] && (
-                      <p className="text-red-500 text-[10px] mt-1 absolute font-bold">
-                        {errors[isTransfer ? 'passengers' : 'dropoffDate']}
-                      </p>
-                    )}
                   </div>
                 </div>
-        
+
                 {/* KHỐI 3: SEARCH */}
                 <div className="lg:col-span-2 pt-[22px]">
                   <SearchButton label="Tìm xe" color="emerald" onClick={handleCarSearch} loading={loading} />
@@ -1053,16 +1151,16 @@ function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {cars.map((c, index) => (
-                <CarCard 
-                  key={c.id || index} 
-                  car={c} 
-                  onSelect={handleSelectCar}
-                  pickupDate={carState.pickupDate}
-                  dropoffDate={carState.dropoffDate}
-                  isTransfer={carState.serviceType === 'transfer'}
-                />
-              ))}
+            {cars.map((c, index) => (
+              <CarCard 
+                key={c.id || index} 
+                car={c} 
+                onSelect={handleSelectCar}
+                pickupDate={carState.pickupDate}
+                dropoffDate={carState.dropoffDate}
+                isTransfer={carState.serviceType === 'transfer'}
+              />
+            ))}
             </div>
           </div>
         );
