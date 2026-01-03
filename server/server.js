@@ -937,7 +937,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal Server Error' });
 });
 app.use(express.static(path.join(__dirname, "client/build"))); 
-  app.get((req, res) => { res.sendFile(path.join(__dirname, "client/build", "index.html")); });
+  app.get('/*',(req, res) => { res.sendFile(path.join(__dirname, "client/build", "index.html")); });
 server.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
