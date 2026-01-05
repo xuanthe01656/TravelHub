@@ -220,15 +220,11 @@ const transformFlightOffer = (offer, dictionaries, numAdults) => {
       destination: lastSegment.arrival.iataCode,
       departureTime: firstSegment.departure.at, 
       arrivalTime: lastSegment.arrival.at,      
-      
       duration: itinerary.duration.replace('PT', '').replace('H', 'h ').replace('M', 'm'),
-      
       flightNumber: `${firstSegment.carrierCode} ${firstSegment.number}`,
       airline: carrierName,
       logo: `https://pics.avs.io/200/200/${firstSegment.carrierCode}.png`, 
       aircraft: aircraftName,
-      
-      // Kiểm tra xem có transit không
       stops: itinerary.segments.length - 1, 
       segments: itinerary.segments.map(seg => ({
         from: seg.departure.iataCode,
@@ -239,25 +235,39 @@ const transformFlightOffer = (offer, dictionaries, numAdults) => {
   };
 
   const exchangeRate = 25500;
-  const priceEUR = parseFloat(offer.price.total);
-  const priceVND = Math.round(priceEUR * exchangeRate);
 
-  const result = {
+  // Ưu tiên lấy giá chi tiết theo từng hành khách
+  let totalPriceEUR = 0;
+  let perPassengerEUR = 0;
+
+  if (offer.travelerPricings && offer.travelerPricings.length > 0) {
+    const prices = offer.travelerPricings.map(tp => parseFloat(tp.price.total));
+    totalPriceEUR = prices.reduce((sum, p) => sum + p, 0);
+    perPassengerEUR = totalPriceEUR / prices.length;
+  } else {
+    // fallback nếu không có travelerPricings
+    totalPriceEUR = parseFloat(offer.price.grandTotal || offer.price.total);
+    perPassengerEUR = totalPriceEUR / numAdults;
+  }
+
+  const totalPriceVND = Math.round(totalPriceEUR * exchangeRate);
+  const perPassengerVND = Math.round(perPassengerEUR * exchangeRate);
+
+  return {
     id: offer.id,
     type: offer.itineraries.length > 1 ? 'roundtrip' : 'oneway',
     price: {
-      total: priceVND * numAdults, 
-      perPassenger: priceVND,
+      total: totalPriceVND,
+      perPassenger: perPassengerVND,
       currency: 'VND'
     },
     outbound: getSegmentDetails(offer.itineraries[0]),
     inbound: offer.itineraries[1] ? getSegmentDetails(offer.itineraries[1]) : null,
-    bookingToken: offer.id, 
+    bookingToken: offer.id,
     validatingAirlineCodes: offer.validatingAirlineCodes
   };
-
-  return result;
 };
+
 app.get('/api/flights', async (req, res) => {
   try {
     let {
