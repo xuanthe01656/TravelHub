@@ -84,7 +84,7 @@ function Register() {
         </div>
 
         {/* Đăng ký nhanh với Google */}
-        <button type="button" className="w-full flex items-center justify-center gap-3 py-3.5 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-[0.98] mb-8">
+        <button onClick={() => window.location.href = `${import.meta.env.VITE_SERVER_URL}/auth/google`} type="button" className="w-full flex items-center justify-center gap-3 py-3.5 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-[0.98] mb-8">
           <FcGoogle className="text-2xl" />
           <span>Đăng ký nhanh qua Google</span>
         </button>

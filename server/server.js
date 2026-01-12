@@ -16,6 +16,10 @@ const amadeus = require("./amadeus");
 const http = require('http');
 const { Server } = require('socket.io');
 const axios = require("axios");
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
+const crypto = require('crypto');
 //const Redis = require('ioredis');
 //const redis = new Redis(process.env.REDIS_URL);
 //redis.on('error', (err) => console.error('Redis Error:', err));
@@ -130,6 +134,129 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: `${process.env.SERVER_URL}/auth/google/callback`
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const users = await getUsers();
+    const email = profile.emails[0].value;
+    let user = users.find(u => u.email === email);
+
+    if (!user) {
+      // Tạo user mới nếu chưa tồn tại
+      user = {
+        id: Date.now().toString(),
+        name: profile.displayName,
+        email: email,
+        passwordHash: '', // Không cần password cho social login
+        provider: 'google',
+        providerId: profile.id
+      };
+      await addUser(user);
+    } else if (user.provider && user.provider !== 'google') {
+      return done(null, false, { message: 'Email đã đăng ký bằng phương thức khác' });
+    }
+
+    return done(null, user);
+  } catch (err) {
+    return done(err);
+  }
+}));
+
+passport.use(new FacebookStrategy({
+  clientID: process.env.FACEBOOK_APP_ID,
+  clientSecret: process.env.FACEBOOK_APP_SECRET,
+  callbackURL: `${process.env.SERVER_URL}/auth/facebook/callback`,
+  profileFields: ['id', 'displayName', 'emails']
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const users = await getUsers();
+    const email = profile.emails ? profile.emails[0].value : null;
+    if (!email) {
+      return done(null, false, { message: 'Không lấy được email từ Facebook' });
+    }
+
+    let user = users.find(u => u.email === email);
+
+    if (!user) {
+      user = {
+        id: Date.now().toString(),
+        name: profile.displayName,
+        email: email,
+        passwordHash: '',
+        provider: 'facebook',
+        providerId: profile.id
+      };
+      await addUser(user);
+    } else if (user.provider && user.provider !== 'facebook') {
+      return done(null, false, { message: 'Email đã đăng ký bằng phương thức khác' });
+    }
+
+    return done(null, user);
+  } catch (err) {
+    return done(err);
+  }
+}));
+
+// Serialize và Deserialize user (lưu session nếu cần, nhưng vì dùng JWT, có thể đơn giản)
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser(async (id, done) => {
+  try {
+    const users = await getUsers();
+    const user = users.find(u => u.id === id);
+    done(null, user);
+  } catch (err) {
+    done(err);
+  }
+});
+
+// Thêm middleware passport vào app
+app.use(passport.initialize());
+
+// Routes cho Google OAuth
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}/login` }), (req, res) => {
+  // Tạo JWT token sau khi auth thành công
+  const token = jwt.sign({ id: req.user.id, email: req.user.email }, secretKey, { expiresIn: '15h' });
+  
+  // Redirect về frontend với token (frontend sẽ lưu vào localStorage)
+  res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&provider=google`);
+});
+
+// Routes cho Facebook OAuth
+app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email'] }));
+
+app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: `${process.env.FRONTEND_URL}/login` }), (req, res) => {
+  const token = jwt.sign({ id: req.user.id, email: req.user.email }, secretKey, { expiresIn: '15h' });
+  res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&provider=facebook`);
+});
+
+// Cập nhật API login thường để kiểm tra provider (tùy chọn, để tránh login thường cho user social)
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const users = await getUsers();
+    const user = users.find(u => u.email === email);
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+
+    if (user.provider) {
+      return res.status(401).json({ message: 'Vui lòng đăng nhập bằng ' + user.provider });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const token = jwt.sign({ id: user.id, email: user.email }, secretKey, { expiresIn: '15h' });
+    res.json({ token });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 // API Register
 app.post('/api/register', async (req, res) => {
   const { name, email, password } = req.body;
@@ -339,6 +466,7 @@ app.get('/api/flights', async (req, res) => {
     res.status(500).json({ message: 'Không tìm thấy chuyến bay phù hợp hoặc lỗi hệ thống.' });
   }
 });
+
   app.get('/api/flights/cheap', async (req, res) => {
     try {
       const { lat, lng } = req.query;

@@ -131,10 +131,10 @@ function Login() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <button className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95">
+            <button onClick={() => window.location.href = `${import.meta.env.VITE_SERVER_URL}/auth/google`} className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95">
               <FcGoogle className="text-2xl" /> <span>Google</span>
             </button>
-            <button className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95">
+            <button onClick={() => window.location.href = `${import.meta.env.VITE_SERVER_URL}/auth/facebook`} className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95">
               <FaFacebook className="text-2xl text-[#1877F2]" /> <span>Facebook</span>
             </button>
           </div>
