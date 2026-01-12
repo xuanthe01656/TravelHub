@@ -34,6 +34,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",
     "motion": "^12.23.26",
+    "mysql2": "^3.16.0",
     "node-cache": "^5.1.2",
     "nodemon": "^3.1.11",
     "passport": "^0.7.0",

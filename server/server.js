@@ -36,6 +36,18 @@ const {
   getPurchases,
   addPurchase,
 } = require('./sheetsService');
+const pool = require('./db');
+
+// Route test kết nối DB
+app.get('/api/users', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM users');
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
 
 // Danh sách sân bay (có thể mở rộng từ config)
 const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','VDO','DIN','VDH','THD','VCL','TBB','VKG','PXU','BMV','CAH','VCS'];  
