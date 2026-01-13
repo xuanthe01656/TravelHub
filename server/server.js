@@ -70,6 +70,79 @@ app.get('/api/setup-database', async (req, res) => {
     res.status(500).json({ error: 'Không thể tạo bảng', details: err.message });
   }
 });
+app.get('/api/setup-content-db', async (req, res) => {
+  const createPromotionsTable = `
+    CREATE TABLE IF NOT EXISTS promotions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      service_type ENUM('flight', 'hotel', 'car', 'shuttle') NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      button_text VARCHAR(50) DEFAULT 'Khám Phá',
+      image_url TEXT,
+      discount_value VARCHAR(50),
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  const createBlogsTable = `
+    CREATE TABLE IF NOT EXISTS blogs (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      excerpt TEXT,
+      content LONGTEXT, -- Dùng cho nội dung chi tiết bài viết
+      image_url TEXT,
+      category VARCHAR(50),
+      author_name VARCHAR(100) DEFAULT 'TravelHub Team',
+      published_date DATE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  try {
+    await pool.query(createPromotionsTable);
+    await pool.query(createBlogsTable);
+    res.status(200).json({ message: "Đã tạo bảng 'promotions' và 'blogs' thành công!" });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi tạo bảng', details: err.message });
+  }
+});
+app.get('/api/setup-extra-db', async (req, res) => {
+  // Bảng Điểm đến phổ biến
+  const createDestinationsTable = `
+    CREATE TABLE IF NOT EXISTS popular_destinations (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      location VARCHAR(100),
+      image_url TEXT,
+      price_from DECIMAL(10, 2), -- Giá thấp nhất để đi đến đó
+      rating DECIMAL(2, 1) DEFAULT 5.0,
+      is_trending BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // Bảng Đánh giá khách hàng
+  const createTestimonialsTable = `
+    CREATE TABLE IF NOT EXISTS testimonials (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_name VARCHAR(100) NOT NULL,
+      user_avatar TEXT,
+      role VARCHAR(100) DEFAULT 'Khách hàng', -- Ví dụ: Chuyên gia du lịch, Blogger...
+      content TEXT NOT NULL,
+      rating INT DEFAULT 5,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  try {
+    await pool.query(createDestinationsTable);
+    await pool.query(createTestimonialsTable);
+    res.status(200).json({ message: "Đã tạo bảng Destinations và Testimonials thành công!" });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi tạo bảng', details: err.message });
+  }
+});
 // Danh sách sân bay (có thể mở rộng từ config)
 const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','VDO','DIN','VDH','THD','VCL','TBB','VKG','PXU','BMV','CAH','VCS'];  
   const server = http.createServer(app);
