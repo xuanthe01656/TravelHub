@@ -48,7 +48,7 @@ app.get('/api/users', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
-app.post('/api/setup-database', async (req, res) => {
+app.get('/api/setup-database', async (req, res) => {
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
