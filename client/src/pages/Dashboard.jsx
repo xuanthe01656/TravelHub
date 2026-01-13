@@ -33,7 +33,7 @@ import {
   FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
   FaChair, FaCar, FaGlobe, FaBars, FaTimes, FaCreditCard, FaSpinner,
   FaWallet, FaUniversity, FaArrowLeft, FaClock, FaTicketAlt, FaHotel, FaBusAlt, FaMapMarkedAlt,
-  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach,FaArrowRight,FaUserFriends
+  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach,FaArrowRight,FaUserFriends,FaShuttleVan
 } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
@@ -610,31 +610,30 @@ function Dashboard() {
 
   const blogPosts = [
     { 
-      id:1,
-      title: 'Top 10 địa điểm du lịch hè 2025 không thể bỏ qua', 
+      title: 'Top 10 địa điểm du lịch hè 2026 không thể bỏ qua', 
       excerpt: 'Từ những bãi biển xanh ngắt tại Phú Quốc đến không gian se lạnh của Sapa, đây là những tọa độ đang làm mưa làm gió...', 
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
-      date: '20/12/2024',
+      // Ảnh bãi biển trong xanh nhiệt đới
+      image: 'https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg?auto=compress&cs=tinysrgb&w=600',
+      date: '10/01/2026',
       category: 'Cẩm nang'
     },
     { 
-      id:2,
       title: 'Mẹo đặt vé máy bay và phòng khách sạn giá rẻ', 
       excerpt: 'Làm thế nào để săn được vé 0 đồng? Thời điểm nào đặt phòng là tốt nhất? Hãy cùng TravelHub khám phá bí kíp tiết kiệm...', 
-      image: 'https://images.unsplash.com/photo-1436491865332-7a61a109c055?auto=format&fit=crop&w=600&q=80',
-      date: '18/12/2024',
+      // Ảnh hộ chiếu và vé máy bay/điện thoại check-in
+      image: 'https://images.pexels.com/photos/385997/pexels-photo-385997.jpeg?auto=compress&cs=tinysrgb&w=600',
+      date: '08/01/2026',
       category: 'Kinh nghiệm'
     },
     { 
-      id:3,
       title: 'Hành trình khám phá ẩm thực đường phố Hà Nội', 
       excerpt: 'Phở, bún chả, chả cá Lã Vọng... nét tinh hoa ẩm thực nghìn năm văn hiến khiến bất kỳ thực khách nào cũng phải say đắm...', 
-      image: 'https://images.unsplash.com/photo-1567129937968-cdad8f0d5a3a?auto=format&fit=crop&w=600&q=80',
-      date: '15/12/2024',
+      // Ảnh ẩm thực đường phố/món ăn đặc trưng
+      image: 'https://images.pexels.com/photos/2454533/pexels-photo-2454533.jpeg?auto=compress&cs=tinysrgb&w=600',
+      date: '05/01/2026',
       category: 'Ẩm thực'
     },
   ];
-
   const otherServices = [
     // { icon: <FaBusAlt />, name: 'Vé Xe Bus', path: '/bus' },
     // { icon: <FaTrain />, name: 'Vé Tàu', path: '/train' },
@@ -1182,40 +1181,69 @@ function Dashboard() {
         welcomeMessage={welcomeMessage} 
         handleLogout={handleLogout} 
       />
-      <div className="w-full">
+      <div className="w-full relative z-10 overflow-hidden shadow-2xl rounded-2xl">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
-          spaceBetween={0} slidesPerView={1}
+          spaceBetween={0}
+          slidesPerView={1}
           autoplay={{ delay: 5000, disableOnInteraction: false }}
-          pagination={{ clickable: true }} navigation={true}
-          className="w-full h-[180px] md:h-[320px]"
+          pagination={{ clickable: true }}
+          navigation={true}
+          className="w-full h-[280px] md:h-[420px]" 
         >
-          {[{
-            color: "from-indigo-600 to-purple-600",
-            title: "Khuyến Mãi Đặc Biệt",
-            desc: "Giảm tới 50% cho chuyến bay nội địa.",
-            btn: "Khám Phá",
-            url:"https://www.shutterstock.com/image-photo/white-passenger-airplane-flying-sky-600nw-2331577059.jpg"
-          }, {
-            color: "from-emerald-500 to-teal-500",
-            title: "Bay Quốc Tế Giá Sốc",
-            desc: "Chỉ từ 2.000.000 VND cho các chặng bay ASEAN.",
-            btn: "Đặt Ngay",
-            url:"https://media.istockphoto.com/id/1366213348/photo/sunset-sky-from-an-airplane-wing-view-of-the-horizon-and-sun-lights.jpg?s=612x612&w=0&k=20&c=yvelEAeFk7Sr4KbEuQxsy4daspwWuasG6muHG3gUlmk="
-          }, {
-            color: "from-orange-500 to-rose-500",
-            title: "Vi Vu Cuối Tuần",
-            desc: "Ưu đãi vé khứ hồi cho cặp đôi.",
-            btn: "Xem Ngay",
-            url:"https://www.shutterstock.com/image-photo/bottomup-view-white-passenger-airplane-600nw-2619924563.jpg"
-          }].map((banner, idx) => (
+          {[
+            {
+              title: "Vé Máy Bay Nội Địa & Quốc Tế",
+              desc: "Hàng ngàn chặng bay với giá vé cạnh tranh nhất thị trường.",
+              btn: "Đặt Vé Máy Bay",
+              icon: <FaPlane />,
+              url: "https://images.pexels.com/photos/1004584/pexels-photo-1004584.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Khách Sạn & Resort Cao Cấp",
+              desc: "Tận hưởng kỳ nghỉ mơ ước tại những điểm đến hàng đầu thế giới.",
+              btn: "Tìm Khách Sạn",
+              icon: <FaHotel />,
+              url: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Thuê Xe Tự Lái Linh Hoạt",
+              desc: "Chủ động hành trình với dịch vụ thuê xe 4-7 chỗ đa dạng.",
+              btn: "Thuê Xe Ngay",
+              icon: <FaCar />,
+              url: "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Xe Đưa Đón Sân Bay",
+              desc: "Dịch vụ đưa đón tận nơi, đúng giờ, an toàn và chuyên nghiệp.",
+              btn: "Đặt Xe Đưa Đón",
+              icon: <FaShuttleVan />,
+              url: "https://images.pexels.com/photos/385998/pexels-photo-385998.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            }
+          ].map((banner, idx) => (
             <SwiperSlide key={idx}>
-              <div className={`relative bg-black/40 text-blue w-full h-full flex flex-col items-center justify-center text-center p-4`} style={{ backgroundImage: `url(${banner.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                <h2 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
-                <p className="text-sm md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
-                <button className="bg-white text-slate-900 px-6 py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
-                  <FaPlane /> {banner.btn}
-                </button>
+              <div 
+                className="relative w-full h-full flex flex-col items-center justify-center text-center p-6 text-white" 
+                style={{ 
+                  backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7)), url(${banner.url})`, 
+                  backgroundSize: 'cover', 
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                <div className="max-w-4xl px-4 animate-fadeIn">
+                  <h2 className="text-2xl md:text-5xl font-extrabold mb-4 drop-shadow-2xl tracking-tight uppercase">
+                    {banner.title}
+                  </h2>
+                  
+                  <p className="text-sm md:text-2xl mb-8 opacity-100 font-light drop-shadow-md italic">
+                    {banner.desc}
+                  </p>
+                  
+                  <button className="bg-orange-500 hover:bg-orange-600 text-white px-7 py-2 md:px-12 md:py-4 rounded-full font-bold shadow-2xl transition-all transform hover:scale-110 active:scale-95 flex items-center gap-3 mx-auto text-sm md:text-xl">
+                    {banner.icon} {banner.btn}
+                  </button>
+                </div>
               </div>
             </SwiperSlide>
           ))}

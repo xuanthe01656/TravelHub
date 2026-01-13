@@ -339,24 +339,27 @@ function Flights() {
 
   const blogPosts = [
     { 
-      title: 'Top 10 địa điểm du lịch hè 2025 không thể bỏ qua', 
+      title: 'Top 10 địa điểm du lịch hè 2026 không thể bỏ qua', 
       excerpt: 'Từ những bãi biển xanh ngắt tại Phú Quốc đến không gian se lạnh của Sapa, đây là những tọa độ đang làm mưa làm gió...', 
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
-      date: '20/12/2024',
+      // Ảnh bãi biển trong xanh nhiệt đới
+      image: 'https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg?auto=compress&cs=tinysrgb&w=600',
+      date: '10/01/2026',
       category: 'Cẩm nang'
     },
     { 
       title: 'Mẹo đặt vé máy bay và phòng khách sạn giá rẻ', 
       excerpt: 'Làm thế nào để săn được vé 0 đồng? Thời điểm nào đặt phòng là tốt nhất? Hãy cùng TravelHub khám phá bí kíp tiết kiệm...', 
-      image: 'https://images.unsplash.com/photo-1436491865332-7a61a109c055?auto=format&fit=crop&w=600&q=80',
-      date: '18/12/2024',
+      // Ảnh hộ chiếu và vé máy bay/điện thoại check-in
+      image: 'https://images.pexels.com/photos/385997/pexels-photo-385997.jpeg?auto=compress&cs=tinysrgb&w=600',
+      date: '08/01/2026',
       category: 'Kinh nghiệm'
     },
     { 
       title: 'Hành trình khám phá ẩm thực đường phố Hà Nội', 
       excerpt: 'Phở, bún chả, chả cá Lã Vọng... nét tinh hoa ẩm thực nghìn năm văn hiến khiến bất kỳ thực khách nào cũng phải say đắm...', 
-      image: 'https://images.unsplash.com/photo-1567129937968-cdad8f0d5a3a?auto=format&fit=crop&w=600&q=80',
-      date: '15/12/2024',
+      // Ảnh ẩm thực đường phố/món ăn đặc trưng
+      image: 'https://images.pexels.com/photos/2454533/pexels-photo-2454533.jpeg?auto=compress&cs=tinysrgb&w=600',
+      date: '05/01/2026',
       category: 'Ẩm thực'
     },
   ];
@@ -383,36 +386,60 @@ function Flights() {
       <div className="w-full relative z-10 overflow-hidden">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
-          spaceBetween={0} slidesPerView={1}
+          spaceBetween={0}
+          slidesPerView={1}
           autoplay={{ delay: 5000, disableOnInteraction: false }}
-          pagination={{ clickable: true }} navigation={true}
-          className="w-full h-[180px] md:h-[320px]"
+          pagination={{ clickable: true }}
+          navigation={true}
+          className="w-full h-[300px] md:h-[450px] lg:h-[550px]" // Tăng chiều cao để ảnh thoáng hơn
         >
-          {[{
-            color: "from-indigo-600 to-purple-600",
-            title: "Khuyến Mãi Đặc Biệt",
-            desc: "Giảm tới 50% cho chuyến bay nội địa.",
-            btn: "Khám Phá",
-            url:"https://www.shutterstock.com/image-photo/white-passenger-airplane-flying-sky-600nw-2331577059.jpg"
-          }, {
-            color: "from-emerald-500 to-teal-500",
-            title: "Bay Quốc Tế Giá Sốc",
-            desc: "Chỉ từ 2.000.000 VND cho các chặng bay ASEAN.",
-            btn: "Đặt Ngay",
-            url:"https://media.istockphoto.com/id/1366213348/photo/sunset-sky-from-an-airplane-wing-view-of-the-horizon-and-sun-lights.jpg?s=612x612&w=0&k=20&c=yvelEAeFk7Sr4KbEuQxsy4daspwWuasG6muHG3gUlmk="
-          }, {
-            color: "from-orange-500 to-rose-500",
-            title: "Vi Vu Cuối Tuần",
-            desc: "Ưu đãi vé khứ hồi cho cặp đôi.",
-            btn: "Xem Ngay",
-            url:"https://www.shutterstock.com/image-photo/bottomup-view-white-passenger-airplane-600nw-2619924563.jpg"
-          }].map((banner, idx) => (
+          {[
+            {
+              title: "Khuyến Mãi Đặc Biệt",
+              desc: "Giảm tới 50% cho tất cả các chuyến bay nội địa trong tháng này.",
+              btn: "Khám Phá Ngay",
+              // Ảnh máy bay góc rộng, độ phân giải cao
+              url: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=2074&auto=format&fit=crop"
+            },
+            {
+              title: "Bay Quốc Tế Giá Sốc",
+              desc: "Khám phá Đông Nam Á chỉ từ 2.000.000 VND. Đặt sớm để giữ chỗ!",
+              btn: "Đặt Vé Ngay",
+              // Ảnh cánh máy bay lúc hoàng hôn cực đẹp
+              url: "https://images.pexels.com/photos/2007401/pexels-photo-2007401.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Vi Vu Cuối Tuần",
+              desc: "Ưu đãi vé khứ hồi cực hấp dẫn dành riêng cho các cặp đôi.",
+              btn: "Xem Ưu Đãi",
+              // Ảnh bãi biển trong xanh mang lại cảm giác du lịch
+              url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop"
+            }
+          ].map((banner, idx) => (
             <SwiperSlide key={idx}>
-              <div className={`relative bg-black/40 text-blue w-full h-full flex flex-col items-center justify-center text-center p-4`} style={{ backgroundImage: `url(${banner.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                <h2 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
-                <p className="text-sm md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
-                <button className="bg-white text-slate-900 px-6 py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
-                  <FaPlane /> {banner.btn}
+              <div 
+                className="relative w-full h-full flex flex-col items-center justify-center text-center p-6 text-white" 
+                style={{ 
+                  // linear-gradient tạo lớp phủ tối để chữ không bị "nuốt" bởi màu của ảnh
+                  backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${banner.url})`, 
+                  backgroundSize: 'cover', 
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                {/* Title với hiệu ứng đổ bóng mạnh hơn */}
+                <h2 className="text-3xl md:text-6xl font-extrabold mb-3 md:mb-6 drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] animate-fadeInUp uppercase tracking-wide">
+                  {banner.title}
+                </h2>
+                
+                {/* Description rõ ràng hơn */}
+                <p className="text-base md:text-2xl mb-6 md:mb-10 max-w-3xl opacity-100 font-medium drop-shadow-md px-4">
+                  {banner.desc}
+                </p>
+                
+                {/* Button được thiết kế lại chuyên nghiệp */}
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 md:px-10 md:py-4 rounded-full font-bold shadow-2xl transition-all transform hover:scale-110 active:scale-95 flex items-center gap-3 text-sm md:text-lg">
+                  <FaPlane className="rotate-45" /> {banner.btn}
                 </button>
               </div>
             </SwiperSlide>

@@ -28,7 +28,7 @@ import {
   FaPlane, FaReceipt, FaCalendarAlt, FaGlobe, FaTimes, FaSpinner,
   FaWallet, FaUniversity, FaArrowLeft, FaTicketAlt, FaHotel,
   FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, 
-  FaUmbrellaBeach, FaBusAlt, FaArrowRight, FaCar
+  FaUmbrellaBeach, FaBusAlt, FaArrowRight, FaCar,FaShuttleVan, FaBed
 } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
@@ -144,17 +144,20 @@ const blogPosts = [
   { 
     title: 'Top 10 khách sạn view biển đẹp nhất Việt Nam', 
     excerpt: 'Khám phá những resort nghỉ dưỡng sang trọng bên bờ biển xanh trong...', 
-    image: 'https://via.placeholder.com/300x200?text=Beach+Resort' 
+    // Ảnh Resort biển cao cấp, góc nhìn rộng
+    image: 'https://images.pexels.com/photos/189296/pexels-photo-189296.jpeg?auto=compress&cs=tinysrgb&w=600' 
   },
   { 
     title: 'Bí quyết đặt phòng khách sạn giá rẻ', 
     excerpt: 'Hướng dẫn chi tiết cách săn deal khách sạn tiết kiệm nhất...', 
-    image: 'https://via.placeholder.com/300x200?text=Hotel+Deal' 
+    // Ảnh máy tính/điện thoại đang check giá phòng hoặc sảnh khách sạn hiện đại
+    image: 'https://images.pexels.com/photos/271639/pexels-photo-271639.jpeg?auto=compress&cs=tinysrgb&w=600' 
   },
   { 
     title: 'Checklist chuẩn bị khi đi nghỉ khách sạn', 
     excerpt: 'Những vật dụng cần thiết và lưu ý quan trọng cho chuyến đi...', 
-    image: 'https://via.placeholder.com/300x200?text=Travel+Tips' 
+    // Ảnh vali du lịch hoặc phụ kiện chuẩn bị lên đường
+    image: 'https://images.pexels.com/photos/1058959/pexels-photo-1058959.jpeg?auto=compress&cs=tinysrgb&w=600' 
   },
 ];
 
@@ -297,37 +300,70 @@ function Hotels() {
       />
       
       {/* Banner Slider */}
-      <div className="w-full">
+      <div className="w-full relative z-10 overflow-hidden shadow-xl rounded-2xl">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
-          spaceBetween={0} slidesPerView={1}
+          spaceBetween={0}
+          slidesPerView={1}
           autoplay={{ delay: 5000, disableOnInteraction: false }}
-          pagination={{ clickable: true }} navigation={true}
-          className="w-full h-[180px] md:h-[320px]"
+          pagination={{ clickable: true }}
+          navigation={true}
+          className="w-full h-[250px] md:h-[400px]"
         >
-          {[{
-            title: "Khuyến Mãi Khách Sạn",
-            desc: "Giảm tới 50% cho đặt phòng cao cấp.",
-            btn: "Khám Phá",
-            url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"
-          }, {
-            title: "Resort Nghỉ Dưỡng",
-            desc: "Ưu đãi đặc biệt cho kỳ nghỉ cuối tuần.",
-            btn: "Đặt Ngay",
-            url: "https://images.unsplash.com/photo-1520250491191-9276974f52f9?auto=format&fit=crop&w=800&q=80"
-          }, {
-            title: "Khách Sạn Trung Tâm",
-            desc: "Vị trí tiện lợi, dịch vụ 5 sao.",
-            btn: "Xem Ngay",
-            url: "https://images.unsplash.com/photo-1549637641-d69588745819?auto=format&fit=crop&w=800&q=80"
-          }].map((banner, idx) => (
+          {[
+            {
+              title: "Khách Sạn & Resort 5 Sao",
+              desc: "Tận hưởng không gian sang trọng và dịch vụ đẳng cấp thế giới.",
+              btn: "Khám Phá",
+              icon: <FaHotel />,
+              url: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Ưu Đãi Đặt Phòng Cuối Tuần",
+              desc: "Giảm tới 50% cho các gói nghỉ dưỡng cao cấp dành cho gia đình.",
+              btn: "Đặt Ngay",
+              icon: <FaBed />,
+              url: "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Khách Sạn Trung Tâm Thành Phố",
+              desc: "Vị trí đắc địa, thuận tiện di chuyển đến các điểm tham quan.",
+              btn: "Xem Ngay",
+              icon: <FaStar />,
+              url: "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Dịch Vụ Xe Đưa Đón Tận Nơi",
+              desc: "Kết nối nhanh chóng từ sân bay đến khách sạn của bạn 24/7.",
+              btn: "Đặt Xe Ngay",
+              icon: <FaShuttleVan />,
+              url: "https://images.pexels.com/photos/385998/pexels-photo-385998.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            }
+          ].map((banner, idx) => (
             <SwiperSlide key={idx}>
-              <div className={`relative bg-black/40 text-white w-full h-full flex flex-col items-center justify-center text-center p-4`} style={{ backgroundImage: `url(${banner.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                <h2 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
-                <p className="text-sm md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
-                <button className="bg-white text-slate-900 px-6 py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
-                  <FaHotel /> {banner.btn}
-                </button>
+              <div 
+                className="relative w-full h-full flex flex-col items-center justify-center text-center p-6 text-white" 
+                style={{ 
+                  // Overlay gradient tối dần xuống dưới giúp đọc text và thấy rõ button
+                  backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.65)), url(${banner.url})`, 
+                  backgroundSize: 'cover', 
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                <div className="max-w-4xl animate-fadeInUp">
+                  <h2 className="text-2xl md:text-5xl font-extrabold mb-3 drop-shadow-2xl tracking-tight uppercase">
+                    {banner.title}
+                  </h2>
+                  
+                  <p className="text-sm md:text-xl mb-6 md:mb-10 opacity-100 font-medium drop-shadow-md">
+                    {banner.desc}
+                  </p>
+                  
+                  <button className="bg-orange-500 hover:bg-orange-600 text-white px-7 py-2 md:px-12 md:py-4 rounded-full font-bold shadow-2xl transition-all transform hover:scale-110 active:scale-95 flex items-center gap-3 mx-auto text-sm md:text-lg">
+                    {banner.icon} {banner.btn}
+                  </button>
+                </div>
               </div>
             </SwiperSlide>
           ))}

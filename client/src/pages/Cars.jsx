@@ -24,12 +24,10 @@ import TestimonialsSwiper from '../components/Common/TestimonialsSwiper';
 import BlogPostsGrid from '../components/Common/BlogPostsGrid';
 import PopularDestinationsSwiper from '../components/Common/PopularDestinationsSwiper';
 import SearchButton from '../components/Common/SearchButton';
-import {
-  FaPlaneDeparture, FaPlaneArrival, FaPlane, FaShoppingCart, FaLock, FaReceipt,
-  FaInfoCircle, FaHome, FaPhoneAlt, FaUserCircle, FaCalendarAlt, FaUsers,
-  FaChair, FaCar, FaGlobe, FaBars, FaTimes, FaCreditCard, FaSpinner,
+import { FaCalendarAlt, FaUsers,
+  FaChair, FaCar,
   FaWallet, FaUniversity, FaArrowLeft, FaClock, FaTicketAlt, FaHotel, FaBusAlt, FaMapMarkedAlt,
-  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach, FaArrowRight, FaUserFriends
+  FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach, FaArrowRight, FaUserFriends, FaShuttleVan, FaKey, FaRoute
 } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
@@ -644,40 +642,73 @@ function Cars() {
         welcomeMessage={welcomeMessage} 
         handleLogout={handleLogout} 
       />
-      <div className="w-full">
+      <div className="w-full relative z-10 overflow-hidden shadow-xl rounded-2xl">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
-          spaceBetween={0} slidesPerView={1}
+          spaceBetween={0}
+          slidesPerView={1}
           autoplay={{ delay: 5000, disableOnInteraction: false }}
-          pagination={{ clickable: true }} navigation={true}
-          className="w-full h-[180px] md:h-[320px]"
+          pagination={{ clickable: true }}
+          navigation={true}
+          className="w-full h-[250px] md:h-[400px]"
         >
-          {[{
-            color: "from-indigo-600 to-purple-600",
-            title: "Khuyến Mãi Thuê Xe",
-            desc: "Giảm tới 30% cho thuê xe tự lái.",
-            btn: "Khám Phá",
-            url:"https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=80"
-          }, {
-            color: "from-emerald-500 to-teal-500",
-            title: "Đưa Đón Sân Bay Giá Rẻ",
-            desc: "Chỉ từ 500.000 VND cho các chuyến đưa đón.",
-            btn: "Đặt Ngay",
-            url:"https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=800&q=80"
-          }, {
-            color: "from-orange-500 to-rose-500",
-            title: "Xe Cao Cấp Cuối Tuần",
-            desc: "Ưu đãi đặc biệt cho thuê xe dài ngày.",
-            btn: "Xem Ngay",
-            url:"https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"
-          }].map((banner, idx) => (
+          {[
+            {
+              title: "Thuê Xe Tự Lái - Tự Do Hành Trình",
+              desc: "Đa dạng dòng xe từ 4-7 chỗ, thủ tục đơn giản, nhận xe nhanh chóng.",
+              btn: "Thuê Xe Ngay",
+              icon: <FaKey />,
+              url: "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Đưa Đón Sân Bay Chuyên Nghiệp",
+              desc: "Cam kết đúng giờ, tài xế lịch sự, đưa đón tận nơi 24/7.",
+              btn: "Đặt Lịch Ngay",
+              icon: <FaShuttleVan />,
+              url: "https://images.pexels.com/photos/385998/pexels-photo-385998.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Thuê Xe Theo Ngày - Giá Ưu Đãi",
+              desc: "Tiết kiệm hơn 30% khi đặt thuê xe dài hạn hoặc thuê theo tuần.",
+              btn: "Xem Báo Giá",
+              icon: <FaRoute />,
+              url: "https://images.pexels.com/photos/116675/pexels-photo-116675.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            },
+            {
+              title: "Dòng Xe Cao Cấp & Sang Trọng",
+              desc: "Trải nghiệm các dòng xe đời mới nhất cho những chuyến công tác đặc biệt.",
+              btn: "Khám Phá",
+              icon: <FaCar />,
+              url: "https://images.pexels.com/photos/3729464/pexels-photo-3729464.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            }
+          ].map((banner, idx) => (
             <SwiperSlide key={idx}>
-              <div className={`relative bg-black/40 text-blue w-full h-full flex flex-col items-center justify-center text-center p-4`} style={{ backgroundImage: `url(${banner.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                <h2 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md animate-fadeInUp">{banner.title}</h2>
-                <p className="text-sm md:text-xl mb-4 md:mb-8 max-w-2xl opacity-90">{banner.desc}</p>
-                <button className="bg-white text-slate-900 px-6 py-2 md:px-8 md:py-3 rounded-full font-bold shadow-lg hover:scale-105 transition transform flex items-center gap-2 text-sm md:text-base">
-                  <FaCar /> {banner.btn}
-                </button>
+              <div 
+                className="relative w-full h-full flex flex-col items-center justify-center text-center p-6 text-white" 
+                style={{ 
+                  // Overlay kết hợp màu tối phía dưới để làm nổi bật nút bấm
+                  backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url(${banner.url})`, 
+                  backgroundSize: 'cover', 
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                <div className="max-w-4xl animate-fadeInUp">
+                  {/* Title với hiệu ứng đổ bóng mạnh */}
+                  <h2 className="text-2xl md:text-5xl font-extrabold mb-3 drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] tracking-tight uppercase">
+                    {banner.title}
+                  </h2>
+                  
+                  {/* Description rõ ràng hơn */}
+                  <p className="text-sm md:text-xl mb-6 md:mb-10 opacity-100 font-medium drop-shadow-md px-4">
+                    {banner.desc}
+                  </p>
+                  
+                  {/* Nút bấm màu sắc nổi bật đặc trưng cho mảng Xe (thường dùng xanh hoặc cam) */}
+                  <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-7 py-2 md:px-12 md:py-4 rounded-full font-bold shadow-2xl transition-all transform hover:scale-110 active:scale-95 flex items-center gap-3 mx-auto text-sm md:text-lg">
+                    {banner.icon} {banner.btn}
+                  </button>
+                </div>
               </div>
             </SwiperSlide>
           ))}
