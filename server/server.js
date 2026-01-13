@@ -48,7 +48,28 @@ app.get('/api/users', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+app.post('/api/setup-database', async (req, res) => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      full_name VARCHAR(100),
+      email VARCHAR(150) UNIQUE,
+      password VARCHAR(255) NULL,
+      login_provider VARCHAR(20) NOT NULL DEFAULT 'local',
+      provider_id VARCHAR(255) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_social_login (login_provider, provider_id)
+    );
+  `;
 
+  try {
+    const [result] = await pool.query(createTableQuery);
+    res.status(200).json({ message: "Bảng 'users' đã được tạo thành công!", result });
+  } catch (err) {
+    console.error('Lỗi tạo bảng:', err);
+    res.status(500).json({ error: 'Không thể tạo bảng', details: err.message });
+  }
+});
 // Danh sách sân bay (có thể mở rộng từ config)
 const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','VDO','DIN','VDH','THD','VCL','TBB','VKG','PXU','BMV','CAH','VCS'];  
   const server = http.createServer(app);
@@ -1108,7 +1129,7 @@ app.get('/api/purchases', authenticateToken, async (req, res) => {
   });
 
 // Error handler global
-app.use((err, req, res, next) => {
+app.get((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Internal Server Error' });
 });
