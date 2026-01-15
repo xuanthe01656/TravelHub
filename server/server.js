@@ -417,7 +417,12 @@ app.post('/api/logout', (req, res) => {
     req.session.destroy((err) => {
       if (err) return res.status(500).json({ message: 'Không thể hủy session' });
       
-      res.clearCookie('connect.sid');
+      res.clearCookie('connect.sid', {
+        path: '/',
+        secure: true,   
+        sameSite: 'none',  
+        httpOnly: true
+      });
       res.status(200).json({ message: 'Logout thành công' });
     });
   });
