@@ -9,57 +9,6 @@ const auth = new google.auth.GoogleAuth({
 
 const spreadsheetId = '1Tuevg7REmIde0y6XbJ5gBRIkOjX1cjJbsubwfyrKpUU'; // ID Google Sheet
 
-async function getUsers() {
-  try {
-    // Truy vấn tất cả người dùng từ bảng users
-    const [rows] = await pool.query('SELECT * FROM users');
-    
-    // Map lại dữ liệu để khớp với định dạng bạn đang dùng ở Frontend
-    return rows.map(user => ({
-      id: user.id,
-      name: user.full_name, // Chú ý đổi r[1] thành full_name theo đúng cột trong DB
-      email: user.email,
-      passwordHash: user.password,
-      loginProvider: user.login_provider,
-      createdAt: user.created_at
-    }));
-  } catch (error) {
-    console.error('Lỗi khi lấy danh sách người dùng từ DB:', error.message);
-    throw error;
-  }
-}
-
-async function addUser(user) {
-  try {
-    const sql = `
-      INSERT INTO users (full_name, email, password, login_provider, provider_id) 
-      VALUES (?, ?, ?, ?, ?)
-    `;
-    
-    // Các giá trị tương ứng với dấu ?
-    const values = [
-      user.name || '', 
-      user.email || '', 
-      user.passwordHash || null, // Password có thể null nếu dùng Google/FB
-      user.loginProvider || 'local', 
-      user.providerId || null
-    ];
-
-    const [result] = await pool.query(sql, values);
-    
-    // Trả về thông tin ID vừa tạo để Frontend biết
-    return { id: result.insertId, ...user };
-  } catch (error) {
-    // Xử lý lỗi trùng Email (do cột email là UNIQUE)
-    if (error.code === 'ER_DUP_ENTRY') {
-      console.error('Email này đã tồn tại!');
-      throw new Error('Email đã được sử dụng.');
-    }
-    console.error('Lỗi khi thêm người dùng vào DB:', error.message);
-    throw error;
-  }
-}
-
 // ===== FLIGHTS =====
 async function getFlights() {
   const client = await auth.getClient();
@@ -215,8 +164,6 @@ async function addPurchase(purchase) {
   }
 }
 module.exports = {
-  getUsers,
-  addUser,
   getFlights,
   saveFlightsToSheet,
   getPurchases,

@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Register from './pages/Register'; 
 import Login from './pages/LoginPage'; 
 import Dashboard from './pages/Dashboard';
@@ -22,16 +23,33 @@ import ScrollToTop from './components/ScrollToTop';
 import BackToTop from './components/BackToTop';
 import ContactWidgets from './components/ContactWidgets';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import axios from 'axios';
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = import.meta.env.VITE_SERVER_URL
 
 const ProtectedRoute = ({ children }) => {
- const token = localStorage.getItem('token');
- return token ? children : <Navigate to="/login" />;
+  const [isAuth, setIsAuth] = useState(null);
+
+  useEffect(() => {
+    axios.get('/api/session')
+      .then(res => {
+        if (res.data.loggedIn) setIsAuth(true);
+        else setIsAuth(false);
+      })
+      .catch(() => setIsAuth(false));
+  }, []);
+
+  if (isAuth === null) return <div>Đang tải...</div>; 
+
+  return isAuth ? children : <Navigate to="/login" replace/>;
 };
-const isAdminPage = location.pathname === '/admin' || location.pathname === '/admin-support';
-function App() {
+const AppContent = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin') || location.pathname === '/admin-support';
+
   return (
-    <BrowserRouter>
-    <ScrollToTop />
+    <>
+      <ScrollToTop />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -45,6 +63,7 @@ function App() {
         <Route path="/termsofuse" element={<TermsOfUse />} />
         <Route path="/fqa" element={<FAQ />} />
         <Route path="/confirmation" element={<Confirmation />} />
+        
         <Route
           path="/profile"
           element={
@@ -54,17 +73,29 @@ function App() {
           }
         />
         <Route path="/thank-you" element={<ThankYouPage />} />
-        <Route path="/" element={<Navigate to="/Dashboard" />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/admin-support" element={<AdminChat />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
-      {!isAdminPage && <ContactWidgets />}
-      {!isAdminPage && <ChatBox />}
+      {!isAdminPage && (
+        <>
+          <ContactWidgets />
+          <ChatBox />
+        </>
+      )}
+      
       <BackToTop />
-      <ToastContainer />
+      <ToastContainer position="top-right" autoClose={3000} />
+    </>
+  );
+};
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
-
 
 export default App;

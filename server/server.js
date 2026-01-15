@@ -1,7 +1,7 @@
-// server.js - Backend Node.js/Express cho các API
 require('dotenv').config({ path: '../.env' });
 
 const express = require('express');
+const session = require('express-session');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -20,32 +20,51 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const crypto = require('crypto');
-//const Redis = require('ioredis');
-//const redis = new Redis(process.env.REDIS_URL);
-//redis.on('error', (err) => console.error('Redis Error:', err));
 const NodeCache = require('node-cache');
 const myCache = new NodeCache({ stdTTL: 1800, checkperiod: 600 });
 app.set("trust proxy", 1);
 const buildPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(buildPath));
+const origin = process.env.FRONTEND_URL || "http://localhost:5173";
+app.use(cors({
+  origin: origin,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 const {
-  getUsers,
-  addUser,
   getFlights,
   saveFlightsToSheet,
   getPurchases,
   addPurchase,
 } = require('./sheetsService');
+const {
+  getUsers,
+  getUserByEmail,
+  getUserById,
+  addUser
+} = require('./dbService');
 const pool = require('./db');
 
-// Route test kết nối DB
+app.use(session({
+  secret: process.env.SESSION_SECRET,   
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: false,
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 
+  }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 app.get('/api/users', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM users');
-    res.json(rows);
+    const users = await getUsers();
+    res.json(users);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('Lỗi khi lấy danh sách user:', err);
+    res.status(500).json({ error: 'Không thể lấy dữ liệu người dùng' });
   }
 });
 app.get('/api/setup-database', async (req, res) => {
@@ -142,9 +161,7 @@ app.get('/api/setup-extra-db', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Lỗi tạo bảng', details: err.message });
   }
-});
-// Danh sách sân bay (có thể mở rộng từ config)
-const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','VDO','DIN','VDH','THD','VCL','TBB','VKG','PXU','BMV','CAH','VCS'];  
+}); 
   const server = http.createServer(app);
   
   const io = new Server(server, {
@@ -157,8 +174,7 @@ const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','V
   
   io.on('connection', (socket) => {
     console.log("Kết nối mới:", socket.id);
-  
-    // Khai báo vai trò
+
     socket.on("join", (role) => {
       if (role === "admin") {
         socket.join("admin_group");
@@ -166,20 +182,16 @@ const airports = ['SGN','HAN','DAD','PQC','CXR','VCA','VII','HUI','DLI','HPH','V
       }
     });
   
-    // KHÁCH HÀNG GỬI (Khớp với client_msg trong ChatBox.jsx)
     socket.on("client_msg", (data) => {
       const payload = {
-        senderId: socket.id, // ID để admin biết ai nhắn
+        senderId: socket.id,
         text: data.text,
         time: new Date().toLocaleTimeString()
       };
-      // Gửi cho nhóm admin (Khớp với admin_receive_msg trong AdminChat.jsx)
       io.to("admin_group").emit("admin_receive_msg", payload);
     });
-  
-    // ADMIN PHẢN HỒI (Khớp với admin_reply_msg trong AdminChat.jsx)
+
     socket.on("admin_reply_msg", ({ targetId, text }) => {
-      // Gửi về đúng khách hàng (Khớp với admin_reply trong ChatBox.jsx)
       io.to(targetId).emit("admin_reply", {
         text: text,
         time: new Date().toLocaleTimeString()
@@ -220,26 +232,23 @@ app.use(compression());
 app.use(bodyParser.json());
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100 
 });
 app.use(limiter);
 
-const secretKey = process.env.JWT_SECRET || 'fallback-secret';
+// const secretKey = process.env.JWT_SECRET || 'fallback-secret';
+// const authenticateToken = (req, res, next) => {
+//   const authHeader = req.headers['authorization'];
+//   const token = authHeader && authHeader.split(' ')[1];
+//   if (!token) return res.status(401).json({ message: 'Token required' });
 
-// Middleware kiểm tra token (để bảo vệ các route cần đăng nhập)
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Token required' });
-
-  jwt.verify(token, secretKey, (err, user) => {
-    // Nếu token hết hạn hoặc không hợp lệ, trả về 403
-    if (err) return res.status(403).json({ message: 'Invalid or expired token' });
-    req.user = user;
-    next();
-  });
-};
+//   jwt.verify(token, secretKey, (err, user) => {
+//     if (err) return res.status(403).json({ message: 'Invalid or expired token' });
+//     req.user = user;
+//     next();
+//   });
+// };
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -247,23 +256,18 @@ passport.use(new GoogleStrategy({
   proxy: true
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    const users = await getUsers();
     const email = profile.emails[0].value;
-    let user = users.find(u => u.email === email);
+    let user = await getUserByEmail(email);
 
     if (!user) {
-      // Tạo user mới nếu chưa tồn tại
-      user = {
-        id: Date.now().toString(),
+      user = await addUser({
         name: profile.displayName,
         email: email,
-        passwordHash: '', // Không cần password cho social login
-        provider: 'google',
+        loginProvider: 'google',
         providerId: profile.id
-      };
-      await addUser(user);
-    } else if (user.provider && user.provider !== 'google') {
-      return done(null, false, { message: 'Email đã đăng ký bằng phương thức khác' });
+      });
+    } else if (user.loginProvider !== 'google') {
+      return done(null, false, { message: `Email này đã được dùng để đăng nhập bằng ${user.loginProvider}` });
     }
 
     return done(null, user);
@@ -279,26 +283,20 @@ passport.use(new FacebookStrategy({
   profileFields: ['id', 'displayName', 'emails']
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    const users = await getUsers();
     const email = profile.emails ? profile.emails[0].value : null;
-    if (!email) {
-      return done(null, false, { message: 'Không lấy được email từ Facebook' });
-    }
+    if (!email) return done(null, false, { message: 'Không lấy được email từ Facebook' });
 
-    let user = users.find(u => u.email === email);
+    let user = await getUserByEmail(email);
 
     if (!user) {
-      user = {
-        id: Date.now().toString(),
+      user = await addUser({
         name: profile.displayName,
         email: email,
-        passwordHash: '',
-        provider: 'facebook',
+        loginProvider: 'facebook',
         providerId: profile.id
-      };
-      await addUser(user);
-    } else if (user.provider && user.provider !== 'facebook') {
-      return done(null, false, { message: 'Email đã đăng ký bằng phương thức khác' });
+      });
+    } else if (user.loginProvider !== 'facebook') {
+      return done(null, false, { message: `Email này đã được dùng để đăng nhập bằng ${user.loginProvider}` });
     }
 
     return done(null, user);
@@ -307,136 +305,109 @@ passport.use(new FacebookStrategy({
   }
 }));
 
-// Serialize và Deserialize user (lưu session nếu cần, nhưng vì dùng JWT, có thể đơn giản)
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
   try {
-    const users = await getUsers();
-    const user = users.find(u => u.id === id);
+    const user = await getUserById(id);
     done(null, user);
   } catch (err) {
     done(err);
   }
 });
 
-// Thêm middleware passport vào app
-app.use(passport.initialize());
-
-// Routes cho Google OAuth
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}/login` }), (req, res) => {
-  // Tạo JWT token sau khi auth thành công
-  const token = jwt.sign({ id: req.user.id, email: req.user.email }, secretKey, { expiresIn: '15h' });
-  
-  // Redirect về frontend với token (frontend sẽ lưu vào localStorage)
   res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&provider=google`);
 });
-
-// Routes cho Facebook OAuth
 app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email'] }));
 
 app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: `${process.env.FRONTEND_URL}/login` }), (req, res) => {
-  const token = jwt.sign({ id: req.user.id, email: req.user.email }, secretKey, { expiresIn: '15h' });
   res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&provider=facebook`);
 });
 
-// Cập nhật API login thường để kiểm tra provider (tùy chọn, để tránh login thường cho user social)
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const users = await getUsers();
-    const user = users.find(u => u.email === email);
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
-
-    if (user.provider) {
-      return res.status(401).json({ message: 'Vui lòng đăng nhập bằng ' + user.provider });
+    const user = await getUserByEmail(email);
+    
+    if (!user) return res.status(401).json({ message: 'Tài khoản không tồn tại' });
+    if (user.loginProvider !== 'local') {
+      return res.status(401).json({ message: `Tài khoản này dùng đăng nhập bằng ${user.loginProvider}` });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!isMatch) return res.status(401).json({ message: 'Mật khẩu không chính xác' });
 
-    const token = jwt.sign({ id: user.id, email: user.email }, secretKey, { expiresIn: '15h' });
-    res.json({ token });
+    req.login(user, (err) => {
+      if (err) return next(err);
+      return res.json({ message: 'Đăng nhập thành công', user: { name: user.name, email: user.email } });
+    });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Lỗi server' });
   }
 });
 // API Register
 app.post('/api/register', async (req, res) => {
   const { name, email, password } = req.body;
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: 'Missing fields' });
-  }
+  if (!name || !email || !password) return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin' });
 
   try {
-    const users = await getUsers();
-    if (users.find(u => u.email === email)) {
-      return res.status(400).json({ message: 'Email already exists' });
-    }
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) return res.status(400).json({ message: 'Email đã được sử dụng' });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = {
-      id: Date.now().toString(),
+    await addUser({
       name,
       email,
       passwordHash,
-    };
+      loginProvider: 'local'
+    });
 
-    await addUser(newUser);
-    res.status(201).json({ message: 'Registered successfully' });
+    res.status(201).json({ message: 'Đăng ký thành công!' });
   } catch (err) {
     console.error('Register error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Lỗi server' });
   }
 });
-
-// API Login
-app.post('/api/login', async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const users = await getUsers();
-    const user = users.find(u => u.email === email);
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
-
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-
-    // Token hết hạn sau 1 giờ
-    const token = jwt.sign({ id: user.id, email: user.email }, secretKey, { expiresIn: '15h' });
-    res.json({ token });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error' });
+const isAuthenticated = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: 'Bạn chưa đăng nhập' });
+};
+app.get('/api/session', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ loggedIn: true, user: req.user });
+  } else {
+    res.json({ loggedIn: false });
   }
 });
+app.get('/api/user/profile', isAuthenticated, (req, res) => {
+  if (!req.user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
 
-app.get('/api/session', authenticateToken, (req, res) => {
-  res.json({ loggedIn: true, user: req.user });
+  res.json({
+    id: req.user.id,
+    name: req.user.name,
+    email: req.user.email,
+    loginProvider: req.user.loginProvider
+  });
 });
-app.get('/api/user/profile', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const users = await getUsers();
-        const user = users.find(u => u.id === userId);
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        const profile = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-        };
-
-        res.json(profile);
-    } catch (err) {
-        console.error('Get user profile error:', err);
-        res.status(500).json({ message: 'Server error' });
-    }
+app.post('/api/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) return res.status(500).json({ message: 'Lỗi server khi đăng xuất' });
+    
+    req.session.destroy((err) => {
+      if (err) return res.status(500).json({ message: 'Không thể hủy session' });
+      
+      res.clearCookie('connect.sid');
+      res.status(200).json({ message: 'Logout thành công' });
+    });
+  });
 });
 const normalizeInput = (str) => str ? str.trim().toUpperCase() : null;
 const transformFlightOffer = (offer, dictionaries, numAdults) => {
@@ -972,7 +943,7 @@ app.get("/api/geocode", async (req, res) => {
   }
 });
 
-app.post('/api/buy-ticket', authenticateToken, async (req, res) => {
+app.post('/api/buy-ticket', isAuthenticated, async (req, res) => {
   try {
     const { flightId, outboundId, returnId, passengers, class: seatClass, method } = req.body;
     const flights = await getFlights();
@@ -1033,7 +1004,7 @@ app.post('/api/buy-ticket', authenticateToken, async (req, res) => {
 });
 
 // Thanh toán qua ví điện tử
-app.post('/api/buy-ticket/wallet', authenticateToken, async (req, res) => {
+app.post('/api/buy-ticket/wallet', isAuthenticated, async (req, res) => {
   try {
     const { flightId, outboundId, returnId, passengers, class: seatClass, meta } = req.body;
     const { walletProvider } = meta || {};
@@ -1102,7 +1073,7 @@ app.post('/api/buy-ticket/wallet', authenticateToken, async (req, res) => {
 // Thanh toán qua chuyển khoản ngân hàng
 const QRCode = require('qrcode');
 
-app.post('/api/buy-ticket/bank', authenticateToken, async (req, res) => {
+app.post('/api/buy-ticket/bank', isAuthenticated, async (req, res) => {
   try {
     // 1. Kiểm tra req.body xem có dữ liệu không
     if (!req.body.flightDetails) {
@@ -1191,7 +1162,7 @@ app.post('/api/buy-ticket/bank', authenticateToken, async (req, res) => {
 
 
 // API Get purchases (Protected)
-app.get('/api/purchases', authenticateToken, async (req, res) => {
+app.get('/api/purchases', isAuthenticated, async (req, res) => {
     try {
       const purchases = await getPurchases();
       const userPurchases = purchases.filter(p => p.userId === req.user.id);

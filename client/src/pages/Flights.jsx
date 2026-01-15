@@ -233,11 +233,18 @@ function Flights() {
     navigate('/confirmation', { state: { flightData: payload, tripType: formState.tripType } });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUserProfile(null);
-    toast.info('Đã đăng xuất!');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/logout', {}, { withCredentials: true });
+      localStorage.removeItem('token'); 
+      
+      setUserProfile(null);
+      toast.info('Đã đăng xuất thành công!');
+      navigate('/login');
+    } catch (error) {
+      console.error('Lỗi khi đăng xuất:', error);
+      toast.error('Không thể đăng xuất, vui lòng thử lại!');
+    }
   };
 
   const welcomeMessage = isLogged && userProfile ? `Chào, ${userProfile.name}!` : 'Chào bạn!';
