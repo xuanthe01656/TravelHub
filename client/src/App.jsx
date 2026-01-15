@@ -33,13 +33,16 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     axios.get('/api/session')
       .then(res => {
-        if (res.data.loggedIn) setIsAuth(true);
-        else setIsAuth(false);
+        if (res.data && typeof res.data === 'object' && res.data.loggedIn === true) {
+          setIsAuth(true);
+        } else {
+          setIsAuth(false);
+        }
       })
       .catch(() => setIsAuth(false));
   }, []);
 
-  if (isAuth === null) return <div>Đang tải...</div>; 
+  if (isAuth === null) return <div className="loading">Đang kiểm tra...</div>; 
 
   return isAuth ? children : <Navigate to="/login" replace/>;
 };
@@ -73,7 +76,7 @@ const AppContent = () => {
           }
         />
         <Route path="/thank-you" element={<ThankYouPage />} />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard"/>} />
         <Route path="/admin-support" element={<AdminChat />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
