@@ -2,6 +2,7 @@ require('dotenv').config({ path: '../.env' });
 
 const express = require('express');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -26,6 +27,7 @@ app.set("trust proxy", 1);
 const buildPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(buildPath));
 const origin = process.env.FRONTEND_URL
+
 app.use(cors({
   origin: origin,
   credentials: true,
@@ -45,10 +47,15 @@ const {
   addUser
 } = require('./dbService');
 const pool = require('./db');
-
+const sessionStore = new MySQLStore({
+  clearExpired: true,
+  checkExpirationInterval: 900000, // Dọn dẹp session hết hạn mỗi 15 phút
+  expiration: 15 * 60 * 60 * 1000, // Session sống 15 tiếng
+}, pool);
 app.use(session({
   secret: process.env.SESSION_SECRET,   
   resave: false,
+  store: sessionStore,
   saveUninitialized: false,
   proxy: true,
   cookie: { 
