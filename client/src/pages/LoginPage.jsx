@@ -30,13 +30,20 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   useDocumentTitle('Đăng nhập');
+
+  // Kiểm tra session hiện có (Sử dụng Cookie tự động)
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.get('/api/session', { headers: { Authorization: `Bearer ${token}` } })
-        .then(() => navigate('/dashboard'))
-        .catch(() => localStorage.removeItem('token'));
-    }
+    const checkSession = async () => {
+      try {
+        const response = await axios.get('/api/session');
+        if (response.data.loggedIn) {
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        // Nếu chưa đăng nhập thì ở lại trang login, không cần xóa localStorage nữa
+      }
+    };
+    checkSession();
   }, [navigate]);
 
   const handleChange = (e) => {
@@ -54,9 +61,12 @@ function Login() {
     try {
       await validationSchema.validate(formState, { abortEarly: false });
       setErrors({});
+      
+      // Gửi yêu cầu login - Backend sẽ tự động set Cookie (connect.sid)
       const response = await axios.post('/api/login', formState);
+      
       if (response.status === 200) {
-        localStorage.setItem('token', response.data.token);
+        // Lưu ý: Không cần localStorage.setItem('token') nữa vì dùng Session
         toast.success('Chào mừng bạn quay trở lại!');
         navigate('/dashboard');
       }
