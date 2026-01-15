@@ -1,4 +1,5 @@
 import { useReducer, useState, useEffect } from 'react';
+const [isRedirecting, setIsRedirecting] = useState(false);
 import { useNavigate, Link } from 'react-router-dom';
 import * as Yup from 'yup';
 import InputField from '../components/InputField';
@@ -32,6 +33,7 @@ function Login() {
   useDocumentTitle('Đăng nhập');
 
   useEffect(() => {
+    if (isRedirecting) return;
     const checkSession = async () => {
       try {
         const response = await axios.get('/api/session');
@@ -46,8 +48,11 @@ function Login() {
       }
     };
     checkSession();
-  }, [navigate]);
-
+  }, [navigate,isRedirecting]);
+  const handleSocialLogin = (url) => {
+    setIsRedirecting(true); // Đánh dấu đang chuyển hướng
+    window.location.href = url;
+  };
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target;
     dispatch({
@@ -137,10 +142,10 @@ function Login() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => window.location.href = `${import.meta.env.VITE_SERVER_URL}/auth/google`} className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95">
+            <button type="button" onClick={() => handleSocialLogin(`${import.meta.env.VITE_SERVER_URL}/auth/google`)} className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95">
               <FcGoogle className="text-2xl" /> <span>Google</span>
             </button>
-            <button onClick={() => window.location.href = `${import.meta.env.VITE_SERVER_URL}/auth/facebook`} className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95">
+            <button type="button"  onClick={() => handleSocialLogin(`${import.meta.env.VITE_SERVER_URL}/auth/facebook`)} className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95">
               <FaFacebook className="text-2xl text-[#1877F2]" /> <span>Facebook</span>
             </button>
           </div>
