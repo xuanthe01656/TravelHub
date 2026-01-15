@@ -31,16 +31,18 @@ function Login() {
   const navigate = useNavigate();
   useDocumentTitle('Đăng nhập');
 
-  // Kiểm tra session hiện có (Sử dụng Cookie tự động)
   useEffect(() => {
     const checkSession = async () => {
       try {
         const response = await axios.get('/api/session');
-        if (response.data.loggedIn) {
+        if (response.data && typeof response.data === 'object' && response.data.loggedIn === true) {
+          console.log("Đã đăng nhập, chuyển sang Dashboard");
           navigate('/dashboard');
+        } else {
+          console.log("Chưa đăng nhập, ở lại trang Login");
         }
       } catch (err) {
-        // Nếu chưa đăng nhập thì ở lại trang login, không cần xóa localStorage nữa
+        console.log("Không có phiên làm việc hợp lệ.");
       }
     };
     checkSession();
