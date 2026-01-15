@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { 
   FaPlaneDeparture, FaBars, FaTimes, FaPlane, FaHome, 
@@ -7,44 +7,16 @@ import {
 
 const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const navRef = useRef(null);
-  const overlayRef = useRef(null);
-  const toggleRef = useRef(null);
   const navigate = useNavigate();
 
+  // Khóa cuộn trang khi menu mobile mở
   useEffect(() => {
-    const preventInteraction = (e) => {
-      if (
-        navRef.current && !navRef.current.contains(e.target) &&
-        overlayRef.current && !overlayRef.current.contains(e.target) &&
-        toggleRef.current && !toggleRef.current.contains(e.target)
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-
     if (menuOpen) {
       document.body.style.overflow = 'hidden';
-      document.addEventListener('touchstart', preventInteraction, { passive: false, capture: true });
-      document.addEventListener('touchmove', preventInteraction, { passive: false, capture: true });
-      document.addEventListener('touchend', preventInteraction, { passive: false, capture: true });
-      document.addEventListener('click', preventInteraction, { capture: true });
     } else {
       document.body.style.overflow = '';
-      document.removeEventListener('touchstart', preventInteraction, { passive: false, capture: true });
-      document.removeEventListener('touchmove', preventInteraction, { passive: false, capture: true });
-      document.removeEventListener('touchend', preventInteraction, { passive: false, capture: true });
-      document.removeEventListener('click', preventInteraction, { capture: true });
     }
-
-    return () => {
-      document.body.style.overflow = '';
-      document.removeEventListener('touchstart', preventInteraction, { passive: false, capture: true });
-      document.removeEventListener('touchmove', preventInteraction, { passive: false, capture: true });
-      document.removeEventListener('touchend', preventInteraction, { passive: false, capture: true });
-      document.removeEventListener('click', preventInteraction, { capture: true });
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
   const navItems = [
@@ -64,40 +36,43 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
   return (
     <header className="bg-white/95 backdrop-blur-md text-slate-800 p-3 md:p-4 sticky top-0 z-[1000] shadow-sm border-b border-slate-100 font-sans">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
+        
+        {/* Logo */}
         <div 
           className="text-xl md:text-2xl font-black flex items-center cursor-pointer text-blue-600 tracking-tighter shrink-0 relative z-[110]" 
           onClick={() => navigate('/')}
         >
           <FaPlaneDeparture className="mr-2 text-2xl md:text-3xl" /> TravelHub
         </div>
+
+        {/* Nút Hamburger cho Mobile */}
         <button 
-          ref={toggleRef}
           className="lg:hidden text-slate-700 text-2xl p-2 relative z-[130]" 
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <FaTimes /> : <FaBars />}
         </button>
+
+        {/* Lớp phủ (Overlay) khi mở menu mobile */}
         {menuOpen && (
           <div 
-            ref={overlayRef}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[115] lg:hidden animate-in fade-in duration-300" 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[115] lg:hidden transition-opacity" 
             onClick={() => setMenuOpen(false)} 
           />
         )}
-        <nav ref={navRef} className={`
+
+        {/* Thanh Navigation */}
+        <nav className={`
           fixed lg:relative top-0 right-0 h-screen lg:h-auto w-[280px] lg:w-auto 
-          bg-white lg:bg-transparent shadow-[-10px_0_30px_rgba(0,0,0,0.1)] lg:shadow-none 
-          transition-all duration-300 ease-in-out z-[120] lg:z-auto
+          bg-white lg:bg-transparent shadow-2xl lg:shadow-none 
+          transition-transform duration-300 ease-in-out z-[120] lg:z-auto
           flex flex-col lg:flex-row items-start lg:items-center gap-2 lg:gap-4 p-6 lg:p-0
-          ${menuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-0 opacity-0 lg:opacity-100'}
-          ${menuOpen ? 'visible' : 'invisible lg:visible'}
+          ${menuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
         `}>
           <div className="flex justify-between items-center lg:hidden mb-8 w-full border-b border-slate-100 pb-4">
             <span className="font-black text-xl text-blue-600">Menu</span>
-            {/* <button onClick={() => setMenuOpen(false)} className="p-2 text-slate-400 hover:text-red-500">
-              <FaTimes className="text-xl" />
-            </button> */}
           </div>
+
           <div className="flex flex-col lg:flex-row gap-2 lg:gap-1 w-full lg:w-auto overflow-y-auto">
             {navItems.map((item) => (
               <NavLink 
@@ -111,6 +86,8 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
               </NavLink>
             ))}
           </div>
+
+          {/* User Actions cho Mobile */}
           <div className="mt-auto lg:hidden w-full border-t border-slate-100 pt-6 space-y-3">
             {isLogged ? (
               <>
@@ -131,13 +108,15 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
             ) : (
               <button 
                 onClick={() => { navigate('/login'); setMenuOpen(false); }}
-                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-base shadow-lg shadow-blue-200 active:scale-[0.98] transition-all"
+                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-base shadow-lg"
               >
                 Đăng Nhập Ngay
               </button>
             )}
           </div>
         </nav>
+
+        {/* User Actions cho Desktop */}
         <div className="hidden lg:flex items-center gap-3 shrink-0">
           {isLogged ? (
             <div className="flex items-center bg-slate-50 rounded-2xl p-1 pr-3 border border-slate-100">
@@ -147,15 +126,14 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
                   flex items-center gap-2 p-1.5 rounded-xl transition-all group
                   ${isActive ? 'bg-white shadow-sm ring-1 ring-blue-100' : 'hover:bg-white hover:shadow-sm'}
                 `}
-                title="Quản lý tài khoản"
               >
-                <div className="bg-blue-600 p-2 rounded-lg text-white shadow-blue-200 shadow-lg group-hover:bg-blue-700 transition-colors">
+                <div className="bg-blue-600 p-2 rounded-lg text-white shadow-lg group-hover:bg-blue-700 transition-colors">
                   <FaUserCog className="text-sm" />
                 </div>
                 <div className="flex flex-col leading-none">
                   <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Thành viên</span>
                   <span className="text-sm font-black text-slate-700 max-w-[120px] truncate">
-                    {welcomeMessage?.replace('Chào, ', '') || 'Bạn'}
+                    {welcomeMessage || 'Tài khoản'}
                   </span>
                 </div>
               </NavLink>
@@ -172,7 +150,7 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
           ) : (
             <button 
               onClick={() => navigate('/login')} 
-              className="bg-blue-600 text-white px-6 py-2.5 rounded-2xl text-sm font-black hover:bg-blue-700 shadow-xl shadow-blue-200/50 transition-all active:scale-95 flex items-center gap-2"
+              className="bg-blue-600 text-white px-6 py-2.5 rounded-2xl text-sm font-black hover:bg-blue-700 shadow-xl transition-all active:scale-95"
             >
               Đăng Nhập
             </button>
