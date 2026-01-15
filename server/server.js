@@ -54,13 +54,14 @@ const sessionStore = new MySQLStore({
 }, pool);
 app.use(session({
   secret: process.env.SESSION_SECRET,   
-  resave: false,
   store: sessionStore,
+  resave: false,
   saveUninitialized: false,
   proxy: true,
   cookie: { 
     secure: true,
     httpOnly: true,
+    sameSite: 'none',
     maxAge: 24 * 60 * 60 * 1000 
   }
 }));
@@ -174,7 +175,7 @@ app.get('/api/setup-extra-db', async (req, res) => {
   
   const io = new Server(server, {
     cors: {
-      origin: true,
+      origin: process.env.FRONTEND_URL,
       methods: ["GET", "POST"],
       credentials: true
     }
@@ -210,8 +211,6 @@ app.get('/api/setup-extra-db', async (req, res) => {
       console.log("Người dùng thoát:", socket.id);
     });
   });
-// Middleware
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -325,14 +324,20 @@ passport.deserializeUser(async (id, done) => {
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}/login` }), (req, res) => {
-  res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&provider=google`);
-});
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}/login` }), 
+  (req, res) => {
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard`); 
+  }
+);
 app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email'] }));
 
-app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: `${process.env.FRONTEND_URL}/login` }), (req, res) => {
-  res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&provider=facebook`);
-});
+app.get('/auth/facebook/callback', 
+  passport.authenticate('facebook', { failureRedirect: `${process.env.FRONTEND_URL}/login` }), 
+  (req, res) => {
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+  }
+);
 
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
