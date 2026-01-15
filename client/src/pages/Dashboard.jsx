@@ -20,7 +20,7 @@ import reducer from '../utils/reducer';
 import { airports, airportOptions } from '../utils/airports';
 import formatCurrency from '../utils/formatCurrency';
 import handleChange from '../utils/handleChange';
-import useTokenHandler from '../hooks/useTokenHandler';
+import useAuthHandler from '../hooks/useTokenHandler';
 import usePurchases from '../hooks/usePurchases';
 import BankGuideModal from '../components/Common/BankGuideModal';
 import PurchaseHistory from '../components/Common/PurchaseHistory';
@@ -198,12 +198,6 @@ const carValidationSchema = Yup.object({
       then: (schema) => schema.min(1, 'Ít nhất phải có 1 hành khách').required('Vui lòng nhập số khách'),
     }),
 });
-const safeRender = (data) => {
-  if (typeof data === 'object' && data !== null) {
-    return data.name || data.code || 'N/A';
-  }
-  return data || 'N/A';
-};
 
 function FlightMap({ fromPos, toPos, center }) {
   return (
@@ -228,9 +222,9 @@ function Dashboard() {
   const [hotels, setHotels] = useState([]);
   const [cars, setCars] = useState([]);
   const [cheapFlights, setCheapFlights] = useState([]);
-  const isLogged = localStorage.getItem('token');
-  const handleTokenError = useTokenHandler();
-  const { purchases, fetchPurchases } = usePurchases(isLogged, handleTokenError);
+  const [isLogged, setIsLogged] = useState(false);
+  const handleAuthError = useAuthHandler();
+  const { purchases, fetchPurchases } = usePurchases(isLogged, handleAuthError);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [fromPos, setFromPos] = useState(null);
@@ -248,6 +242,7 @@ function Dashboard() {
   useDocumentTitle('Trang chủ');
   useEffect(() => {
     fetchCheapFlights();
+
     if (isLogged) {
       fetchPurchases();
       fetchUserProfile();
@@ -256,17 +251,25 @@ function Dashboard() {
     }
     setBannerVisible(true);
     if (bankGuide) {
-      toast.success('Yêu cầu chuyển khoản đã được tạo! Vui lòng thanh toán.', { autoClose: 5000 });
+      toast.success('Yêu cầu chuyển khoản đã được tạo! Vui lòng thanh toán.', { 
+        autoClose: 5000,
+        toastId: 'bank-guide-toast'
+      });
     }
-  }, [isLogged, bankGuide, navigate, location.pathname]);
+  }, [isLogged, bankGuide]);
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get('/api/user/profile', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
+      const response = await axios.get('/api/user/profile'); 
+      
       setUserProfile(response.data);
-    } catch (err) { handleTokenError(err); }
+    } catch (err) {
+      if (err.response && err.response.status === 401) {
+        console.log("Phiên đăng nhập hết hạn hoặc chưa đăng nhập.");
+      } else {
+        console.error("Lỗi khi lấy profile:", err);
+      }
+    }
   };
 
   const fetchCheapFlights = async () => {

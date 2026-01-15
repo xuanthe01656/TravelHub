@@ -103,9 +103,9 @@ function Flights() {
   const [formState, flightDispatch] = useReducer(reducer, initialState);
   const [errors, setErrors] = useState({});
   const [flights, setFlights] = useState([]);
-  const isLogged = localStorage.getItem('token');
-  const handleTokenError = useTokenHandler();
-  const {purchases, fetchPurchases } = usePurchases(isLogged, handleTokenError);
+  const [isLogged, setIsLogged] = useState(false);
+  const handleAuthError = useAuthHandler();
+  const { purchases, fetchPurchases } = usePurchases(isLogged, handleAuthError);
   const [cheapFlights, setCheapFlights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -121,6 +121,7 @@ function Flights() {
   useDocumentTitle('Đặt vé máy bay');
   useEffect(() => {
     fetchCheapFlights();
+
     if (isLogged) {
       fetchPurchases();
       fetchUserProfile();
@@ -129,17 +130,25 @@ function Flights() {
     }
     setBannerVisible(true);
     if (bankGuide) {
-      toast.success('Yêu cầu chuyển khoản đã được tạo! Vui lòng thanh toán.', { autoClose: 5000 });
+      toast.success('Yêu cầu chuyển khoản đã được tạo! Vui lòng thanh toán.', { 
+        autoClose: 5000,
+        toastId: 'bank-guide-toast'
+      });
     }
-  }, [isLogged, bankGuide, navigate, location.pathname]);
+  }, [isLogged, bankGuide]);
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get('/api/user/profile', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
+      const response = await axios.get('/api/user/profile'); 
+      
       setUserProfile(response.data);
-    } catch (err) { handleTokenError(err); }
+    } catch (err) {
+      if (err.response && err.response.status === 401) {
+        console.log("Phiên đăng nhập hết hạn hoặc chưa đăng nhập.");
+      } else {
+        console.error("Lỗi khi lấy profile:", err);
+      }
+    }
   };
 
   const fetchCheapFlights = async () => {
