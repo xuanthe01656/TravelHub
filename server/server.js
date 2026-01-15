@@ -25,7 +25,7 @@ const myCache = new NodeCache({ stdTTL: 1800, checkperiod: 600 });
 app.set("trust proxy", 1);
 const buildPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(buildPath));
-const origin = process.env.FRONTEND_URL || "http://localhost:5173";
+const origin = process.env.FRONTEND_URL
 app.use(cors({
   origin: origin,
   credentials: true,
@@ -51,7 +51,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false,
+    secure: true,
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 
   }
