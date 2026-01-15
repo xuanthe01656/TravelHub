@@ -1,4 +1,5 @@
 import { useMemo, useReducer, useState, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
@@ -131,27 +132,9 @@ function Cars() {
   const [activeField, setActiveField] = useState(null); 
   
   useDocumentTitle('Thuê Xe');
-
-  useEffect(() => {
-
-    if (isLogged) {
-      fetchPurchases();
-      fetchUserProfile();
-    } else {
-      setUserProfile(null);
-    }
-    setBannerVisible(true);
-    if (bankGuide) {
-      toast.success('Yêu cầu chuyển khoản đã được tạo! Vui lòng thanh toán.', { 
-        autoClose: 5000,
-        toastId: 'bank-guide-toast'
-      });
-    }
-  }, [isLogged, bankGuide]);
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       const response = await axios.get('/api/user/profile'); 
-      
       setUserProfile(response.data);
     } catch (err) {
       if (err.response && err.response.status === 401) {
@@ -160,7 +143,26 @@ function Cars() {
         console.error("Lỗi khi lấy profile:", err);
       }
     }
-  };
+  }, [handleAuthError])
+  useEffect(() => {
+  
+    if (isLogged) {
+      fetchPurchases();
+      fetchUserProfile();
+    } else {
+      setUserProfile(null);
+    }
+  
+    setBannerVisible(true);
+  
+    if (bankGuide) {
+      toast.success('Yêu cầu chuyển khoản đã được tạo!', { 
+        autoClose: 5000,
+        toastId: 'bank-guide-toast'
+      });
+    }
+  }, [isLogged, bankGuide, fetchPurchases, fetchUserProfile]);
+  
   // const fetchPurchases = async () => {
   //   try {
   //     const token = localStorage.getItem('token');

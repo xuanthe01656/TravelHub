@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -25,28 +25,37 @@ const Profile = () => {
   const [btnLoading, setBtnLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
   const [isEditing, setIsEditing] = useState(false);
+  const [isLogged, setIsLogged] = useState(false);
 
   const [editForm, setEditForm] = useState({ name: '', phone: '', address: '', gender: '' });
   const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordErrors, setPasswordErrors] = useState({});
 
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const handleAuthError = useAuthHandler();
   useDocumentTitle('Trang cá nhân');
   useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    fetchData();
-  }, [token, navigate]);
+    const checkAuth = async () => {
+      try {
+        const res = await axios.get('/api/session');
+        if (res.data.loggedIn) {
+          fetchData();
+        } else {
+          navigate('/login');
+        }
+      } catch (err) {
+        navigate('/login');
+      }
+    };
+    checkAuth();
+  }, [fetchData, navigate]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [userRes, purchaseRes] = await Promise.all([
-        axios.get('/api/user/profile', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/api/purchases', { headers: { Authorization: `Bearer ${token}` } })
+        axios.get('/api/user/profile'), 
+        axios.get('/api/purchases')
       ]);
       setUser(userRes.data);
       setEditForm({
@@ -56,10 +65,13 @@ const Profile = () => {
         gender: userRes.data.gender || 'Nam'
       });
       setPurchases(purchaseRes.data || []);
+      setIsLogged(true);
     } catch (err) {
-      toast.error("Không thể tải thông tin");
+      if (!handleAuthError(err)) {
+        toast.error("Không thể tải thông tin");
+      }
     } finally { setLoading(false); }
-  };
+  }, [handleAuthError]);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -101,9 +113,14 @@ const Profile = () => {
     } finally { setBtnLoading(false); }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/logout');
+      setIsLogged(false);
+      navigate('/login');
+    } catch (err) {
+      toast.error("Lỗi khi đăng xuất");
+    }
   };
 
   if (loading) return (

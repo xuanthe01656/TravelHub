@@ -1,4 +1,5 @@
 import { useMemo, useReducer, useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
@@ -239,66 +240,70 @@ function Dashboard() {
   const bankGuide = location.state?.bankGuide;
   const [activeField, setActiveField] = useState(null); 
   const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const fetchCheapFlights = useCallback(async () => {
+    try {
+      let url = '/api/flights/cheap';
+  
+      if ("geolocation" in navigator) {
+        const coords = await new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => resolve(null),
+            { timeout: 5000 }
+          );
+        });
+  
+        if (coords) {
+          url += `?lat=${coords.lat}&lng=${coords.lng}`;
+        }
+      }
+  
+      const response = await axios.get(url);
+      const data = response.data || [];
+      
+      // Sắp xếp theo giá tăng dần
+      const sortedData = [...data].sort((a, b) => (a.priceVND || 0) - (b.priceVND || 0));
+      
+      setCheapFlights(sortedData);
+    } catch (err) {
+      console.error("Lỗi lấy vé rẻ:", err);
+    }
+  }, []);
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      // Axios tự động gửi Cookie kèm theo nhờ withCredentials: true
+      const response = await axios.get('/api/user/profile'); 
+      setUserProfile(response.data);
+    } catch (err) {
+      if (err.response && err.response.status === 401) {
+        console.log("Phiên đăng nhập hết hạn hoặc chưa đăng nhập.");
+        // Bạn có thể gọi handleAuthError(err) ở đây nếu muốn đá user về trang login
+      } else {
+        console.error("Lỗi khi lấy profile:", err);
+      }
+    }
+  }, [handleAuthError])
   useDocumentTitle('Trang chủ');
   useEffect(() => {
     fetchCheapFlights();
-
+  
     if (isLogged) {
       fetchPurchases();
       fetchUserProfile();
     } else {
       setUserProfile(null);
     }
+  
     setBannerVisible(true);
+  
     if (bankGuide) {
-      toast.success('Yêu cầu chuyển khoản đã được tạo! Vui lòng thanh toán.', { 
+      toast.success('Yêu cầu chuyển khoản đã được tạo!', { 
         autoClose: 5000,
         toastId: 'bank-guide-toast'
       });
     }
-  }, [isLogged, bankGuide]);
-
-  const fetchUserProfile = async () => {
-    try {
-      const response = await axios.get('/api/user/profile'); 
-      
-      setUserProfile(response.data);
-    } catch (err) {
-      if (err.response && err.response.status === 401) {
-        console.log("Phiên đăng nhập hết hạn hoặc chưa đăng nhập.");
-      } else {
-        console.error("Lỗi khi lấy profile:", err);
-      }
-    }
-  };
-
-  const fetchCheapFlights = async () => {
-  try {
-    let url = '/api/flights/cheap';
-
-    if ("geolocation" in navigator) {
-      const coords = await new Promise((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => resolve(null),
-          { timeout: 5000 }
-        );
-      });
-
-      if (coords) {
-        url += `?lat=${coords.lat}&lng=${coords.lng}`;
-      }
-    }
-
-    const response = await axios.get(url);
-    const data = response.data || [];
-    // Sắp xếp theo giá tăng dần
-    data.sort((a, b) => (a.priceVND || 0) - (b.priceVND || 0));
-    setCheapFlights(data);
-  } catch (err) {
-    console.error("Lỗi lấy vé rẻ:", err);
-  }
-};
+  }, [isLogged, bankGuide, fetchCheapFlights, fetchPurchases, fetchUserProfile]);
+ 
 
   const handleChange = (dispatch, field, value) => {
     dispatch({ type: 'CHANGE', field, value });
