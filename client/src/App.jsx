@@ -1,5 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// Pages
 import Register from './pages/Register'; 
 import Login from './pages/LoginPage'; 
 import Dashboard from './pages/Dashboard';
@@ -14,72 +19,104 @@ import BlogPage from './pages/BlogPage';
 import BlogDetail from './pages/BlogDetail';
 import TermsOfUse from './pages/TermsOfUse';
 import FAQ from './pages/FAQ';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import './App.css';
-import ChatBox from './components/ChatBox';
 import AdminChat from './components/Admin/AdminChat';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+
+// Components
+import ChatBox from './components/ChatBox';
 import ScrollToTop from './components/ScrollToTop';
 import BackToTop from './components/BackToTop';
 import ContactWidgets from './components/ContactWidgets';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import axios from 'axios';
+
+import './App.css';
+
+// Cấu hình Axios
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = import.meta.env.VITE_SERVER_URL
+axios.defaults.baseURL = import.meta.env.VITE_SERVER_URL;
 
-const ProtectedRoute = ({ children }) => {
-  const [isAuth, setIsAuth] = useState(null);
-
-  useEffect(() => {
-    axios.get('/api/session')
-      .then(res => {
-        if (res.data && typeof res.data === 'object' && res.data.loggedIn === true) {
-          setIsAuth(true);
-        } else {
-          setIsAuth(false);
-        }
-      })
-      .catch(() => setIsAuth(false));
-  }, []);
-
-  if (isAuth === null) return <div className="loading">Đang kiểm tra...</div>; 
-
-  return isAuth ? children : <Navigate to="/login" replace/>;
-};
 const AppContent = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [auth, setAuth] = useState({ isLogged: false, user: null, loading: true });
+
   const isAdminPage = location.pathname.startsWith('/admin') || location.pathname === '/admin-support';
+
+  // Hàm làm mới trạng thái Auth - Dùng chung toàn App
+  const refreshAuth = useCallback(async () => {
+    try {
+      const res = await axios.get('/api/session');
+      if (res.data && res.data.loggedIn) {
+        setAuth({ isLogged: true, user: res.data.user, loading: false });
+      } else {
+        setAuth({ isLogged: false, user: null, loading: false });
+      }
+    } catch (err) {
+      setAuth({ isLogged: false, user: null, loading: false });
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshAuth();
+  }, [refreshAuth]);
+
+  // Hàm xử lý Logout
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/logout');
+      setAuth({ isLogged: false, user: null, loading: false });
+      toast.info("Đã đăng xuất tài khoản");
+      navigate('/login');
+    } catch (err) {
+      toast.error("Lỗi khi đăng xuất");
+    }
+  };
+
+  if (auth.loading) return <div className="loading">Đang tải dữ liệu...</div>;
 
   return (
     <>
       <ScrollToTop />
       <Routes>
-        <Route path="/login" element={<Login />} />
+        {/* Auth Routes */}
+        <Route path="/login" element={<Login onLoginSuccess={refreshAuth} />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/flights" element={<Flights />} />
-        <Route path="/hotels" element={<Hotels />} />
-        <Route path="/cars" element={<Cars />} />
+
+        {/* Public Routes - Truyền props để Header bên trong nhận dữ liệu */}
+        <Route path="/dashboard" element={
+          <Dashboard isLogged={auth.isLogged} user={auth.user} handleLogout={handleLogout} />
+        } />
+        <Route path="/flights" element={
+          <Flights isLogged={auth.isLogged} user={auth.user} handleLogout={handleLogout} />
+        } />
+        <Route path="/hotels" element={
+          <Hotels isLogged={auth.isLogged} user={auth.user} handleLogout={handleLogout} />
+        } />
+        <Route path="/cars" element={
+          <Cars isLogged={auth.isLogged} user={auth.user} handleLogout={handleLogout} />
+        } />
+
+        {/* Private Routes */}
+        <Route path="/profile" element={
+          auth.isLogged ? 
+          <Profile isLogged={auth.isLogged} user={auth.user} handleLogout={handleLogout} /> : 
+          <Navigate to="/login" replace />
+        } />
+
+        {/* Other Routes */}
         <Route path="/blogs" element={<BlogPage />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/privacypolicy" element={<PrivacyPolicy />} />
         <Route path="/termsofuse" element={<TermsOfUse />} />
         <Route path="/fqa" element={<FAQ />} />
         <Route path="/confirmation" element={<Confirmation />} />
-        
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile /> 
-            </ProtectedRoute>
-          }
-        />
         <Route path="/thank-you" element={<ThankYouPage />} />
-        <Route path="/" element={<Navigate to="/dashboard"/>} />
         <Route path="/admin-support" element={<AdminChat />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        
+        {/* Điều hướng mặc định */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+
       {!isAdminPage && (
         <>
           <ContactWidgets />

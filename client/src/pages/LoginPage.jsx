@@ -61,16 +61,10 @@ function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      await validationSchema.validate(formState, { abortEarly: false });
-      setErrors({});
-      
-      // Gửi yêu cầu login - Backend sẽ tự động set Cookie (connect.sid)
       const response = await axios.post('/api/login', formState);
-      
       if (response.status === 200) {
-        // Lưu ý: Không cần localStorage.setItem('token') nữa vì dùng Session
         toast.success('Chào mừng bạn quay trở lại!');
-        navigate('/dashboard');
+        window.location.href = '/dashboard'; 
       }
     } catch (err) {
       if (err.name === 'ValidationError') {
