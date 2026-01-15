@@ -1,5 +1,4 @@
 import { useReducer, useState, useEffect } from 'react';
-const [isRedirecting, setIsRedirecting] = useState(false);
 import { useNavigate, Link } from 'react-router-dom';
 import * as Yup from 'yup';
 import InputField from '../components/InputField';
@@ -29,6 +28,7 @@ function Login() {
   const [formState, dispatch] = useReducer(reducer, initialState);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
   useDocumentTitle('Đăng nhập');
 
