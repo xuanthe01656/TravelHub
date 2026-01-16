@@ -34,6 +34,31 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        "default-src": ["'self'"],
+        "connect-src": [
+          "'self'", 
+          "https://test.api.amadeus.com", 
+          "wss://*.railway.app",
+          "https://*.railway.app",
+          "ws:",
+          "wss:"
+        ],
+        "img-src": ["'self'", "data:", "https:"],
+        "script-src": [
+          "'self'", 
+          "'unsafe-inline'", 
+          "'unsafe-eval'"
+        ],
+        "style-src": ["'self'", "'unsafe-inline'"],
+      },
+    },
+  })
+);
 const {
   getFlights,
   saveFlightsToSheet,
@@ -61,7 +86,7 @@ app.use(session({
   cookie: { 
     secure: true,
     httpOnly: true,
-    sameSite: 'none',
+    sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000 
   }
 }));
@@ -211,30 +236,7 @@ app.get('/api/setup-extra-db', async (req, res) => {
       console.log("Người dùng thoát:", socket.id);
     });
   });
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        "default-src": ["'self'"],
-        "connect-src": [
-          "'self'", 
-          "https://test.api.amadeus.com", 
-          "wss://*.railway.app",
-          "https://*.railway.app",
-          "ws:",
-          "wss:"
-        ],
-        "img-src": ["'self'", "data:", "https:"],
-        "script-src": [
-          "'self'", 
-          "'unsafe-inline'", 
-          "'unsafe-eval'"
-        ],
-        "style-src": ["'self'", "'unsafe-inline'"],
-      },
-    },
-  })
-);
+
 app.use(compression());
 app.use(bodyParser.json());
 

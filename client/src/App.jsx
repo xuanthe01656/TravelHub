@@ -34,6 +34,7 @@ import './App.css';
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_SERVER_URL;
 
+
 const AppContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -58,6 +59,13 @@ const AppContent = () => {
   useEffect(() => {
     refreshAuth();
   }, [refreshAuth]);
+
+  useEffect(() => {
+    if (!auth.loading && auth.isLogged && location.pathname === '/login') {
+      console.log("Đã tìm thấy session từ Google, đang vào Dashboard...");
+      navigate('/dashboard', { replace: true });
+    }
+  }, [auth.isLogged, auth.loading, location.pathname, navigate]);
 
   // Hàm xử lý Logout
   const handleLogout = async () => {

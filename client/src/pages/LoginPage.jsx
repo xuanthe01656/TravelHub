@@ -29,26 +29,26 @@ function Login() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   useDocumentTitle('Đăng nhập');
 
-  useEffect(() => {
-    if (isRedirecting) return;
-    const checkSession = async () => {
-      try {
-        const response = await axios.get('/api/session');
-        if (response.data && typeof response.data === 'object' && response.data.loggedIn === true) {
-          console.log("Đã đăng nhập, chuyển sang Dashboard");
-          navigate('/dashboard');
-        } else {
-          console.log("Chưa đăng nhập, ở lại trang Login");
-        }
-      } catch (err) {
-        console.log("Không có phiên làm việc hợp lệ.");
-      }
-    };
-    checkSession();
-  }, [navigate,isRedirecting]);
+  // useEffect(() => {
+  //   if (isRedirecting) return;
+  //   const checkSession = async () => {
+  //     try {
+  //       const response = await axios.get('/api/session');
+  //       if (response.data && typeof response.data === 'object' && response.data.loggedIn === true) {
+  //         console.log("Đã đăng nhập, chuyển sang Dashboard");
+  //         navigate('/dashboard');
+  //       } else {
+  //         console.log("Chưa đăng nhập, ở lại trang Login");
+  //       }
+  //     } catch (err) {
+  //       console.log("Không có phiên làm việc hợp lệ.");
+  //     }
+  //   };
+  //   checkSession();
+  // }, [navigate,isRedirecting]);
   const handleSocialLogin = (url) => {
     console.log("URL chuyển hướng:", url);
     setIsRedirecting(true); // Đánh dấu đang chuyển hướng
