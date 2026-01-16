@@ -50,6 +50,7 @@ function Login() {
     checkSession();
   }, [navigate,isRedirecting]);
   const handleSocialLogin = (url) => {
+    console.log("URL chuyển hướng:", url);
     setIsRedirecting(true); // Đánh dấu đang chuyển hướng
     window.location.href = url;
   };
