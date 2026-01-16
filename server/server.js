@@ -73,6 +73,7 @@ const {
 } = require('./dbService');
 const pool = require('./db');
 const sessionStore = new MySQLStore({
+  createDatabaseTable: true,
   clearExpired: true,
   checkExpirationInterval: 900000, // Dọn dẹp session hết hạn mỗi 15 phút
   expiration: 15 * 60 * 60 * 1000, // Session sống 15 tiếng
