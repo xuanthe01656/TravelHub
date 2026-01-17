@@ -37,7 +37,13 @@ import {
   FaStar, FaQuoteLeft, FaBlog, FaMapMarkerAlt, FaShip, FaTrain, FaUmbrellaBeach,FaArrowRight,FaUserFriends,FaShuttleVan
 } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+delete L.Icon.Default.prototype._getIconUrl;
 
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 const initialFlightState = {
   from: '',
   to: '',
