@@ -40,6 +40,39 @@ function FAQ({ isLogged, welcomeMessage, handleLogout }) {
   };
 
   return (
+    <>
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": faqs.map(item => ({
+            "@type": "Question",
+            "name": item.q,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": item.a
+            }
+          })),
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://travelhub-production.up.railway.app/fqa"
+          },
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "TravelHub",
+            "url": "https://travelhub-production.up.railway.app"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "TravelHub",
+            "url": "https://travelhub-production.up.railway.app"
+          },
+          "inLanguage": "vi-VN",
+          "dateModified": "2025-12-19"
+        })}
+      </script>
+    </Helmet>
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-800">
       <Header 
         isLogged={isLogged} 
@@ -113,6 +146,7 @@ function FAQ({ isLogged, welcomeMessage, handleLogout }) {
       
       <Footer />
     </div>
+    </>
   );
 }
 

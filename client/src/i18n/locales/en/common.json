@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "home": "Home",
+    "flights": "Flights",
+    "hotels": "Hotels",
+    "cars": "Car Rental"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "profile": {
+    "title": "Profile"
+  },
+  "footer": {
+    "company": {
+      "description": "TravelHub is a platform for searching and connecting travel services including flights, hotels, and transportation from domestic and international partners.",
+      "businessCode": "Business Registration No."
+    },
+    "contact": {
+      "title": "Contact",
+      "address": "Da Nang City, Vietnam",
+      "phone": "+84 28 1234 5678",
+      "email": "support@travelhub.vn"
+    },
+    "legal": {
+      "title": "Legal & Support",
+      "about": "About Us",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Use",
+      "faq": "FAQ"
+    },
+    "disclaimer": "TravelHub acts as an intermediary travel platform and does not directly issue flight tickets. Bookings and payments are processed through licensed partners.",
+    "copyright": "All rights reserved.",
+    "newsletter": {
+      "title": "Subscribe for deals",
+      "placeholder": "Your email"
+    },
+    "trust": {
+      "title": "Trusted Partners"
+    },
+    "tax": "Tax ID: 0123456789"
+  }
+}

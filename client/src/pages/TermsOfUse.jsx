@@ -1,5 +1,6 @@
 // TermsOfUse.jsx
 import React, { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { FaShieldAlt, FaInfoCircle, FaBalanceScale } from 'react-icons/fa';
@@ -13,6 +14,39 @@ function TermsOfUse({ isLogged, welcomeMessage, handleLogout }) {
   }, []);
 
   return (
+    <>
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "TermsOfService",
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": "https://travelhub-production.up.railway.app/termsofuse"
+            },
+            "name": "Điều khoản sử dụng TravelHub",
+            "url": "https://travelhub-production.up.railway.app/termsofuse",
+            "inLanguage": "vi-VN",
+            "dateModified": "2025-12-19",
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "TravelHub",
+              "url": "https://travelhub-production.up.railway.app"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "TravelHub",
+              "url": "https://travelhub-production.up.railway.app",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://travelhub-production.up.railway.app/logo.png"
+              }
+            }
+          })}
+        </script>
+      </Helmet>
+
+
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-800">
       <Header 
         isLogged={isLogged} 
@@ -98,6 +132,7 @@ function TermsOfUse({ isLogged, welcomeMessage, handleLogout }) {
       
       <Footer />
     </div>
+    </>
   );
 }
 

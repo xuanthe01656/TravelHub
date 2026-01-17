@@ -10,5 +10,31 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/client/src/main.jsx"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "TravelHub",
+        "url": "https://travelhub.vn",
+        "logo": "https://travelhub.vn/logo.png",
+        "description": "Nền tảng kết nối dịch vụ du lịch và vé máy bay từ các đối tác được cấp phép.",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+84-28-1234-5678",
+          "contactType": "Hỗ trợ khách hàng",
+          "areaServed": "VN",
+          "availableLanguage": ["vi"]
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Đà Nẵng",
+          "addressCountry": "VN"
+        },
+        "sameAs": [
+          "https://www.facebook.com/travelhub",
+          "https://www.linkedin.com/company/travelhub"
+        ]
+      }
+      </script>      
   </body>
 </html>

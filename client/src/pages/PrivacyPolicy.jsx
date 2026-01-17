@@ -4,6 +4,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { FaLock, FaUserShield, FaDatabase, FaExchangeAlt, FaPrint, FaEnvelope } from 'react-icons/fa';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import { Helmet } from 'react-helmet-async';
+
 
 function PrivacyPolicy({ isLogged, welcomeMessage, handleLogout }) {
   useDocumentTitle('Chính sách bảo mật');
@@ -13,6 +15,38 @@ function PrivacyPolicy({ isLogged, welcomeMessage, handleLogout }) {
   }, []);
 
   return (
+    <>
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "PrivacyPolicy",
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": "https://travelhub-production.up.railway.app/privacypolicy"
+            },
+            "name": "Chính sách bảo mật TravelHub",
+            "url": "https://travelhub-production.up.railway.app/privacypolicy",
+            "inLanguage": "vi-VN",
+            "dateModified": "2025-12-19",
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "TravelHub",
+              "url": "https://travelhub-production.up.railway.app"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "TravelHub",
+              "url": "https://travelhub-production.up.railway.app",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://travelhub-production.up.railway.app/logo.png"
+              }
+            }
+          })}
+        </script>
+      </Helmet>
+
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-800">
       <Header 
         isLogged={isLogged} 
@@ -64,7 +98,7 @@ function PrivacyPolicy({ isLogged, welcomeMessage, handleLogout }) {
                   <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:border-emerald-200 transition-all">
                     <FaDatabase className="text-emerald-500 mb-3 text-lg" />
                     <h3 className="font-bold text-slate-800 mb-2">Dữ liệu hành vi</h3>
-                    <p className="text-sm font-medium">Lịch sử tìm kiếm vé và khách sạn để gợi ý các hành trình tối ưu nhất cho lần truy cập sau.</p>
+                    <p className="text-sm font-medium">Dữ liệu hành vi ẩn danh (lịch sử tìm kiếm, tương tác) nhằm cải thiện trải nghiệm và gợi ý kết quả phù hợp.</p>
                   </div>
                 </div>
               </section>
@@ -85,7 +119,7 @@ function PrivacyPolicy({ isLogged, welcomeMessage, handleLogout }) {
                   <FaExchangeAlt className="text-emerald-500" /> 3. Chia sẻ dữ liệu
                 </h2>
                 <p className="ml-8 font-medium">
-                  Khi bạn tiến hành đặt vé, các thông tin cơ bản sẽ được chuyển tiếp an toàn sang hệ thống của đối tác (Hãng bay/Khách sạn). Chúng tôi <strong>không bao giờ bán</strong> thông tin cá nhân của bạn cho các bên quảng cáo.
+                  Khi bạn tiến hành đặt vé, các thông tin cơ bản sẽ được chuyển tiếp an toàn theo yêu cầu chủ động của bạn sang hệ thống của đối tác (Hãng bay/Khách sạn). Chúng tôi <strong>không bao giờ bán</strong> thông tin cá nhân của bạn cho các bên quảng cáo.
                 </p>
               </section>
 
@@ -131,6 +165,7 @@ function PrivacyPolicy({ isLogged, welcomeMessage, handleLogout }) {
       
       <Footer />
     </div>
+    </>
   );
 }
 

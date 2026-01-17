@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "flights": "Vé máy bay",
+    "hotels": "Khách sạn",
+    "cars": "Thuê xe"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất"
+  },
+  "profile": {
+    "title": "Trang cá nhân"
+  },
+  "footer": {
+    "company": {
+      "description": "TravelHub là nền tảng tìm kiếm và kết nối dịch vụ du lịch, vé máy bay, khách sạn và phương tiện di chuyển từ các đối tác trong và ngoài nước.",
+      "businessCode": "Mã số doanh nghiệp"
+    },
+    "contact": {
+      "title": "Liên hệ",
+      "address": "TP. Đà Nẵng, Việt Nam",
+      "phone": "028 1234 5678",
+      "email": "support@travelhub.vn"
+    },
+    "legal": {
+      "title": "Pháp lý & Hỗ trợ",
+      "about": "Giới thiệu",
+      "privacy": "Chính sách bảo mật",
+      "terms": "Điều khoản sử dụng",
+      "faq": "Câu hỏi thường gặp"
+    },
+    "disclaimer": "TravelHub là nền tảng trung gian kết nối dịch vụ du lịch và không trực tiếp phát hành vé máy bay. Việc đặt chỗ và thanh toán được thực hiện thông qua các đối tác được cấp phép.",
+    "copyright": "Bảo lưu mọi quyền.",
+    "newsletter": {
+      "title": "Đăng ký nhận ưu đãi",
+      "placeholder": "Email của bạn"
+    },
+    "trust": {
+      "title": "Đối tác tin cậy"
+    },
+    "tax": "MST: 0123456789"
+  }
+}

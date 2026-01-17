@@ -3,8 +3,10 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Helmet } from 'react-helmet-async';
 
 // Pages
+import './i18n';
 import Register from './pages/Register'; 
 import Login from './pages/LoginPage'; 
 import Dashboard from './pages/Dashboard';
@@ -16,11 +18,13 @@ import ThankYouPage from './pages/ThankYouPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Profile from './pages/Profile';
 import BlogPage from './pages/BlogPage';
+import About from './pages/About';
 import BlogDetail from './pages/BlogDetail';
 import TermsOfUse from './pages/TermsOfUse';
 import FAQ from './pages/FAQ';
 import AdminChat from './components/Admin/AdminChat';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+
 
 // Components
 import ChatBox from './components/ChatBox';
@@ -112,6 +116,7 @@ const AppContent = () => {
 
         {/* Other Routes */}
         <Route path="/blogs" element={<BlogPage />} />
+        <Route path="/about" element={<About />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/privacypolicy" element={<PrivacyPolicy />} />
         <Route path="/termsofuse" element={<TermsOfUse />} />
@@ -141,9 +146,33 @@ const AppContent = () => {
 function App() {
   return (
     <BrowserRouter>
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "@id": "https://travelhub-production.up.railway.app/#organization",
+            "name": "TravelHub",
+            "url": "https://travelhub-production.up.railway.app",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://travelhub-production.up.railway.app/logo.png"
+            },
+            "description": "Nền tảng tìm kiếm và so sánh dịch vụ du lịch theo mô hình Affiliate.",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer support",
+              "email": "support@travelhub.com",
+              "availableLanguage": ["vi", "en"]
+            }
+          })}
+        </script>
+      </Helmet>
+
       <AppContent />
     </BrowserRouter>
   );
 }
+
 
 export default App;
