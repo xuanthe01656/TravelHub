@@ -46,13 +46,15 @@ app.use(
           "wss://*.railway.app",
           "https://*.railway.app",
           "ws:",
-          "wss:"
+          "wss:",
+          "wss://*.railway.app", "ws://localhost:*", "wss://localhost:*"
         ],
-        "img-src": ["'self'", "data:", "https:"],
+        "img-src": ["'self'", "data:", "https:","https://*.googleusercontent.com"],
         "script-src": [
           "'self'", 
           "'unsafe-inline'", 
-          "'unsafe-eval'"
+          "'unsafe-eval'",
+          "https://accounts.google.com"
         ],
         "style-src": ["'self'", "'unsafe-inline'"],
       },
@@ -423,7 +425,7 @@ app.post('/api/logout', (req, res) => {
       res.clearCookie('connect.sid', {
         path: '/',
         secure: true,   
-        sameSite: 'none',  
+        sameSite: 'lax',  
         httpOnly: true
       });
       res.status(200).json({ message: 'Logout thành công' });
