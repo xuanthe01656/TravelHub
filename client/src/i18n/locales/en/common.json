@@ -1,4 +1,11 @@
 {
+  "common": {
+    "menu": "Menu",
+    "navigation": "Navigation",
+    "settings": "Settings",
+    "currency": "Currency",
+    "language": "Language"
+  },
   "nav": {
     "home": "Home",
     "flights": "Flights",
@@ -7,7 +14,9 @@
   },
   "auth": {
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "member": "Member",
+    "hello": "Hello,"
   },
   "profile": {
     "title": "Profile"

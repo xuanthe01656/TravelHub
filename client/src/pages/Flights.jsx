@@ -22,7 +22,7 @@ import reducer from '../utils/reducer';
 import { airports, airportOptions } from '../utils/airports';
 import formatCurrency from '../utils/formatCurrency';
 import handleChange from '../utils/handleChange';
-import useTokenHandler from '../hooks/useTokenHandler';
+import useAuthHandler from '../hooks/useTokenHandler';
 import usePurchases from '../hooks/usePurchases';
 import BankGuideModal from '../components/Common/BankGuideModal';
 import PurchaseHistory from '../components/Common/PurchaseHistory';

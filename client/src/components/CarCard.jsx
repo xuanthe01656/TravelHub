@@ -15,8 +15,6 @@ const CarCard = ({ car, onSelect, pickupDate, dropoffDate, isTransfer }) => {
 
   return (
     <div className="group flex flex-col bg-white rounded-[24px] md:rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden h-full">
-      
-      {/* 1. Ảnh xe */}
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-50">
         <img 
           src={car.image || `https://placehold.co/600x400?text=${encodeURIComponent(car.vehicle?.name || 'Car')}`} 

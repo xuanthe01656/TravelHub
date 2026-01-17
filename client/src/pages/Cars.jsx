@@ -17,7 +17,7 @@ import reducer from '../utils/reducer';
 import { airports, airportOptions } from '../utils/airports';
 import formatCurrency from '../utils/formatCurrency';
 import handleChange from '../utils/handleChange';
-import useTokenHandler from '../hooks/useTokenHandler';
+import useAuthHandler from '../hooks/useTokenHandler';
 import usePurchases from '../hooks/usePurchases';
 import BankGuideModal from '../components/Common/BankGuideModal';
 import PurchaseHistory from '../components/Common/PurchaseHistory';
@@ -125,6 +125,8 @@ function Cars() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [sortBy, setSortBy] = useState('price'); 
+  const [userProfile, setUserProfile] = useState(null);
+  const [bannerVisible, setBannerVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const bankGuide = location.state?.bankGuide;

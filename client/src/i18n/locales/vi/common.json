@@ -1,4 +1,11 @@
 {
+  "common": {
+    "menu": "Danh mục",
+    "navigation": "Điều hướng",
+    "settings": "Cài đặt",
+    "currency": "Tiền tệ",
+    "language": "Ngôn ngữ"
+  },
   "nav": {
     "home": "Trang chủ",
     "flights": "Vé máy bay",
@@ -7,7 +14,9 @@
   },
   "auth": {
     "login": "Đăng nhập",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "member": "Thành viên",
+    "hello": "Xin chào,"
   },
   "profile": {
     "title": "Trang cá nhân"
