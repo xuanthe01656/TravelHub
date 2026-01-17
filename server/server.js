@@ -274,14 +274,15 @@ passport.use(new GoogleStrategy({
     if (!user) {
       user = await addUser({
         name: profile.displayName,
-        email: email,
+        email,
         loginProvider: 'google',
         providerId: profile.id
       });
-    } else if (user.loginProvider !== 'google') {
-      return done(null, false, { message: `Email này đã được dùng để đăng nhập bằng ${user.loginProvider}` });
+    } else {
+      if (!user.providerId) {
+        await linkProvider(user.id, 'google', profile.id);
+      }
     }
-
     return done(null, user);
   } catch (err) {
     return done(err);
