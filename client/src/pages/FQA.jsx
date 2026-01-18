@@ -1,5 +1,7 @@
 // FAQ.jsx
 import React, { useState, useEffect } from 'react';
+
+import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { FaChevronDown, FaQuestionCircle, FaExternalLinkAlt, FaHeadset } from 'react-icons/fa';

@@ -22,7 +22,7 @@ import BlogPage from './pages/BlogPage';
 import About from './pages/About';
 import BlogDetail from './pages/BlogDetail';
 import TermsOfUse from './pages/TermsOfUse';
-import FAQ from './pages/FAQ';
+import FAQ from './pages/FQA';
 import AdminChat from './components/Admin/AdminChat';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 
@@ -119,8 +119,8 @@ const AppContent = () => {
         <Route path="/blogs" element={<BlogPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
-        <Route path="/privacypolicy" element={<PrivacyPolicy />} />
-        <Route path="/termsofuse" element={<TermsOfUse />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfUse />} />
         <Route path="/fqa" element={<FAQ />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/thank-you" element={<ThankYouPage />} />
