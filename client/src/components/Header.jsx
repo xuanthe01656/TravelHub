@@ -127,8 +127,6 @@ useEffect(() => {
             Travel<span className="text-blue-600">Hub</span>
           </span>
         </div>
-
-        {/* --- DESKTOP NAVIGATION --- */}
         <nav className="hidden lg:flex items-center gap-1 bg-slate-100/50 p-1 rounded-2xl">
           {navItems.map(item => (
             <NavLink
@@ -145,11 +143,7 @@ useEffect(() => {
             </NavLink>
           ))}
         </nav>
-
-        {/* --- DESKTOP ACTIONS --- */}
-        <div className="hidden lg:flex items-center gap-3">
-          
-          {/* Currency Dropdown */}
+        <div className="hidden lg:flex items-center gap-3">\
           <div className="relative" ref={currRef}>
             <button
               onClick={() => setActiveDropdown(activeDropdown === 'currency' ? null : 'currency')}
@@ -174,8 +168,6 @@ useEffect(() => {
               </div>
             )}
           </div>
-
-          {/* Language Dropdown */}
           <div className="relative" ref={langRef}>
             <button
               onClick={() => setActiveDropdown(activeDropdown === 'lang' ? null : 'lang')}
@@ -243,7 +235,6 @@ useEffect(() => {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {/* 2. Profile Section */}
             {localAuth.isLogged ? (
               <div className="p-6 bg-white mb-4 flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-100">
@@ -261,8 +252,6 @@ useEffect(() => {
                 </button>
               </div>
             )}
-
-            {/* 3. Main Nav */}
             <div className="px-4 space-y-1 mb-6">
               {navItems.map(item => (
                 <NavLink key={item.path} to={item.path} onClick={() => setMenuOpen(false)} 
@@ -272,12 +261,9 @@ useEffect(() => {
                 </NavLink>
               ))}
             </div>
-
-            {/* 4. NEW MODERN DROPDOWNS (LANGUAGE & CURRENCY) */}
             <div className="px-4 space-y-3">
               <p className="px-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('common.settings')}</p>
               
-              {/* Language Selector */}
               <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden transition-all duration-300">
                 <button 
                   onClick={() => setMobileSettingOpen(mobileSettingOpen === 'lang' ? null : 'lang')}
@@ -336,10 +322,8 @@ useEffect(() => {
               </div>
             </div>
           </div>
-
-          {/* 5. Footer Sidebar */}
           <div className="p-6">
-            {isLogged && (
+            {localAuth.isLogged && (
               <button onClick={handleLogout} className="w-full flex items-center justify-center gap-3 p-4 bg-red-50 text-red-600 rounded-2xl font-black transition-active active:scale-95">
                 <FaSignOutAlt />
                 {t('auth.logout')}
