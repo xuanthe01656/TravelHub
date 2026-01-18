@@ -29,7 +29,7 @@ function Login() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  //const navigate = useNavigate();
+  const navigate = useNavigate();
   useDocumentTitle('Đăng nhập');
 
   useEffect(() => {
