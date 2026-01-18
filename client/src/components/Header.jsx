@@ -250,8 +250,8 @@ useEffect(() => {
                   {welcomeMessage?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">{localAuth.name}</p>
-                  <p className="font-black text-slate-800 leading-tight">{welcomeMessage}</p>
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">{welcomeMessage}</p>
+                  <p className="font-black text-slate-800 leading-tight">{localAuth.name}</p>
                 </div>
               </div>
             ) : (
