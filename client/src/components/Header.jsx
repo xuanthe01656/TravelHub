@@ -41,7 +41,6 @@ useEffect(() => {
   setLocalAuth({ isLogged, name: welcomeMessage });
  }, [isLogged, welcomeMessage]);
 
- // Self-heal session check
  useEffect(() => {
   if (!isLogged) {
    axios.get('/api/session')
@@ -58,9 +57,7 @@ useEffect(() => {
  }, [isLogged]);
  useEffect(() => {
     if (menuOpen) {
-      // Ngăn scroll trên desktop
       document.body.style.overflow = 'hidden';
-      // Ngăn scroll trên iOS Safari (touchmove)
       document.body.style.touchAction = 'none';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
@@ -77,7 +74,6 @@ useEffect(() => {
     };
   }, [menuOpen]);
 
-  // Đóng dropdown desktop khi click ngoài
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (langRef.current && !langRef.current.contains(e.target)) {
@@ -114,7 +110,6 @@ useEffect(() => {
     <header className="bg-white/90 backdrop-blur-md sticky top-0 z-[1000] border-b border-slate-100 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
         
-        {/* --- LOGO --- */}
         <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
           <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-200 group-hover:rotate-12 transition-transform duration-300">
             <FaPlaneDeparture className="text-xl" />
@@ -122,7 +117,6 @@ useEffect(() => {
           <span className="font-black text-xl tracking-tighter text-slate-800 hidden sm:block">
             Travel<span className="text-blue-600">Hub</span>
           </span>
-          {/* Mobile Logo Text */}
           <span className="font-black text-xl tracking-tighter text-slate-800 sm:hidden">
             Travel<span className="text-blue-600">Hub</span>
           </span>
@@ -143,7 +137,7 @@ useEffect(() => {
             </NavLink>
           ))}
         </nav>
-        <div className="hidden lg:flex items-center gap-3">\
+        <div className="hidden lg:flex items-center gap-3">
           <div className="relative" ref={currRef}>
             <button
               onClick={() => setActiveDropdown(activeDropdown === 'currency' ? null : 'currency')}
