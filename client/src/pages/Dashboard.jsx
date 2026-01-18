@@ -524,11 +524,10 @@ function Dashboard() {
   const handleLogout = async () => {
     try {
       await axios.post('/api/logout', {}, { withCredentials: true });
-      localStorage.removeItem('token'); 
-      
+      localStorage.removeItem('token');
       setUserProfile(null);
       toast.info('Đã đăng xuất thành công!');
-      navigate('/login');
+      window.location.replace('/login');
     } catch (error) {
       console.error('Lỗi khi đăng xuất:', error);
       toast.error('Không thể đăng xuất, vui lòng thử lại!');
