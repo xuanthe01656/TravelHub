@@ -19,6 +19,7 @@
     "amadeus": "^11.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
     "compression": "^1.8.1",
     "cors": "^2.8.5",

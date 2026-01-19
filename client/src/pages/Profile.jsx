@@ -31,7 +31,7 @@ const Profile = () => {
   const [editForm, setEditForm] = useState({ name: '', phone: '', address: '', gender: '' });
   const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordErrors, setPasswordErrors] = useState({});
-
+  const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
   useDocumentTitle('Trang cá nhân');
   const fetchData = useCallback(async () => {
@@ -158,6 +158,40 @@ const Profile = () => {
       setBtnLoading(false);
     }
   };
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ảnh quá lớn, vui lòng chọn file dưới 2MB");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'travelhub_app'); 
+  
+    setUploading(true);
+    try {
+      const res = await axios.post(
+        'https://api.cloudinary.com/v1_1/dchk5caai/image/upload', 
+        formData
+      );
+      
+      const imageUrl = res.data.secure_url;
+      await axios.put('/api/user/profile', { 
+        ...editForm, 
+        avatar_url: imageUrl 
+      });
+      setUser(prev => ({ ...prev, avatar: imageUrl }));
+      toast.success("Cập nhật ảnh đại diện thành công!");
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast.error("Lỗi khi tải ảnh lên Cloudinary");
+    } finally {
+      setUploading(false);
+    }
+  };
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="text-center">
@@ -169,7 +203,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
-      {/* Cập nhật props truyền vào Header cho đúng logic session */}
       <Header 
         isLogged={isLogged} 
         welcomeMessage={user?.name} 
@@ -180,39 +213,44 @@ const Profile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-blue-100/50 text-center border border-white">
-            <div className="relative inline-block mb-4 group">
-              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-lg overflow-hidden border-4 border-white">
-                {user?.avatar ? (
-                  <img 
-                    src={user.avatar} 
-                    alt="Avatar" 
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.target.src = ""; }}
-                  />
-                ) : (
-                  <span>{user?.name?.charAt(0).toUpperCase()}</span>
+            <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-blue-100/50 text-center border border-white">
+              <div className="relative inline-block mb-4 group">
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-lg overflow-hidden border-4 border-white relative">
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                      <FaSpinner className="animate-spin text-white text-xl" />
+                    </div>
+                  )}
+                  
+                  {user?.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    <span>{user?.name?.charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+                {user?.loginProvider === 'local' && (
+                  <label className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2 rounded-xl shadow-lg hover:bg-blue-600 transition-all cursor-pointer scale-100 lg:scale-0 lg:group-hover:scale-100 shadow-blue-200 z-20">
+                    <FaEdit size={12} />
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleFileUpload}
+                      disabled={uploading}
+                    />
+                  </label>
                 )}
               </div>
-              {user?.loginProvider === 'local' && (
-                <button 
-                  onClick={() => {
-                    const url = prompt("Nhập URL hình ảnh mới của bạn:");
-                    if (url) handleUpdateAvatar(url);
-                  }}
-                  className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2 rounded-xl shadow-lg hover:bg-blue-600 transition-all scale-0 group-hover:scale-100"
-                  title="Đổi ảnh đại diện"
-                >
-                  <FaEdit size={12} />
-                </button>
-              )}
+
+              <h2 className="text-xl font-black text-slate-800 break-words">{user?.name}</h2>
+              <p className="text-blue-600 text-[10px] font-black uppercase tracking-widest mt-1">
+                {user?.loginProvider !== 'local' ? `Login via ${user.loginProvider}` : 'Khách hàng thân thiết'}
+              </p>
             </div>
-            
-            <h2 className="text-xl font-black text-slate-800 break-words">{user?.name}</h2>
-            <p className="text-blue-600 text-xs font-black uppercase tracking-widest mt-1">
-              {user?.loginProvider !== 'local' ? `Đăng nhập qua ${user?.loginProvider}` : 'Khách hàng thân thiết'}
-            </p>
-          </div>
 
             <nav className="bg-white rounded-[2rem] p-4 shadow-xl shadow-blue-100/50 border border-white space-y-2">
               <TabButton active={activeTab === 'info'} onClick={() => setActiveTab('info')} icon={<FaUser />} label="Thông tin cá nhân" />

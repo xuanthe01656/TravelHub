@@ -49,7 +49,7 @@ app.use(
           "wss:",
           "wss://*.railway.app", "ws://localhost:*", "wss://localhost:*"
         ],
-        "img-src": ["'self'", "data:", "https:", "https://*.googleusercontent.com", "https://graph.facebook.com", "https://*.fbcdn.net"],
+        "img-src": ["'self'", "data:", "https:", "https://*.googleusercontent.com", "https://graph.facebook.com", "https://*.fbcdn.net","https://res.cloudinary.com"],
         "script-src": [
           "'self'", 
           "'unsafe-inline'", 
