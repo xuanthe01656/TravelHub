@@ -120,27 +120,37 @@ app.get('/api/setup-database', async (req, res) => {
     );
   `;
 
-  // Danh sách các cột cần bổ sung nếu chưa có
+  // Danh sách các câu lệnh thêm cột (bỏ IF NOT EXISTS trong SQL)
   const alterQueries = [
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT AFTER email",
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20) AFTER full_name",
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT AFTER phone",
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(10) AFTER address"
+    { name: 'avatar_url', sql: "ALTER TABLE users ADD COLUMN avatar_url TEXT AFTER email" },
+    { name: 'phone',      sql: "ALTER TABLE users ADD COLUMN phone VARCHAR(20) AFTER full_name" },
+    { name: 'address',    sql: "ALTER TABLE users ADD COLUMN address TEXT AFTER phone" },
+    { name: 'gender',     sql: "ALTER TABLE users ADD COLUMN gender VARCHAR(10) AFTER address" }
   ];
 
   try {
-    // 1. Tạo bảng trước
+    // 1. Luôn đảm bảo bảng tồn tại đầu tiên
     await pool.query(createTableQuery);
 
-    // 2. Chạy lần lượt các lệnh Alter để cập nhật thêm cột
-    for (let query of alterQueries) {
-      await pool.query(query);
+    // 2. Thử thêm từng cột. Nếu cột đã có, catch sẽ bắt lỗi ER_DUP_FIELDNAME và bỏ qua
+    for (let col of alterQueries) {
+      try {
+        await pool.query(col.sql);
+        console.log(`Đã thêm thành công cột: ${col.name}`);
+      } catch (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log(`Cột ${col.name} đã tồn tại, không cần thêm.`);
+        } else {
+          // Nếu là lỗi khác (ví dụ sai tên bảng) thì mới báo lỗi thực sự
+          throw err;
+        }
+      }
     }
 
-    res.status(200).json({ message: "Bảng 'users' đã được cập nhật đầy đủ các trường (avatar, phone, address...)" });
+    res.status(200).json({ message: "Đồng bộ Database thành công!" });
   } catch (err) {
-    console.error('Lỗi cập nhật database:', err);
-    res.status(500).json({ error: 'Không thể cập nhật database', details: err.message });
+    console.error('Lỗi Setup DB:', err);
+    res.status(500).json({ error: 'Lỗi cấu hình Database', details: err.message });
   }
 });
 app.get('/api/setup-content-db', async (req, res) => {
