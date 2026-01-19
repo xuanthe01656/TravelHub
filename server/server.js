@@ -45,11 +45,15 @@ app.use(
           "https://test.api.amadeus.com", 
           "wss://*.railway.app",
           "https://*.railway.app",
+          "blob:",
+          "https://res.cloudinary.com",
           "ws:",
           "wss:",
-          "wss://*.railway.app", "ws://localhost:*", "wss://localhost:*"
+          "wss://*.railway.app", "ws://localhost:*", "wss://localhost:*",
+          "https://accounts.google.com",
+          "https://*.googleusercontent.com", "https://*.facebook.com", "https://*.fbcdn.net","https://*.cloudinary.com"
         ],
-        "img-src": ["'self'", "data:", "https:", "https://*.googleusercontent.com", "https://graph.facebook.com", "https://*.fbcdn.net","https://res.cloudinary.com"],
+        "img-src": ["'self'", "data:", "https:", "https://*.googleusercontent.com", "https://*.facebook.com", "https://res.cloudinary.com", "https://*.fbcdn.net","https://*.cloudinary.com"],
         "script-src": [
           "'self'", 
           "'unsafe-inline'", 
