@@ -175,7 +175,10 @@ const Profile = () => {
     try {
       const res = await axios.post(
         'https://api.cloudinary.com/v1_1/dchk5caai/image/upload', 
-        formData
+        formData,
+        {
+          withCredentials: false
+        }
       );
       
       const rawUrl = res.data.secure_url;
