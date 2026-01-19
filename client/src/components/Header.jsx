@@ -7,7 +7,23 @@ import {
   FaCar, FaSignOutAlt, FaUserCog, FaChevronDown,
   FaHotel, FaGlobe, FaMoneyBillWave, FaCheck
 } from 'react-icons/fa';
-
+const FlagIcon = ({ lang }) => {
+  if (lang === 'vi') return (
+    <svg className="w-5 h-5 rounded-full shadow-sm" viewBox="0 0 30 20">
+      <rect width="30" height="20" fill="#da251d" />
+      <polygon points="15,4 11.47,14.85 20.72,8.15 9.28,8.15 18.53,14.85" fill="#ffff00" />
+    </svg>
+  );
+  return (
+    <svg className="w-5 h-5 rounded-full shadow-sm" viewBox="0 0 60 30">
+      <path d="M0,0 v30 h60 v-30 z" fill="#012169" />
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4" />
+      <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10" />
+      <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
+    </svg>
+  );
+};
 const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -141,22 +157,33 @@ useEffect(() => {
           <div className="relative" ref={currRef}>
             <button
               onClick={() => setActiveDropdown(activeDropdown === 'currency' ? null : 'currency')}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-100 transition-all text-sm font-bold text-slate-700 border border-transparent hover:border-slate-200"
+              className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-200 hover:bg-white transition-all text-sm font-bold text-slate-700 shadow-sm"
             >
-              <span className="text-blue-600 font-black">{currentCurr.symbol}</span>
+              <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px]">
+                {currentCurr.symbol}
+              </div>
               <span>{currentCurr.code}</span>
-              <FaChevronDown className={`text-[10px] transition-transform ${activeDropdown === 'currency' ? 'rotate-180' : ''}`} />
+              <FaChevronDown className={`text-[10px] transition-transform duration-300 ${activeDropdown === 'currency' ? 'rotate-180' : ''}`} />
             </button>
+
             {activeDropdown === 'currency' && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 animate-in fade-in zoom-in duration-200 overflow-hidden">
+                <p className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">
+                  {t('common.currency')}
+                </p>
                 {currencies.map(c => (
                   <button
                     key={c.code}
-                    onClick={() => changeCurrency(c.code)}
+                    onClick={() => { changeCurrency(c.code); setActiveDropdown(null); }}
                     className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-bold transition-all ${currency === c.code ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
                   >
-                    <span>{c.name}</span>
-                    <span className="opacity-50">{c.symbol}</span>
+                    <div className="flex items-center gap-3">
+                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currency === c.code ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                        {c.symbol}
+                      </span>
+                      <span>{c.name}</span>
+                    </div>
+                    {currency === c.code && <FaCheck className="text-[10px]" />}
                   </button>
                 ))}
               </div>
@@ -165,21 +192,27 @@ useEffect(() => {
           <div className="relative" ref={langRef}>
             <button
               onClick={() => setActiveDropdown(activeDropdown === 'lang' ? null : 'lang')}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-100 transition-all text-sm font-bold text-slate-700 border border-transparent hover:border-slate-200"
+              className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-200 hover:bg-white transition-all text-sm font-bold text-slate-700 shadow-sm"
             >
-              <span className="text-lg">{currentLang.flag}</span>
-              <FaChevronDown className={`text-[10px] transition-transform ${activeDropdown === 'lang' ? 'rotate-180' : ''}`} />
+              <FlagIcon lang={i18n.language} />
+              <span className="uppercase">{i18n.language}</span>
+              <FaChevronDown className={`text-[10px] transition-transform duration-300 ${activeDropdown === 'lang' ? 'rotate-180' : ''}`} />
             </button>
+
             {activeDropdown === 'lang' && (
-              <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 animate-in fade-in zoom-in duration-200 overflow-hidden">
+                <p className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">
+                  {t('common.language')}
+                </p>
                 {languages.map(l => (
                   <button
                     key={l.code}
-                    onClick={() => changeLanguage(l.code)}
+                    onClick={() => { changeLanguage(l.code); setActiveDropdown(null); }}
                     className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold transition-all ${i18n.language === l.code ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
                   >
-                    <span className="text-lg">{l.flag}</span>
-                    {l.native}
+                    <FlagIcon lang={l.code} />
+                    <span className="flex-1 text-left">{l.name}</span>
+                    {i18n.language === l.code && <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" />}
                   </button>
                 ))}
               </div>

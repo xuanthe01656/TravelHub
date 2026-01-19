@@ -18,6 +18,7 @@ import viFlights from './locales/vi/flights.json';
 import viCars from './locales/vi/cars.json';
 import viHotels from './locales/vi/hotels.json';
 import viProfile from './locales/vi/profile.json';
+import viAuth from './locales/vi/auth.json'
 
 // EN
 import enCommon from './locales/en/common.json';
@@ -31,6 +32,7 @@ import enFlights from './locales/en/flights.json';
 import enCars from './locales/en/cars.json';
 import enHotels from './locales/en/hotels.json';
 import enProfile from './locales/en/profile.json';
+import enAuth from './locales/en/auth.json'
 
 /* =========================
    I18N CONFIG
@@ -46,7 +48,7 @@ i18n
 
     supportedLngs: ['vi', 'en'],
 
-    ns: ['common', 'privacy', 'terms', 'faq', 'about', 'seo','dashboard','flights','cars','hotels','profile'],
+    ns: ['common', 'privacy', 'terms', 'faq', 'about', 'seo','dashboard','flights','cars','hotels','profile','auth'],
     defaultNS: 'common',
 
     resources: {
@@ -61,7 +63,8 @@ i18n
         flights: viFlights,
         cars: viCars,
         hotels: viHotels,
-        profile: viProfile
+        profile: viProfile,
+        auth: viAuth
       },
       en: {
         common: enCommon,
@@ -74,7 +77,8 @@ i18n
         flights: enFlights,
         cars: enCars,
         hotels: enHotels,
-        profile: enProfile
+        profile: enProfile,
+        auth: enAuth
       }
     },
 
