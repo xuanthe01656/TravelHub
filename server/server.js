@@ -279,19 +279,6 @@ const limiter = rateLimit({
   max: 100 
 });
 app.use(limiter);
-
-// const secretKey = process.env.JWT_SECRET || 'fallback-secret';
-// const authenticateToken = (req, res, next) => {
-//   const authHeader = req.headers['authorization'];
-//   const token = authHeader && authHeader.split(' ')[1];
-//   if (!token) return res.status(401).json({ message: 'Token required' });
-
-//   jwt.verify(token, secretKey, (err, user) => {
-//     if (err) return res.status(403).json({ message: 'Invalid or expired token' });
-//     req.user = user;
-//     next();
-//   });
-// };
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -447,7 +434,7 @@ app.get('/api/user/profile', isAuthenticated, (req, res) => {
     id: req.user.id,
     name: req.user.name,
     email: req.user.email,
-    avatar: req.user.avatar_url,
+    avatar: req.user.avatar,
     phone: req.user.phone,     
     address: req.user.address, 
     gender: req.user.gender,
@@ -471,8 +458,10 @@ app.put('/api/user/profile', isAuthenticated, async (req, res) => {
       req.user.phone = phone;
       req.user.address = address;
       req.user.gender = gender;
-      if (avatar_url) req.user.avatar = avatar_url;
-      res.json({ message: "Cập nhật thành công" });
+      req.user.avatar = finalAvatar;
+      //if (avatar_url) req.user.avatar = avatar_url;
+      res.json({ message: "Cập nhật thành công" ,user: { ...req.user, avatar: finalAvatar }});
+      
     } else {
       res.status(400).json({ message: "Không có thay đổi nào được thực hiện" });
     }

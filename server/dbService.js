@@ -1,16 +1,13 @@
 const pool = require('./db');
 
-/**
- * Ánh xạ dữ liệu từ DB sang Object JS (Helper function)
- */
 const mapUser = (user) => ({
   id: user.id,
   name: user.full_name,
   email: user.email,
-  phone: user.phone,          // Trường mới
-  address: user.address,      // Trường mới
-  gender: user.gender,        // Trường mới
-  avatar: user.avatar_url,    // Trường mới: Ảnh đại diện
+  phone: user.phone,      
+  address: user.address,      
+  gender: user.gender,        
+  avatar: user.avatar_url,    
   passwordHash: user.password,
   loginProvider: user.login_provider,
   providerId: user.provider_id,
@@ -48,10 +45,6 @@ async function getUserById(id) {
     throw error;
   }
 }
-
-/**
- * Thêm người dùng mới (Hỗ trợ lưu Avatar từ Google/FB)
- */
 async function addUser(user) {
   try {
     const sql = `
@@ -61,8 +54,8 @@ async function addUser(user) {
     
     const values = [
       user.name || user.full_name || '', 
-      user.email || '', 
-      user.avatar_url || null,
+      user.email || '',
+      user.avatar || user.avatar_url || null, 
       user.passwordHash || user.password || null, 
       user.loginProvider || user.provider || 'local', 
       user.providerId || null

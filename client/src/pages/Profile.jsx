@@ -86,8 +86,8 @@ const Profile = () => {
     e.preventDefault();
     setBtnLoading(true);
     try {
-      // Bỏ token vì dùng session cookie
       const res = await axios.put('/api/user/profile', editForm);
+      //const updatedUser = res.data.user || { ...user, ...editForm };
       setUser(res.data.user || { ...user, ...editForm });
       toast.success("Cập nhật thông tin thành công!");
       setIsEditing(false);
@@ -138,23 +138,6 @@ const Profile = () => {
     } catch (error) {
       console.error('Lỗi khi đăng xuất:', error);
       window.location.replace('/login');
-    }
-  };
-  const handleUpdateAvatar = async (avatarUrl) => {
-    setBtnLoading(true);
-    try {
-      // Gọi API cập nhật riêng hoặc dùng chung API profile
-      const res = await axios.put('/api/user/profile', { 
-        ...editForm, 
-        avatar_url: avatarUrl 
-      });
-      
-      setUser({ ...user, avatar: avatarUrl });
-      toast.success("Cập nhật ảnh đại diện thành công!");
-    } catch (err) {
-      toast.error("Không thể cập nhật ảnh");
-    } finally {
-      setBtnLoading(false);
     }
   };
   const handleFileUpload = async (e) => {
