@@ -34,16 +34,12 @@ const Profile = () => {
 
   const navigate = useNavigate();
   useDocumentTitle('Trang cá nhân');
-
-  // Hàm lấy dữ liệu (đưa lên trước useEffect)
   const fetchData = useCallback(async () => {
     setLoading(true);
+    
+    // Bước 1: Lấy Profile (Cực kỳ quan trọng, hỏng là nghỉ)
     try {
-      const [userRes, purchaseRes] = await Promise.all([
-        axios.get('/api/user/profile'), 
-        axios.get('/api/purchases')
-      ]);
-      
+      const userRes = await axios.get('/api/user/profile');
       setUser(userRes.data);
       setEditForm({
         name: userRes.data.name || '',
@@ -51,13 +47,23 @@ const Profile = () => {
         address: userRes.data.address || '',
         gender: userRes.data.gender || 'Nam'
       });
-      setPurchases(purchaseRes.data || []);
       setIsLogged(true);
     } catch (err) {
-      toast.error("Không thể tải thông tin. Vui lòng đăng nhập lại.");
+      console.error("Profile Error:", err);
+      toast.error("Phiên đăng nhập hết hạn!");
       navigate('/login');
-    } finally { 
-      setLoading(false); 
+      return;
+    }
+  
+    try {
+      const purchaseRes = await axios.get('/api/purchases');
+      setPurchases(purchaseRes.data || []);
+    } catch (err) {
+      console.error("Purchases API 500 Error:", err);
+      setPurchases([]); 
+      toast.warning("Không thể tải lịch sử chuyến bay lúc này.");
+    } finally {
+      setLoading(false);
     }
   }, [navigate]);
 
