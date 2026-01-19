@@ -178,12 +178,14 @@ const Profile = () => {
         formData
       );
       
-      const imageUrl = res.data.secure_url;
+      const rawUrl = res.data.secure_url;
+      const optimizedUrl = rawUrl.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,q_auto,f_auto/');
+
       await axios.put('/api/user/profile', { 
         ...editForm, 
-        avatar_url: imageUrl 
+        avatar_url: optimizedUrl 
       });
-      setUser(prev => ({ ...prev, avatar: imageUrl }));
+      setUser(prev => ({ ...prev, avatar: optimizedUrl }));
       toast.success("Cập nhật ảnh đại diện thành công!");
     } catch (err) {
       console.error("Upload error:", err);
