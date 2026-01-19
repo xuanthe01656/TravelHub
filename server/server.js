@@ -467,6 +467,11 @@ app.put('/api/user/profile', isAuthenticated, async (req, res) => {
     });
 
     if (success) {
+      req.user.name = name;
+      req.user.phone = phone;
+      req.user.address = address;
+      req.user.gender = gender;
+      if (avatar_url) req.user.avatar = avatar_url;
       res.json({ message: "Cập nhật thành công" });
     } else {
       res.status(400).json({ message: "Không có thay đổi nào được thực hiện" });

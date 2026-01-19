@@ -87,7 +87,7 @@ async function updateUserProfile(id, data) {
   try {
     const sql = `
       UPDATE users 
-      SET full_name = ?, phone = ?, address = ?, gender = ? 
+      SET full_name = ?, phone = ?, address = ?, gender = ? , avatar_url = ?
       WHERE id = ?
     `;
     const [result] = await pool.query(sql, [data.name, data.phone, data.address, data.avatar_url, data.gender, id]);
