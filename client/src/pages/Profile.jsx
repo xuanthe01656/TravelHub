@@ -227,9 +227,9 @@ const Profile = () => {
                     </div>
                   )}
                   
-                  {user?.avatar ? (
+                  {user?.avatar_url ? (
                     <img 
-                      src={user.avatar} 
+                      src={user.avatar_url} 
                       alt="Avatar" 
                       className="w-full h-full object-cover" 
                     />
