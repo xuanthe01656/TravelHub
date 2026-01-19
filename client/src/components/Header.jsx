@@ -239,7 +239,7 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
       {/* MOBILE MENU - Fixed Z-index and Layout */}
       <div className={`fixed inset-0 z-[1500] lg:hidden transition-all ${menuOpen ? 'visible' : 'invisible'}`}>
         <div className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity ${menuOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setMenuOpen(false)} />
-        <div className={`absolute right-0 top-0 w-[280px] h-full bg-slate-50 shadow-2xl transition-transform duration-300 transform ${menuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
+        <div className={`absolute right-0 top-0 w-[280px] bg-slate-50 shadow-2xl transition-transform duration-300 transform ${menuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
           <div className="p-5 bg-white flex items-center justify-between border-b">
             <span className="font-black text-slate-800 uppercase tracking-widest text-xs">{t('common.menu')}</span>
             <button className="p-2 bg-slate-100 rounded-full text-slate-500" onClick={() => setMenuOpen(false)}><FaTimes /></button>
@@ -271,9 +271,11 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
 
             <div className="px-5 space-y-3">
               <p className="text-[10px] font-black text-slate-400 uppercase px-2">{t('common.settings')}</p>
-              {/* Language Mobile */}
+              
+              {/* 1. Chọn Ngôn ngữ (Language) */}
               <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                <button onClick={() => setMobileSettingOpen(mobileSettingOpen === 'lang' ? null : 'lang')} className="w-full p-4 flex items-center justify-between text-sm font-bold text-slate-700">
+                <button onClick={() => setMobileSettingOpen(mobileSettingOpen === 'lang' ? null : 'lang')} 
+                        className="w-full p-4 flex items-center justify-between text-sm font-bold text-slate-700">
                   <span className="flex items-center gap-3"><FaGlobe className="text-orange-500" /> {t('common.language')}</span>
                   <FaChevronDown className={`text-[10px] transition-transform ${mobileSettingOpen === 'lang' ? 'rotate-180' : ''}`} />
                 </button>
@@ -282,6 +284,29 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
                     <button key={l.code} onClick={() => { changeLanguage(l.code); setMenuOpen(false); }} className="w-full p-4 flex items-center justify-between text-sm">
                       <span className={i18n.language === l.code ? 'font-black text-blue-600' : ''}>{l.name}</span>
                       {i18n.language === l.code && <FaCheck className="text-blue-600 text-xs" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. CHỌN TIỀN TỆ (Currency) - PHẦN BỊ THIẾU ĐÃ THÊM LẠI ĐÂY */}
+              <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                <button onClick={() => setMobileSettingOpen(mobileSettingOpen === 'curr' ? null : 'curr')} 
+                        className="w-full p-4 flex items-center justify-between text-sm font-bold text-slate-700">
+                  <span className="flex items-center gap-3"><FaMoneyBillWave className="text-green-500" /> {t('common.currency')}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">{currentCurr.code}</span>
+                    <FaChevronDown className={`text-[10px] transition-transform ${mobileSettingOpen === 'curr' ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+                <div className={`overflow-hidden transition-all bg-slate-50 ${mobileSettingOpen === 'curr' ? 'max-h-60 border-t' : 'max-h-0'}`}>
+                  {currencies.map(c => (
+                    <button key={c.code} onClick={() => { changeCurrency(c.code); setMenuOpen(false); }} className="w-full p-4 flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 text-center font-bold text-slate-400">{c.symbol}</span>
+                        <span className={currency === c.code ? 'font-black text-blue-600' : ''}>{c.name}</span>
+                      </div>
+                      {currency === c.code && <FaCheck className="text-blue-600 text-xs" />}
                     </button>
                   ))}
                 </div>
