@@ -36,8 +36,6 @@ const Profile = () => {
   useDocumentTitle('Trang cá nhân');
   const fetchData = useCallback(async () => {
     setLoading(true);
-    
-    // Bước 1: Lấy Profile (Cực kỳ quan trọng, hỏng là nghỉ)
     try {
       const userRes = await axios.get('/api/user/profile');
       setUser(userRes.data);
@@ -45,7 +43,8 @@ const Profile = () => {
         name: userRes.data.name || '',
         phone: userRes.data.phone || '',
         address: userRes.data.address || '',
-        gender: userRes.data.gender || 'Nam'
+        gender: userRes.data.gender || 'Nam',
+        avatar_url: userRes.data.avatar || ''
       });
       setIsLogged(true);
     } catch (err) {
@@ -227,9 +226,9 @@ const Profile = () => {
                     </div>
                   )}
                   
-                  {user?.avatar_url ? (
+                  {user?.avatar ? (
                     <img 
-                      src={user.avatar_url} 
+                      src={user.avatar} 
                       alt="Avatar" 
                       className="w-full h-full object-cover" 
                     />
