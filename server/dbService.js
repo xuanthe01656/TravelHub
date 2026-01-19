@@ -90,7 +90,7 @@ async function updateUserProfile(id, data) {
       SET full_name = ?, phone = ?, address = ?, gender = ? 
       WHERE id = ?
     `;
-    const [result] = await pool.query(sql, [data.name, data.phone, data.address, data.gender, id]);
+    const [result] = await pool.query(sql, [data.name, data.phone, data.address, data.avatar_url, data.gender, id]);
     return result.affectedRows > 0;
   } catch (error) {
     console.error('Lỗi khi cập nhật Profile trong DB:', error.message);

@@ -452,12 +452,14 @@ app.get('/api/user/profile', isAuthenticated, (req, res) => {
 });
 app.put('/api/user/profile', isAuthenticated, async (req, res) => {
   try {
-    const { name, phone, address, gender } = req.body;
+    const { name, phone, address, gender, avatar_url } = req.body;
+    const finalAvatar = avatar_url || req.user.avatar;
     const success = await updateUserProfile(req.user.id, { 
       name,
       phone, 
       address, 
-      gender 
+      gender,
+      avatar_url: finalAvatar
     });
 
     if (success) {

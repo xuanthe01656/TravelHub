@@ -141,7 +141,23 @@ const Profile = () => {
       window.location.replace('/login');
     }
   };
-
+  const handleUpdateAvatar = async (avatarUrl) => {
+    setBtnLoading(true);
+    try {
+      // Gọi API cập nhật riêng hoặc dùng chung API profile
+      const res = await axios.put('/api/user/profile', { 
+        ...editForm, 
+        avatar_url: avatarUrl 
+      });
+      
+      setUser({ ...user, avatar: avatarUrl });
+      toast.success("Cập nhật ảnh đại diện thành công!");
+    } catch (err) {
+      toast.error("Không thể cập nhật ảnh");
+    } finally {
+      setBtnLoading(false);
+    }
+  };
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="text-center">
@@ -163,17 +179,40 @@ const Profile = () => {
       <main className="max-w-6xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-blue-100/50 text-center border border-white">
-              <div className="relative inline-block mb-4">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </div>
+          <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-blue-100/50 text-center border border-white">
+            <div className="relative inline-block mb-4 group">
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-lg overflow-hidden border-4 border-white">
+                {user?.avatar ? (
+                  <img 
+                    src={user.avatar} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.src = ""; }}
+                  />
+                ) : (
+                  <span>{user?.name?.charAt(0).toUpperCase()}</span>
+                )}
               </div>
-              <h2 className="text-xl font-black text-slate-800 break-words">{user?.name}</h2>
-              <p className="text-blue-600 text-xs font-black uppercase tracking-widest mt-1">Khách hàng thân thiết</p>
+              {user?.loginProvider === 'local' && (
+                <button 
+                  onClick={() => {
+                    const url = prompt("Nhập URL hình ảnh mới của bạn:");
+                    if (url) handleUpdateAvatar(url);
+                  }}
+                  className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2 rounded-xl shadow-lg hover:bg-blue-600 transition-all scale-0 group-hover:scale-100"
+                  title="Đổi ảnh đại diện"
+                >
+                  <FaEdit size={12} />
+                </button>
+              )}
             </div>
+            
+            <h2 className="text-xl font-black text-slate-800 break-words">{user?.name}</h2>
+            <p className="text-blue-600 text-xs font-black uppercase tracking-widest mt-1">
+              {user?.loginProvider !== 'local' ? `Đăng nhập qua ${user?.loginProvider}` : 'Khách hàng thân thiết'}
+            </p>
+          </div>
 
             <nav className="bg-white rounded-[2rem] p-4 shadow-xl shadow-blue-100/50 border border-white space-y-2">
               <TabButton active={activeTab === 'info'} onClick={() => setActiveTab('info')} icon={<FaUser />} label="Thông tin cá nhân" />
@@ -181,8 +220,6 @@ const Profile = () => {
               <TabButton active={activeTab === 'password'} onClick={() => setActiveTab('password')} icon={<FaKey />} label="Đổi mật khẩu" />
             </nav>
           </div>
-
-          {/* Content Area */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-blue-100/50 border border-white min-h-[550px]">
               
