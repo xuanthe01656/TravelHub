@@ -443,9 +443,20 @@ app.get('/api/user/profile', isAuthenticated, (req, res) => {
 app.put('/api/user/profile', isAuthenticated, async (req, res) => {
   try {
     const { name, phone, address, gender } = req.body;
-    await updateUserProfile(req.user.id, { name, phone, address, gender });
-    res.json({ message: "Cập nhật thành công" });
+    const success = await updateUserProfile(req.user.id, { 
+      name,
+      phone, 
+      address, 
+      gender 
+    });
+
+    if (success) {
+      res.json({ message: "Cập nhật thành công" });
+    } else {
+      res.status(400).json({ message: "Không có thay đổi nào được thực hiện" });
+    }
   } catch (err) {
+    console.error("Lỗi cập nhật:", err);
     res.status(500).json({ message: "Lỗi khi lưu thông tin" });
   }
 });
