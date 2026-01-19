@@ -128,13 +128,17 @@ const Profile = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('/api/logout');
-      setIsLogged(false);
-      navigate('/login');
-    } catch (err) {
-      toast.error("Lỗi khi đăng xuất");
-      // Vẫn navigate để thoát trạng thái hiện tại
-      navigate('/login');
+      await axios.post('/api/logout', {}, { withCredentials: true });
+      localStorage.removeItem('token');
+      setUser(null); 
+      setIsLogged(false); 
+  
+      toast.info('Đã đăng xuất thành công!');
+      window.location.replace('/login');
+      
+    } catch (error) {
+      console.error('Lỗi khi đăng xuất:', error);
+      window.location.replace('/login');
     }
   };
 
