@@ -49,7 +49,7 @@ app.use(
           "wss:",
           "wss://*.railway.app", "ws://localhost:*", "wss://localhost:*"
         ],
-        "img-src": ["'self'", "data:", "https:","https://*.googleusercontent.com"],
+        "img-src": ["'self'", "data:", "https:", "https://*.googleusercontent.com", "https://graph.facebook.com", "https://*.fbcdn.net"],
         "script-src": [
           "'self'", 
           "'unsafe-inline'", 
@@ -71,7 +71,9 @@ const {
   getUsers,
   getUserByEmail,
   getUserById,
-  addUser
+  addUser,
+  updatePassword,
+  updateUserProfile
 } = require('./dbService');
 const pool = require('./db');
 const sessionStore = new MySQLStore({
@@ -118,12 +120,27 @@ app.get('/api/setup-database', async (req, res) => {
     );
   `;
 
+  // Danh sách các cột cần bổ sung nếu chưa có
+  const alterQueries = [
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT AFTER email",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20) AFTER full_name",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT AFTER phone",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(10) AFTER address"
+  ];
+
   try {
-    const [result] = await pool.query(createTableQuery);
-    res.status(200).json({ message: "Bảng 'users' đã được tạo thành công!", result });
+    // 1. Tạo bảng trước
+    await pool.query(createTableQuery);
+
+    // 2. Chạy lần lượt các lệnh Alter để cập nhật thêm cột
+    for (let query of alterQueries) {
+      await pool.query(query);
+    }
+
+    res.status(200).json({ message: "Bảng 'users' đã được cập nhật đầy đủ các trường (avatar, phone, address...)" });
   } catch (err) {
-    console.error('Lỗi tạo bảng:', err);
-    res.status(500).json({ error: 'Không thể tạo bảng', details: err.message });
+    console.error('Lỗi cập nhật database:', err);
+    res.status(500).json({ error: 'Không thể cập nhật database', details: err.message });
   }
 });
 app.get('/api/setup-content-db', async (req, res) => {
@@ -269,12 +286,14 @@ passport.use(new GoogleStrategy({
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails[0].value;
+    const avatarUrl = profile.photos && profile.photos[0] ? profile.photos[0].value : null;
     let user = await getUserByEmail(email);
 
     if (!user) {
       user = await addUser({
         name: profile.displayName,
         email,
+        avatar_url: avatarUrl,
         loginProvider: 'google',
         providerId: profile.id
       });
@@ -293,18 +312,19 @@ passport.use(new FacebookStrategy({
   clientID: process.env.FACEBOOK_APP_ID,
   clientSecret: process.env.FACEBOOK_APP_SECRET,
   callbackURL: `${process.env.SERVER_URL}/auth/facebook/callback`,
-  profileFields: ['id', 'displayName', 'emails']
+  profileFields: ['id', 'displayName', 'emails', 'photos']
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails ? profile.emails[0].value : null;
     if (!email) return done(null, false, { message: 'Không lấy được email từ Facebook' });
-
+    const avatarUrl = `https://graph.facebook.com/${profile.id}/picture?type=large`;
     let user = await getUserByEmail(email);
 
     if (!user) {
       user = await addUser({
         name: profile.displayName,
         email: email,
+        avatar_url: avatarUrl,
         loginProvider: 'facebook',
         providerId: profile.id
       });
@@ -413,8 +433,53 @@ app.get('/api/user/profile', isAuthenticated, (req, res) => {
     id: req.user.id,
     name: req.user.name,
     email: req.user.email,
+    avatar: req.user.avatar,
+    phone: req.user.phone,     
+    address: req.user.address, 
+    gender: req.user.gender,
     loginProvider: req.user.loginProvider
   });
+});
+app.put('/api/user/profile', isAuthenticated, async (req, res) => {
+  try {
+    const { name, phone, address, gender } = req.body;
+    await updateUserProfile(req.user.id, { name, phone, address, gender });
+    res.json({ message: "Cập nhật thành công" });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi khi lưu thông tin" });
+  }
+});
+app.post('/api/user/change-password', isAuthenticated, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  try {
+    if (req.user.loginProvider !== 'local') {
+      return res.status(400).json({ 
+        message: `Tài khoản đăng nhập bằng ${req.user.loginProvider} không thể đổi mật khẩu theo cách này.` 
+      });
+    }
+
+    const user = await getUserByEmail(req.user.email);
+    
+    const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Mật khẩu hiện tại không chính xác' });
+    }
+
+    if (oldPassword === newPassword) {
+      return res.status(400).json({ message: 'Mật khẩu mới phải khác mật khẩu cũ' });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const newPasswordHash = await bcrypt.hash(newPassword, salt);
+    
+    await updatePassword(req.user.id, newPasswordHash);
+
+    res.json({ message: 'Đổi mật khẩu thành công!' });
+
+  } catch (err) {
+    console.error('Lỗi đổi mật khẩu:', err);
+    res.status(500).json({ message: 'Lỗi server khi đổi mật khẩu' });
+  }
 });
 app.post('/api/logout', (req, res) => {
   req.logout((err) => {

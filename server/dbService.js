@@ -1,74 +1,68 @@
 const pool = require('./db');
 
+/**
+ * Ánh xạ dữ liệu từ DB sang Object JS (Helper function)
+ */
+const mapUser = (user) => ({
+  id: user.id,
+  name: user.full_name,
+  email: user.email,
+  phone: user.phone,          // Trường mới
+  address: user.address,      // Trường mới
+  gender: user.gender,        // Trường mới
+  avatar: user.avatar_url,    // Trường mới: Ảnh đại diện
+  passwordHash: user.password,
+  loginProvider: user.login_provider,
+  providerId: user.provider_id,
+  createdAt: user.created_at
+});
+
 async function getUsers() {
   try {
     const [rows] = await pool.query('SELECT * FROM users');
-    
-    return rows.map(user => ({
-      id: user.id,
-      name: user.full_name, 
-      email: user.email,
-      passwordHash: user.password,
-      loginProvider: user.login_provider,
-      providerId: user.provider_id,
-      createdAt: user.created_at
-    }));
+    return rows.map(mapUser);
   } catch (error) {
     console.error('Lỗi khi lấy danh sách người dùng từ DB:', error.message);
     throw error;
   }
 }
 
-/**
- * Tìm một người dùng theo Email (Dùng cho Login & Passport)
- */
 async function getUserByEmail(email) {
   try {
     const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (rows.length === 0) return null;
-    
-    const user = rows[0];
-    return {
-      id: user.id,
-      name: user.full_name,
-      email: user.email,
-      passwordHash: user.password,
-      loginProvider: user.login_provider,
-      providerId: user.provider_id
-    };
+    return mapUser(rows[0]);
   } catch (error) {
     console.error('Lỗi khi tìm người dùng bằng email:', error.message);
     throw error;
   }
 }
+
 async function getUserById(id) {
-    try {
-      const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
-      if (rows.length === 0) return null;
-      const user = rows[0];
-      return {
-        id: user.id,
-        name: user.full_name,
-        email: user.email,
-        loginProvider: user.login_provider
-      };
-    } catch (error) {
-      throw error;
-    }
+  try {
+    const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+    if (rows.length === 0) return null;
+    return mapUser(rows[0]);
+  } catch (error) {
+    console.error('Lỗi khi tìm người dùng bằng ID:', error.message);
+    throw error;
+  }
 }
+
 /**
- * Thêm người dùng mới (Hỗ trợ cả Local, Google, Facebook)
+ * Thêm người dùng mới (Hỗ trợ lưu Avatar từ Google/FB)
  */
 async function addUser(user) {
   try {
     const sql = `
-      INSERT INTO users (full_name, email, password, login_provider, provider_id) 
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO users (full_name, email, avatar_url, password, login_provider, provider_id) 
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
     
     const values = [
       user.name || user.full_name || '', 
       user.email || '', 
+      user.avatar_url || null, // Lưu link ảnh từ profile social
       user.passwordHash || user.password || null, 
       user.loginProvider || user.provider || 'local', 
       user.providerId || null
@@ -89,9 +83,37 @@ async function addUser(user) {
   }
 }
 
+async function updateUserProfile(id, data) {
+  try {
+    const sql = `
+      UPDATE users 
+      SET full_name = ?, phone = ?, address = ?, gender = ? 
+      WHERE id = ?
+    `;
+    const [result] = await pool.query(sql, [data.name, data.phone, data.address, data.gender, id]);
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error('Lỗi khi cập nhật Profile trong DB:', error.message);
+    throw error;
+  }
+}
+async function updatePassword(id, newPasswordHash) {
+  try {
+    const [result] = await pool.query(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [newPasswordHash, id]
+    );
+    return result.affectedRows > 0;
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   getUsers,
   getUserByEmail,
   getUserById,
-  addUser
+  addUser,
+  updateUserProfile,
+  updatePassword
 };
