@@ -447,7 +447,7 @@ app.get('/api/user/profile', isAuthenticated, (req, res) => {
     id: req.user.id,
     name: req.user.name,
     email: req.user.email,
-    avatar: req.user.avatar,
+    avatar: req.user.avatar_url,
     phone: req.user.phone,     
     address: req.user.address, 
     gender: req.user.gender,

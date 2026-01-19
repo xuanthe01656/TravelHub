@@ -62,7 +62,7 @@ async function addUser(user) {
     const values = [
       user.name || user.full_name || '', 
       user.email || '', 
-      user.avatar_url || null, // Lưu link ảnh từ profile social
+      user.avatar_url || null,
       user.passwordHash || user.password || null, 
       user.loginProvider || user.provider || 'local', 
       user.providerId || null
@@ -90,7 +90,7 @@ async function updateUserProfile(id, data) {
       SET full_name = ?, phone = ?, address = ?, gender = ? , avatar_url = ?
       WHERE id = ?
     `;
-    const [result] = await pool.query(sql, [data.name, data.phone, data.address, data.avatar_url, data.gender, id]);
+    const [result] = await pool.query(sql, [data.name, data.phone, data.address, data.gender, data.avatar_url, id]);
     return result.affectedRows > 0;
   } catch (error) {
     console.error('Lỗi khi cập nhật Profile trong DB:', error.message);
