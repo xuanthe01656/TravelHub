@@ -299,9 +299,18 @@ passport.use(new GoogleStrategy({
         providerId: profile.id
       });
     } else {
-      if (!user.providerId) {
-        await linkProvider(user.id, 'google', profile.id);
-      }
+      // if (!user.providerId) {
+      //   await linkProvider(user.id, 'google', profile.id);
+      // }
+      const sqlUpdate = `
+        UPDATE users 
+        SET login_provider = ?, provider_id = ?, avatar_url = COALESCE(?, avatar_url) 
+        WHERE id = ?
+      `;
+      await pool.query(sqlUpdate, ['google', profile.id, avatarUrl, user.id]);
+      user.loginProvider = 'google';
+      user.providerId = profile.id;
+      if (avatarUrl) user.avatar = avatarUrl;
     }
     return done(null, user);
   } catch (err) {
