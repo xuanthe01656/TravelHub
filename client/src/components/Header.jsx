@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -63,7 +64,6 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
     setLocalAuth({ isLogged, name: welcomeMessage });
   }, [isLogged, welcomeMessage]);
 
-  // Kiểm tra session khi khởi tạo (Fix lỗi mất dữ liệu khi reload)
   useEffect(() => {
     if (!isLogged) {
       axios.get('/api/session')
@@ -78,8 +78,6 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
         .catch(() => {});
     }
   }, [isLogged]);
-
-  // Chặn scroll body khi mở menu
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = 'hidden';
@@ -94,8 +92,6 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
       document.body.style.position = 'static';
     };
   }, [menuOpen]);
-
-  // Đóng dropdown khi click ngoài
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (langRef.current && !langRef.current.contains(e.target)) {
@@ -237,10 +233,11 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
       </div>
 
       {/* MOBILE MENU - Fixed Z-index and Layout */}
+      {menuOpen && createPortal(
       <div className={`fixed inset-0 z-[1500] lg:hidden transition-all ${menuOpen ? 'visible' : 'invisible'}`}>
         <div className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity ${menuOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setMenuOpen(false)} />
-        <div className={`absolute right-0 top-0 w-[280px] bg-slate-50 shadow-2xl transition-transform duration-300 transform ${menuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
-          <div className="p-5 bg-white flex items-center justify-between border-b">
+        <div className={`absolute right-0 top-0 w-[280px] bg-slate-50 shadow-2xl transition-transform duration-300 transform ${menuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col  max-h-screen`}>
+          <div className="p-5 bg-white flex items-center justify-between border-b shrink-0">
             <span className="font-black text-slate-800 uppercase tracking-widest text-xs">{t('common.menu')}</span>
             <button className="p-2 bg-slate-100 rounded-full text-slate-500" onClick={() => setMenuOpen(false)}><FaTimes /></button>
           </div>
@@ -322,7 +319,8 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
             )}
           </div>
         </div>
-      </div>
+      </div>,
+      document.body )}
     </header>
   );
 };

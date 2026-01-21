@@ -126,3 +126,13 @@
 .delay-1000 {
   animation-delay: 1s;
 }
+html.mobile-menu-open,
+html.mobile-menu-open body {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
+html.mobile-menu-open * {
+  /* Optional: giảm tương tác không mong muốn */
+  -webkit-tap-highlight-color: transparent;
+}
