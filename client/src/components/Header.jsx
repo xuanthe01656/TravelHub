@@ -268,8 +268,6 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
 
             <div className="px-5 space-y-3">
               <p className="text-[10px] font-black text-slate-400 uppercase px-2">{t('common.settings')}</p>
-              
-              {/* 1. Chọn Ngôn ngữ (Language) */}
               <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
                 <button onClick={() => setMobileSettingOpen(mobileSettingOpen === 'lang' ? null : 'lang')} 
                         className="w-full p-4 flex items-center justify-between text-sm font-bold text-slate-700">
@@ -278,15 +276,13 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
                 </button>
                 <div className={`overflow-hidden transition-all bg-slate-50 ${mobileSettingOpen === 'lang' ? 'max-h-40 border-t' : 'max-h-0'}`}>
                   {languages.map(l => (
-                    <button key={l.code} onClick={() => { changeLanguage(l.code); setMenuOpen(false); }} className="w-full p-4 flex items-center justify-between text-sm">
+                    <button key={l.code} onClick={() => { changeLanguage(l.code); }} className="w-full p-4 flex items-center justify-between text-sm">
                       <span className={i18n.language === l.code ? 'font-black text-blue-600' : ''}>{l.name}</span>
                       {i18n.language === l.code && <FaCheck className="text-blue-600 text-xs" />}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* 2. CHỌN TIỀN TỆ (Currency) - PHẦN BỊ THIẾU ĐÃ THÊM LẠI ĐÂY */}
               <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
                 <button onClick={() => setMobileSettingOpen(mobileSettingOpen === 'curr' ? null : 'curr')} 
                         className="w-full p-4 flex items-center justify-between text-sm font-bold text-slate-700">
@@ -298,7 +294,7 @@ const Header = ({ isLogged, welcomeMessage, handleLogout }) => {
                 </button>
                 <div className={`overflow-hidden transition-all bg-slate-50 ${mobileSettingOpen === 'curr' ? 'max-h-60 border-t' : 'max-h-0'}`}>
                   {currencies.map(c => (
-                    <button key={c.code} onClick={() => { changeCurrency(c.code); setMenuOpen(false); }} className="w-full p-4 flex items-center justify-between text-sm">
+                    <button key={c.code} onClick={() => { changeCurrency(c.code); }} className="w-full p-4 flex items-center justify-between text-sm">
                       <div className="flex items-center gap-3">
                         <span className="w-6 text-center font-bold text-slate-400">{c.symbol}</span>
                         <span className={currency === c.code ? 'font-black text-blue-600' : ''}>{c.name}</span>
